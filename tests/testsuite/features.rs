@@ -1,14 +1,14 @@
 //! Tests for `[features]` table.
 
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::{Dependency, Package};
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid1() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -22,7 +22,7 @@ fn invalid1() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -35,12 +35,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn same_name() {
     // Feature with the same name as a dependency.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -56,11 +56,11 @@ fn same_name() {
             "#,
         )
         .file("src/main.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "1.0.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("tree -f")
+    p.crabgo("tree -f")
         .arg("{p} [{f}]")
         .with_stderr("")
         .with_stdout(
@@ -71,7 +71,7 @@ foo v0.0.1 ([..]) []
         )
         .run();
 
-    p.cargo("tree --features bar -f")
+    p.crabgo("tree --features bar -f")
         .arg("{p} [{f}]")
         .with_stderr("")
         .with_stdout(
@@ -83,11 +83,11 @@ foo v0.0.1 ([..]) [bar,baz]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid3() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -104,7 +104,7 @@ fn invalid3() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -118,11 +118,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid4() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -135,11 +135,11 @@ fn invalid4() {
             "#,
         )
         .file("src/main.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -154,19 +154,19 @@ failed to select a version for `bar` which could resolve this conflict",
         )
         .run();
 
-    p.change_file("Cargo.toml", &basic_manifest("foo", "0.0.1"));
+    p.change_file("Crabgo.toml", &basic_manifest("foo", "0.0.1"));
 
-    p.cargo("check --features test")
+    p.crabgo("check --features test")
         .with_status(101)
         .with_stderr("error: Package `foo v0.0.1 ([..])` does not have the feature `test`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid5() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -181,7 +181,7 @@ fn invalid5() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -194,11 +194,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid6() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -212,7 +212,7 @@ fn invalid6() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check --features foo")
+    p.crabgo("check --features foo")
         .with_status(101)
         .with_stderr(
             "\
@@ -225,11 +225,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid7() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -244,7 +244,7 @@ fn invalid7() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check --features foo")
+    p.crabgo("check --features foo")
         .with_status(101)
         .with_stderr(
             "\
@@ -257,11 +257,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid8() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -274,15 +274,15 @@ fn invalid8() {
             "#,
         )
         .file("src/main.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check --features foo")
+    p.crabgo("check --features foo")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[CWD]/Cargo.toml`
+error: failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   feature `foo/bar` in dependency `bar` is not allowed to contain slashes
@@ -292,11 +292,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid9() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -308,11 +308,11 @@ fn invalid9() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check --features bar")
+    p.crabgo("check --features bar")
         .with_stderr(
             "\
 error: Package `foo v0.0.1 ([..])` does not have feature `bar`. It has a required dependency with that name, but only optional dependencies can be used as features.
@@ -320,11 +320,11 @@ error: Package `foo v0.0.1 ([..])` does not have feature `bar`. It has a require
         ).with_status(101).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid10() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -338,7 +338,7 @@ fn invalid10() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -350,11 +350,11 @@ fn invalid10() {
             "#,
         )
         .file("bar/src/lib.rs", "")
-        .file("bar/baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("bar/baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("bar/baz/src/lib.rs", "")
         .build();
 
-    p.cargo("check").with_stderr("\
+    p.crabgo("check").with_stderr("\
 error: failed to select a version for `bar`.
     ... required by package `foo v0.0.1 ([..])`
 versions that meet the requirements `*` are: 0.0.1
@@ -368,11 +368,11 @@ failed to select a version for `bar` which could resolve this conflict
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_transitive_dep_feature_requirement() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -394,7 +394,7 @@ fn no_transitive_dep_feature_requirement() {
             "#,
         )
         .file(
-            "derived/Cargo.toml",
+            "derived/Crabgo.toml",
             r#"
                 [package]
                 name = "derived"
@@ -407,7 +407,7 @@ fn no_transitive_dep_feature_requirement() {
         )
         .file("derived/src/lib.rs", "extern crate bar; pub use bar::test;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -426,11 +426,11 @@ fn no_transitive_dep_feature_requirement() {
             "#,
         )
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[CWD]/Cargo.toml`
+error: failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   multiple slashes in feature `derived/bar/qux` (included by feature `default`) are not allowed
@@ -439,11 +439,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_feature_doesnt_build() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -466,11 +466,11 @@ fn no_feature_doesnt_build() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -480,7 +480,7 @@ fn no_feature_doesnt_build() {
         .run();
     p.process(&p.bin("foo")).with_stdout("").run();
 
-    p.cargo("build --features bar -v")
+    p.crabgo("build --features bar -v")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -495,11 +495,11 @@ fn no_feature_doesnt_build() {
     p.process(&p.bin("foo")).with_stdout("bar\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_feature_pulled_in() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -525,11 +525,11 @@ fn default_feature_pulled_in() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -540,7 +540,7 @@ fn default_feature_pulled_in() {
         .run();
     p.process(&p.bin("foo")).with_stdout("bar\n").run();
 
-    p.cargo("build --no-default-features -v")
+    p.crabgo("build --no-default-features -v")
         .with_stderr(
             "\
 [DIRTY-MSVC] foo v0.0.1 ([CWD]): the list of features changed
@@ -553,11 +553,11 @@ fn default_feature_pulled_in() {
     p.process(&p.bin("foo")).with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cyclic_feature() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -571,17 +571,17 @@ fn cyclic_feature() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr("[ERROR] cyclic feature dependency: feature `default` depends on itself")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cyclic_feature2() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -596,14 +596,14 @@ fn cyclic_feature2() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn groups_on_groups_on_groups() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -639,13 +639,13 @@ fn groups_on_groups_on_groups() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] ba[..] v0.0.1 ([CWD]/ba[..])
@@ -657,11 +657,11 @@ fn groups_on_groups_on_groups() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn many_cli_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -687,13 +687,13 @@ fn many_cli_features() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check --features")
+    p.crabgo("check --features")
         .arg("bar baz")
         .with_stderr(
             "\
@@ -706,11 +706,11 @@ fn many_cli_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn union_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -738,7 +738,7 @@ fn union_features() {
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -756,7 +756,7 @@ fn union_features() {
         )
         .file("d1/src/lib.rs", "")
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -777,7 +777,7 @@ fn union_features() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] d2 v0.0.1 ([CWD]/d2)
@@ -789,11 +789,11 @@ fn union_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn many_features_no_rebuilds() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name    = "b"
@@ -807,7 +807,7 @@ fn many_features_no_rebuilds() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name    = "a"
@@ -823,7 +823,7 @@ fn many_features_no_rebuilds() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] a v0.1.0 ([CWD]/a)
@@ -834,7 +834,7 @@ fn many_features_no_rebuilds() {
         .run();
     p.root().move_into_the_past();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr(
             "\
 [FRESH] a v0.1.0 ([..]/a)
@@ -846,19 +846,19 @@ fn many_features_no_rebuilds() {
 }
 
 // Tests that all cmd lines work with `--features ""`
-#[cargo_test]
+#[crabgo_test]
 fn empty_features() {
     let p = project().file("src/main.rs", "fn main() {}").build();
 
-    p.cargo("check --features").arg("").run();
+    p.crabgo("check --features").arg("").run();
 }
 
 // Tests that all cmd lines work with `--features ""`
-#[cargo_test]
+#[crabgo_test]
 fn transitive_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -874,7 +874,7 @@ fn transitive_features() {
         )
         .file("src/main.rs", "extern crate bar; fn main() { bar::baz(); }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -891,14 +891,14 @@ fn transitive_features() {
         )
         .build();
 
-    p.cargo("check --features foo").run();
+    p.crabgo("check --features foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn everything_in_the_lockfile() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -921,7 +921,7 @@ fn everything_in_the_lockfile() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -933,10 +933,10 @@ fn everything_in_the_lockfile() {
             "#,
         )
         .file("d1/src/lib.rs", "")
-        .file("d2/Cargo.toml", &basic_manifest("d2", "0.0.2"))
+        .file("d2/Crabgo.toml", &basic_manifest("d2", "0.0.2"))
         .file("d2/src/lib.rs", "")
         .file(
-            "d3/Cargo.toml",
+            "d3/Crabgo.toml",
             r#"
                 [package]
                 name = "d3"
@@ -950,7 +950,7 @@ fn everything_in_the_lockfile() {
         .file("d3/src/lib.rs", "")
         .build();
 
-    p.cargo("fetch").run();
+    p.crabgo("fetch").run();
     let lockfile = p.read_lockfile();
     assert!(
         lockfile.contains(r#"name = "d1""#),
@@ -969,11 +969,11 @@ fn everything_in_the_lockfile() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_rebuild_when_frobbing_default_feature() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -987,7 +987,7 @@ fn no_rebuild_when_frobbing_default_feature() {
         )
         .file("src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1000,7 +1000,7 @@ fn no_rebuild_when_frobbing_default_feature() {
         )
         .file("b/src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1015,16 +1015,16 @@ fn no_rebuild_when_frobbing_default_feature() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check").with_stdout("").run();
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").run();
+    p.crabgo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unions_work_with_no_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1038,7 +1038,7 @@ fn unions_work_with_no_default_features() {
         )
         .file("src/lib.rs", "extern crate a; pub fn foo() { a::a(); }")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1051,7 +1051,7 @@ fn unions_work_with_no_default_features() {
         )
         .file("b/src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1066,16 +1066,16 @@ fn unions_work_with_no_default_features() {
         .file("a/src/lib.rs", r#"#[cfg(feature = "f1")] pub fn a() {}"#)
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check").with_stdout("").run();
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").run();
+    p.crabgo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn optional_and_dev_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name    = "test"
@@ -1089,11 +1089,11 @@ fn optional_and_dev_dep() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] test v0.1.0 ([..])
@@ -1103,11 +1103,11 @@ fn optional_and_dev_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn activating_feature_activates_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name    = "test"
@@ -1126,7 +1126,7 @@ fn activating_feature_activates_dep() {
             "extern crate foo; pub fn bar() { foo::bar(); }",
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1140,14 +1140,14 @@ fn activating_feature_activates_dep() {
         .file("foo/src/lib.rs", r#"#[cfg(feature = "a")] pub fn bar() {}"#)
         .build();
 
-    p.cargo("check --features a -v").run();
+    p.crabgo("check --features a -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_feature_in_cmd_line() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1166,7 +1166,7 @@ fn dep_feature_in_cmd_line() {
             "#,
         )
         .file(
-            "derived/Cargo.toml",
+            "derived/Crabgo.toml",
             r#"
                 [package]
                 name = "derived"
@@ -1183,7 +1183,7 @@ fn dep_feature_in_cmd_line() {
         )
         .file("derived/src/lib.rs", "extern crate bar; pub use bar::test;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1205,33 +1205,33 @@ fn dep_feature_in_cmd_line() {
 
     // The foo project requires that feature "some-feat" in "bar" is enabled.
     // Building without any features enabled should fail:
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]unresolved import `bar::test`")
         .run();
 
     // We should be able to enable the feature "derived-feat", which enables "some-feat",
     // on the command line. The feature is enabled, thus building should be successful:
-    p.cargo("check --features derived/derived-feat").run();
+    p.crabgo("check --features derived/derived-feat").run();
 
     // Trying to enable features of transitive dependencies is an error
-    p.cargo("check --features bar/some-feat")
+    p.crabgo("check --features bar/some-feat")
         .with_status(101)
         .with_stderr("error: package `foo v0.0.1 ([..])` does not have a dependency named `bar`")
         .run();
 
     // Hierarchical feature specification should still be disallowed
-    p.cargo("check --features derived/bar/some-feat")
+    p.crabgo("check --features derived/bar/some-feat")
         .with_status(101)
         .with_stderr("[ERROR] multiple slashes in feature `derived/bar/some-feat` is not allowed")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_features_flag_enables_all_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1265,18 +1265,18 @@ fn all_features_flag_enables_all_features() {
                 }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check --all-features").run();
+    p.crabgo("check --all-features").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn many_cli_features_comma_delimited() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1302,13 +1302,13 @@ fn many_cli_features_comma_delimited() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check --features bar,baz")
+    p.crabgo("check --features bar,baz")
         .with_stderr(
             "\
 [CHECKING] ba[..] v0.0.1 ([CWD]/ba[..])
@@ -1320,11 +1320,11 @@ fn many_cli_features_comma_delimited() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn many_cli_features_comma_and_space_delimited() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1362,17 +1362,17 @@ fn many_cli_features_comma_and_space_delimited() {
                 fn main() {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
-        .file("bam/Cargo.toml", &basic_manifest("bam", "0.0.1"))
+        .file("bam/Crabgo.toml", &basic_manifest("bam", "0.0.1"))
         .file("bam/src/lib.rs", "pub fn bam() {}")
-        .file("bap/Cargo.toml", &basic_manifest("bap", "0.0.1"))
+        .file("bap/Crabgo.toml", &basic_manifest("bap", "0.0.1"))
         .file("bap/src/lib.rs", "pub fn bap() {}")
         .build();
 
-    p.cargo("check --features")
+    p.crabgo("check --features")
         .arg("bar,baz bam bap")
         .with_stderr(
             "\
@@ -1387,13 +1387,13 @@ fn many_cli_features_comma_and_space_delimited() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn only_dep_is_optional() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1413,16 +1413,16 @@ fn only_dep_is_optional() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_features_all_crates() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1435,7 +1435,7 @@ fn all_features_all_crates() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1449,14 +1449,14 @@ fn all_features_all_crates() {
         .file("bar/src/main.rs", "#[cfg(feature = \"foo\")] fn main() {}")
         .build();
 
-    p.cargo("check --all-features --workspace").run();
+    p.crabgo("check --all-features --workspace").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn feature_off_dylib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
@@ -1485,7 +1485,7 @@ fn feature_off_dylib() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1508,16 +1508,16 @@ fn feature_off_dylib() {
         .build();
 
     // Build the dylib with `f1` feature.
-    p.cargo("check --features f1").run();
+    p.crabgo("check --features f1").run();
     // Check that building without `f1` uses a dylib without `f1`.
-    p.cargo("run -p bar").run();
+    p.crabgo("run -p bar").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_if_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "foo"
@@ -1533,11 +1533,11 @@ fn warn_if_default_features() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             r#"
 [WARNING] `default-features = [".."]` was found in [features]. Did you mean to use `default = [".."]`?
@@ -1547,11 +1547,11 @@ fn warn_if_default_features() {
         ).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_feature_for_non_optional_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1571,7 +1571,7 @@ fn no_feature_for_non_optional_dep() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1585,14 +1585,14 @@ fn no_feature_for_non_optional_dep() {
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check --features bar/a").run();
+    p.crabgo("check --features bar/a").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_option_given_twice() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1613,14 +1613,14 @@ fn features_option_given_twice() {
         )
         .build();
 
-    p.cargo("check --features a --features b").run();
+    p.crabgo("check --features a --features b").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multi_multi_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1642,14 +1642,14 @@ fn multi_multi_features() {
         )
         .build();
 
-    p.cargo("check --features a --features").arg("b c").run();
+    p.crabgo("check --features a --features").arg("b c").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cli_parse_ok() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1671,24 +1671,24 @@ fn cli_parse_ok() {
         )
         .build();
 
-    p.cargo("run --features a b").run();
+    p.crabgo("run --features a b").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_features_virtual_ws() {
     // What happens with `--all-features` in the root of a virtual workspace.
     // Some of this behavior is a little strange (member dependencies also
     // have all features enabled, one might expect `f4` to be disabled).
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1720,7 +1720,7 @@ fn all_features_virtual_ws() {
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1747,23 +1747,23 @@ fn all_features_virtual_ws() {
         )
         .build();
 
-    p.cargo("run").with_stdout("f1\n").run();
-    p.cargo("run --all-features")
+    p.crabgo("run").with_stdout("f1\n").run();
+    p.crabgo("run --all-features")
         .with_stdout("f1\nf2\nf3\nf4\n")
         .run();
     // In `a`, it behaves differently. :(
-    p.cargo("run --all-features")
+    p.crabgo("run --all-features")
         .cwd("a")
         .with_stdout("f1\nf2\nf3\n")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn slash_optional_enables() {
     // --features dep/feat will enable `dep` and set its feature.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1781,7 +1781,7 @@ fn slash_optional_enables() {
             "#,
         )
         .file(
-            "dep/Cargo.toml",
+            "dep/Crabgo.toml",
             r#"
             [package]
             name = "dep"
@@ -1800,15 +1800,15 @@ fn slash_optional_enables() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]dep not set[..]")
         .run();
 
-    p.cargo("check --features dep/feat").run();
+    p.crabgo("check --features dep/feat").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_summary_order_doesnt_matter() {
     // Checks for an issue where the resolver depended on the order of entries
     // in the registry summary. If there was a non-optional dev-dependency
@@ -1846,7 +1846,7 @@ fn registry_summary_order_doesnt_matter() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1867,7 +1867,7 @@ fn registry_summary_order_doesnt_matter() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -1885,7 +1885,7 @@ fn registry_summary_order_doesnt_matter() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn nonexistent_required_features() {
     Package::new("required_dependency", "0.1.0")
         .feature("simple", &[])
@@ -1895,7 +1895,7 @@ fn nonexistent_required_features() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1921,7 +1921,7 @@ fn nonexistent_required_features() {
         .file("examples/ololo.rs", "fn main() {}")
         .build();
 
-    p.cargo("check --examples")
+    p.crabgo("check --examples")
         .with_stderr_contains(
             "\
 [WARNING] invalid feature `not_present` in required-features of target `ololo`: \
@@ -1936,12 +1936,12 @@ fn nonexistent_required_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_feature_names_warning() {
     // Warnings for more restricted feature syntax.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1972,52 +1972,52 @@ fn invalid_feature_names_warning() {
 
     // Unfortunately the warnings are duplicated due to the Summary being
     // loaded twice (once in the Workspace, and once in PackageRegistry) and
-    // Cargo does not have a de-duplication system. This should probably be
+    // Crabgo does not have a de-duplication system. This should probably be
     // OK, since I'm not expecting this to affect anyone.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr("\
 [WARNING] invalid character `+` in feature `+foo` in package foo v0.1.0 ([ROOT]/foo), the first character must be a Unicode XID start character or digit (most letters or `_` or `0` to `9`)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `-` in feature `-foo` in package foo v0.1.0 ([ROOT]/foo), the first character must be a Unicode XID start character or digit (most letters or `_` or `0` to `9`)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `.` in feature `.foo` in package foo v0.1.0 ([ROOT]/foo), the first character must be a Unicode XID start character or digit (most letters or `_` or `0` to `9`)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `?` in feature `?foo` in package foo v0.1.0 ([ROOT]/foo), the first character must be a Unicode XID start character or digit (most letters or `_` or `0` to `9`)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `¼` in feature `a¼` in package foo v0.1.0 ([ROOT]/foo), characters must be Unicode XID characters, `+`, or `.` (numbers, `+`, `-`, `_`, `.`, or most letters)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `:` in feature `foo:bar` in package foo v0.1.0 ([ROOT]/foo), characters must be Unicode XID characters, `+`, or `.` (numbers, `+`, `-`, `_`, `.`, or most letters)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `?` in feature `foo?` in package foo v0.1.0 ([ROOT]/foo), characters must be Unicode XID characters, `+`, or `.` (numbers, `+`, `-`, `_`, `.`, or most letters)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `Ⓐ` in feature `ⒶⒷⒸ` in package foo v0.1.0 ([ROOT]/foo), the first character must be a Unicode XID start character or digit (most letters or `_` or `0` to `9`)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `Ⓑ` in feature `ⒶⒷⒸ` in package foo v0.1.0 ([ROOT]/foo), characters must be Unicode XID characters, `+`, or `.` (numbers, `+`, `-`, `_`, `.`, or most letters)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [WARNING] invalid character `Ⓒ` in feature `ⒶⒷⒸ` in package foo v0.1.0 ([ROOT]/foo), characters must be Unicode XID characters, `+`, or `.` (numbers, `+`, `-`, `_`, `.`, or most letters)
 This was previously accepted but is being phased out; it will become a hard error in a future release.
-For more information, see issue #8813 <https://github.com/rust-lang/cargo/issues/8813>, and please leave a comment if this will be a problem for your project.
+For more information, see issue #8813 <https://github.com/rust-lang/crabgo/issues/8813>, and please leave a comment if this will be a problem for your project.
 [CHECKING] foo v0.1.0 [..]
 [FINISHED] [..]
 ")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_feature_names_error() {
     // Errors for more restricted feature syntax.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2030,11 +2030,11 @@ fn invalid_feature_names_error() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[CWD]/Cargo.toml`
+error: failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   feature named `foo/bar` is not allowed to contain slashes
@@ -2043,11 +2043,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_features_conflicting_warning() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2060,7 +2060,7 @@ fn default_features_conflicting_warning() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2075,7 +2075,7 @@ fn default_features_conflicting_warning() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains(
 "[WARNING] conflicting between `default-features` and `default_features` in the `a` dependency.\n
         `default_features` is ignored and not recommended for use in the future"

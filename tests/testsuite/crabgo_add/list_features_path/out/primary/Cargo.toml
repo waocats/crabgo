@@ -1,0 +1,6 @@
+[package]
+name = "crabgo-list-test-fixture"
+version = "0.0.0"
+
+[dependencies]
+your-face = { version = "0.1.3", path = "../dependency" }

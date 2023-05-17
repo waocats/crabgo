@@ -5,17 +5,17 @@ members*, that are managed together.
 
 The key points of workspaces are:
 
-* Common commands can run across all workspace members, like `cargo check --workspace`.
-* All packages share a common [`Cargo.lock`] file which resides in the
+* Common commands can run across all workspace members, like `crabgo check --workspace`.
+* All packages share a common [`Crabgo.lock`] file which resides in the
   *workspace root*.
 * All packages share a common [output directory], which defaults to a
   directory named `target` in the *workspace root*.
 * Sharing package metadata, like with [`workspace.package`](#the-package-table).
 * The [`[patch]`][patch], [`[replace]`][replace] and [`[profile.*]`][profiles]
-  sections in `Cargo.toml` are only recognized in the *root* manifest, and
+  sections in `Crabgo.toml` are only recognized in the *root* manifest, and
   ignored in member crates' manifests.
 
-In the `Cargo.toml`, the `[workspace]` table supports the following sections:
+In the `Crabgo.toml`, the `[workspace]` table supports the following sections:
 
 * [`[workspace]`](#the-workspace-section) --- Defines a workspace.
   * [`resolver`](resolver.md#resolver-versions) --- Sets the dependency resolver to use.
@@ -31,7 +31,7 @@ In the `Cargo.toml`, the `[workspace]` table supports the following sections:
 
 ### The `[workspace]` section
 
-To create a workspace, you add the `[workspace]` table to a `Cargo.toml`:
+To create a workspace, you add the `[workspace]` table to a `Crabgo.toml`:
 ```toml
 [workspace]
 # ...
@@ -43,9 +43,9 @@ a virtual manifest.
 #### Root package
 
 If the [`[workspace]` section](#the-workspace-section) is added to a
-`Cargo.toml` that already defines a `[package]`, the package is
+`Crabgo.toml` that already defines a `[package]`, the package is
 the *root package* of the workspace. The *workspace root* is the directory
-where the workspace's `Cargo.toml` is located.
+where the workspace's `Crabgo.toml` is located.
 
 ```toml
 [workspace]
@@ -59,19 +59,19 @@ authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 <a id="virtual-manifest"></a>
 #### Virtual workspace
 
-Alternatively, a `Cargo.toml` file can be created with a `[workspace]` section
+Alternatively, a `Crabgo.toml` file can be created with a `[workspace]` section
 but without a [`[package]` section][package]. This is called a *virtual
 manifest*. This is typically useful when there isn't a "primary" package, or
 you want to keep all the packages organized in separate directories.
 
 ```toml
-# [PROJECT_DIR]/Cargo.toml
+# [PROJECT_DIR]/Crabgo.toml
 [workspace]
 members = ["hello_world"]
 ```
 
 ```toml
-# [PROJECT_DIR]/hello_world/Cargo.toml
+# [PROJECT_DIR]/hello_world/Crabgo.toml
 [package]
 name = "hello_world" # the name of the package
 version = "0.1.0"    # the current version, obeying semver
@@ -91,7 +91,7 @@ exclude = ["crates/foo", "path/to/other"]
 
 All [`path` dependencies] residing in the workspace directory automatically
 become members. Additional members can be listed with the `members` key, which
-should be an array of strings containing directories with `Cargo.toml` files.
+should be an array of strings containing directories with `Crabgo.toml` files.
 
 The `members` list also supports [globs] to match multiple paths, using
 typical filename glob patterns like `*` and `?`.
@@ -101,8 +101,8 @@ workspace. This can be useful if some path dependencies aren't desired to be
 in the workspace at all, or using a glob pattern and you want to remove a
 directory.
 
-When inside a subdirectory within the workspace, Cargo will automatically
-search the parent directories for a `Cargo.toml` file with a `[workspace]`
+When inside a subdirectory within the workspace, Crabgo will automatically
+search the parent directories for a `Crabgo.toml` file with a `[workspace]`
 definition to determine which workspace to use. The [`package.workspace`]
 manifest key can be used in member crates to point at a workspace's root to
 override this automatic search. The manual setting can be useful if the member
@@ -110,9 +110,9 @@ is not inside a subdirectory of the workspace root.
 
 #### Package selection
 
-In a workspace, package-related Cargo commands like [`cargo build`] can use
+In a workspace, package-related Crabgo commands like [`crabgo build`] can use
 the `-p` / `--package` or `--workspace` command-line flags to determine which
-packages to operate on. If neither of those flags are specified, Cargo will
+packages to operate on. If neither of those flags are specified, Crabgo will
 use the package in the current working directory. If the current directory is
 a [virtual workspace](#virtual-workspace), it will apply to all members (as if
 `--workspace` were specified on the command-line).  See also
@@ -156,7 +156,7 @@ Keys that are supported:
 
 Example:
 ```toml
-# [PROJECT_DIR]/Cargo.toml
+# [PROJECT_DIR]/Crabgo.toml
 [workspace]
 members = ["bar"]
 
@@ -168,7 +168,7 @@ documentation = "https://example.com/bar"
 ```
 
 ```toml
-# [PROJECT_DIR]/bar/Cargo.toml
+# [PROJECT_DIR]/bar/Crabgo.toml
 [package]
 name = "bar"
 version.workspace = true
@@ -190,7 +190,7 @@ You can then [inherit the workspace dependency as a package dependency][inheriti
 
 Example:
 ```toml
-# [PROJECT_DIR]/Cargo.toml
+# [PROJECT_DIR]/Crabgo.toml
 [workspace]
 members = ["bar"]
 
@@ -201,7 +201,7 @@ regex = { version = "1.6.0", default-features = false, features = ["std"] }
 ```
 
 ```toml
-# [PROJECT_DIR]/bar/Cargo.toml
+# [PROJECT_DIR]/bar/Crabgo.toml
 [package]
 name = "bar"
 version = "0.2.0"
@@ -218,9 +218,9 @@ rand.workspace = true
 
 ### The `metadata` table
 
-The `workspace.metadata` table is ignored by Cargo and will not be warned
+The `workspace.metadata` table is ignored by Crabgo and will not be warned
 about. This section can be used for tools that would like to store workspace
-configuration in `Cargo.toml`. For example:
+configuration in `Crabgo.toml`. For example:
 
 ```toml
 [workspace]
@@ -233,14 +233,14 @@ tool = ["npm", "run", "build"]
 ```
 
 There is a similar set of tables at the package level at
-[`package.metadata`][package-metadata]. While cargo does not specify a
+[`package.metadata`][package-metadata]. While crabgo does not specify a
 format for the content of either of these tables, it is suggested that
 external tools may wish to use them in a consistent fashion, such as referring
 to the data in `workspace.metadata` if data is missing from `package.metadata`,
 if that makes sense for the tool in question.
 
 [package]: manifest.md#the-package-section
-[`Cargo.lock`]: ../guide/cargo-toml-vs-cargo-lock.md
+[`Crabgo.lock`]: ../guide/crabgo-toml-vs-crabgo-lock.md
 [package-metadata]: manifest.md#the-metadata-table
 [output directory]: ../guide/build-cache.md
 [patch]: overriding-dependencies.md#the-patch-section
@@ -249,7 +249,7 @@ if that makes sense for the tool in question.
 [`path` dependencies]: specifying-dependencies.md#specifying-path-dependencies
 [`package.workspace`]: manifest.md#the-workspace-field
 [globs]: https://docs.rs/glob/0.3.0/glob/struct.Pattern.html
-[`cargo build`]: ../commands/cargo-build.md
+[`crabgo build`]: ../commands/crabgo-build.md
 [specifying-dependencies]: specifying-dependencies.md
 [features]: features.md
 [inheriting-a-dependency-from-a-workspace]: specifying-dependencies.md#inheriting-a-dependency-from-a-workspace

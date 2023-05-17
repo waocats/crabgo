@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest an idea for enhancing Cargo
+description: Suggest an idea for enhancing Crabgo
 labels: ["C-feature-request", "S-triage"]
 body:
   - type: markdown
@@ -9,10 +9,10 @@ body:
 
         If the feature request is relatively small and already with a possible solution, this might be the place for you.
 
-        If you are brewing a big feature that needs feedback from the community, [the internal forum] is the best fit, especially for pre-RFC. You can also talk the idea over with other developers in [#t-cargo Zulip stream].
+        If you are brewing a big feature that needs feedback from the community, [the internal forum] is the best fit, especially for pre-RFC. You can also talk the idea over with other developers in [#t-crabgo Zulip stream].
 
-        [the internal forum]: https://internals.rust-lang.org/c/tools-and-infrastructure/cargo/15
-        [#t-cargo Zulip stream]: https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo
+        [the internal forum]: https://internals.rust-lang.org/c/tools-and-infrastructure/crabgo/15
+        [#t-crabgo Zulip stream]: https://rust-lang.zulipchat.com/#narrow/stream/246057-t-crabgo
   - type: textarea
     id: problem
     attributes:

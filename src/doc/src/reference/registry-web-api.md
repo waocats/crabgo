@@ -4,11 +4,11 @@
 A registry may host a web API at the location defined in `config.json` to
 support any of the actions listed below.
 
-Cargo includes the `Authorization` header for requests that require
+Crabgo includes the `Authorization` header for requests that require
 authentication. The header value is the API token. The server should respond
 with a 403 response code if the token is not valid. Users are expected to
-visit the registry's website to obtain a token, and Cargo can store the token
-using the [`cargo login`] command, or by passing the token on the
+visit the registry's website to obtain a token, and Crabgo can store the token
+using the [`crabgo login`] command, or by passing the token on the
 command-line.
 
 Responses use the 200 response code for success.
@@ -28,22 +28,22 @@ responses should have a JSON object with the following structure:
 }
 ```
 
-If the response has this structure Cargo will display the detailed message to the user, even if the response code is 200.
-If the response code indicates an error and the content does not have this structure, Cargo will display to the user a
+If the response has this structure Crabgo will display the detailed message to the user, even if the response code is 200.
+If the response code indicates an error and the content does not have this structure, Crabgo will display to the user a
  message intended to help debugging the server error. A server returning an `errors` object allows a registry to provide a more
 detailed or user-centric error message.
 
 For backwards compatibility, servers should ignore any unexpected query
 parameters or JSON fields. If a JSON field is missing, it should be assumed to
 be null. The endpoints are versioned with the `v1` component of the path, and
-Cargo is responsible for handling backwards compatibility fallbacks should any
+Crabgo is responsible for handling backwards compatibility fallbacks should any
 be required in the future.
 
-Cargo sets the following headers for all requests:
+Crabgo sets the following headers for all requests:
 
 - `Content-Type`: `application/json`
 - `Accept`: `application/json`
-- `User-Agent`: The Cargo version such as `cargo 1.32.0 (8610973aa
+- `User-Agent`: The Crabgo version such as `crabgo 1.32.0 (8610973aa
   2019-01-02)`. This may be modified by the user in a configuration value.
   Added in 1.29.
 
@@ -58,10 +58,10 @@ should validate the crate, make it available for download, and add it to the
 index.
 
 It is not required for the index to be updated before the successful response is sent.
-After a successful response, Cargo will poll the index for a short period of time to identify that the new crate has been added.
-If the crate does not appear in the index after a short period of time, then Cargo will display a warning letting the user know that the new crate is not yet available.
+After a successful response, Crabgo will poll the index for a short period of time to identify that the new crate has been added.
+If the crate does not appear in the index after a short period of time, then Crabgo will display a warning letting the user know that the new crate is not yet available.
 
-The body of the data sent by Cargo is:
+The body of the data sent by Crabgo is:
 
 - 32-bit unsigned little-endian integer of the length of JSON data.
 - Metadata of the package as a JSON object.
@@ -114,7 +114,7 @@ considered as an exhaustive list of restrictions [crates.io] imposes.
     ],
     // Set of features defined for the package.
     // Each feature maps to an array of features or dependencies it enables.
-    // Cargo does not impose limitations on feature names, but crates.io
+    // Crabgo does not impose limitations on feature names, but crates.io
     // requires alphanumeric ASCII, `_` or `-` characters.
     "features": {
         "extras": ["rand/simd_support"]
@@ -156,7 +156,7 @@ considered as an exhaustive list of restrictions [crates.io] imposes.
     "badges": {
         "travis-ci": {
             "branch": "master",
-            "repository": "rust-lang/cargo"
+            "repository": "rust-lang/crabgo"
         }
     },
     // The `links` string value from the package's manifest, or null if not
@@ -222,7 +222,7 @@ A successful response includes the JSON object:
 
 ### Owners
 
-Cargo does not have an inherent notion of users and owners, but it does
+Crabgo does not have an inherent notion of users and owners, but it does
 provide the `owner` command to assist managing who has authorization to
 control a crate. It is up to the registry to decide exactly how users and
 owners are handled. See the [publishing documentation] for a description of
@@ -282,7 +282,7 @@ A successful response includes the JSON object:
     // Indicates the add succeeded, always true.
     "ok": true,
     // A string to be displayed to the user.
-    "msg": "user ehuss has been invited to be an owner of crate cargo"
+    "msg": "user ehuss has been invited to be an owner of crate crabgo"
 }
 ```
 
@@ -308,7 +308,7 @@ A successful response includes the JSON object:
 {
     // Indicates the remove succeeded, always true.
     "ok": true
-    // A string to be displayed to the user. Currently ignored by cargo.
+    // A string to be displayed to the user. Currently ignored by crabgo.
     "msg": "owners successfully removed",
 }
 ```
@@ -351,13 +351,13 @@ A successful response includes the JSON object:
 - Endpoint: `/me`
 
 The "login" endpoint is not an actual API request. It exists solely for the
-[`cargo login`] command to display a URL to instruct a user to visit in a web
+[`crabgo login`] command to display a URL to instruct a user to visit in a web
 browser to log in and retrieve an API token.
 
-[`cargo login`]: ../commands/cargo-login.md
-[`cargo package`]: ../commands/cargo-package.md
-[`cargo publish`]: ../commands/cargo-publish.md
+[`crabgo login`]: ../commands/crabgo-login.md
+[`crabgo package`]: ../commands/crabgo-package.md
+[`crabgo publish`]: ../commands/crabgo-publish.md
 [alphanumeric]: ../../std/primitive.char.html#method.is_alphanumeric
 [config]: config.md
 [crates.io]: https://crates.io/
-[publishing documentation]: publishing.md#cargo-owner
+[publishing documentation]: publishing.md#crabgo-owner

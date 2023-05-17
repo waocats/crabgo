@@ -1,12 +1,12 @@
 //! Tests for config settings.
 
-use cargo::core::{PackageIdSpec, Shell};
-use cargo::util::config::{self, Config, Definition, SslVersionConfig, StringList};
-use cargo::util::interning::InternedString;
-use cargo::util::toml::{self as cargo_toml, TomlDebugInfo, VecStringOrBool as VSOB};
-use cargo::CargoResult;
-use cargo_test_support::compare;
-use cargo_test_support::{panic_error, paths, project, symlink_supported, t};
+use crabgo::core::{PackageIdSpec, Shell};
+use crabgo::util::config::{self, Config, Definition, SslVersionConfig, StringList};
+use crabgo::util::interning::InternedString;
+use crabgo::util::toml::{self as crabgo_toml, TomlDebugInfo, VecStringOrBool as VSOB};
+use crabgo::CrabgoResult;
+use crabgo_test_support::compare;
+use crabgo_test_support::{panic_error, paths, project, symlink_supported, t};
 use serde::Deserialize;
 use std::borrow::Borrow;
 use std::collections::{BTreeMap, HashMap};
@@ -71,7 +71,7 @@ impl ConfigBuilder {
     }
 
     /// Creates the `Config`, returning a Result.
-    pub fn build_err(&self) -> CargoResult<Config> {
+    pub fn build_err(&self) -> CrabgoResult<Config> {
         let output = Box::new(fs::File::create(paths::root().join("shell.out")).unwrap());
         let shell = Shell::from_write(output);
         let cwd = self.cwd.clone().unwrap_or_else(|| paths::root());
@@ -106,11 +106,11 @@ pub fn read_output(config: Config) -> String {
     fs::read_to_string(path).unwrap()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn read_env_vars_for_config() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -131,11 +131,11 @@ fn read_env_vars_for_config() {
         )
         .build();
 
-    p.cargo("check").env("CARGO_BUILD_JOBS", "100").run();
+    p.crabgo("check").env("CRABGO_BUILD_JOBS", "100").run();
 }
 
 pub fn write_config(config: &str) {
-    write_config_at(paths::root().join(".cargo/config"), config);
+    write_config_at(paths::root().join(".crabgo/config"), config);
 }
 
 pub fn write_config_at(path: impl AsRef<Path>, contents: &str) {
@@ -145,7 +145,7 @@ pub fn write_config_at(path: impl AsRef<Path>, contents: &str) {
 }
 
 pub fn write_config_toml(config: &str) {
-    write_config_at(paths::root().join(".cargo/config.toml"), config);
+    write_config_at(paths::root().join(".crabgo/config.toml"), config);
 }
 
 #[cfg(unix)]
@@ -159,8 +159,8 @@ fn symlink_file(target: &Path, link: &Path) -> io::Result<()> {
 }
 
 fn symlink_config_to_config_toml() {
-    let toml_path = paths::root().join(".cargo/config.toml");
-    let symlink_path = paths::root().join(".cargo/config");
+    let toml_path = paths::root().join(".crabgo/config.toml");
+    let symlink_path = paths::root().join(".crabgo/config");
     t!(symlink_file(&toml_path, &symlink_path));
 }
 
@@ -189,7 +189,7 @@ pub fn assert_match(expected: &str, actual: &str) {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn get_config() {
     write_config(
         "\
@@ -206,13 +206,13 @@ f1 = 123
     }
     let s: S = config.get("S").unwrap();
     assert_eq!(s, S { f1: Some(123) });
-    let config = ConfigBuilder::new().env("CARGO_S_F1", "456").build();
+    let config = ConfigBuilder::new().env("CRABGO_S_F1", "456").build();
     let s: S = config.get("S").unwrap();
     assert_eq!(s, S { f1: Some(456) });
 }
 
 #[cfg(windows)]
-#[cargo_test]
+#[crabgo_test]
 fn environment_variable_casing() {
     // Issue #11814: Environment variable names are case-insensitive on Windows.
     let config = ConfigBuilder::new()
@@ -236,7 +236,7 @@ fn environment_variable_casing() {
     assert_eq!(var, String::from("def"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_works_with_extension() {
     write_config_toml(
         "\
@@ -250,7 +250,7 @@ f1 = 1
     assert_eq!(config.get::<Option<i32>>("foo.f1").unwrap(), Some(1));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_ambiguous_filename_symlink_doesnt_warn() {
     // Windows requires special permissions to create symlinks.
     // If we don't have permission, just skip this test.
@@ -276,7 +276,7 @@ f1 = 1
     assert_eq!(output, "");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_ambiguous_filename() {
     write_config(
         "\
@@ -301,12 +301,12 @@ f1 = 2
     // But it also should have warned.
     let output = read_output(config);
     let expected = "\
-warning: Both `[..]/.cargo/config` and `[..]/.cargo/config.toml` exist. Using `[..]/.cargo/config`
+warning: Both `[..]/.crabgo/config` and `[..]/.crabgo/config.toml` exist. Using `[..]/.crabgo/config`
 ";
     assert_match(expected, &output);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_unused_fields() {
     write_config(
         "\
@@ -316,8 +316,8 @@ unused = 456
     );
 
     let config = ConfigBuilder::new()
-        .env("CARGO_S_UNUSED2", "1")
-        .env("CARGO_S2_UNUSED", "2")
+        .env("CRABGO_S_UNUSED2", "1")
+        .env("CRABGO_S2_UNUSED", "2")
         .build();
 
     #[derive(Debug, Deserialize, Eq, PartialEq)]
@@ -335,12 +335,12 @@ unused = 456
     // Verify the warnings.
     let output = read_output(config);
     let expected = "\
-warning: unused config key `S.unused` in `[..]/.cargo/config`
+warning: unused config key `S.unused` in `[..]/.crabgo/config`
 ";
     assert_match(expected, &output);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_load_toml_profile() {
     write_config(
         "\
@@ -370,26 +370,26 @@ lto = false
 
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_PROFILE_DEV_CODEGEN_UNITS", "5")
-        .env("CARGO_PROFILE_DEV_BUILD_OVERRIDE_CODEGEN_UNITS", "11")
-        .env("CARGO_PROFILE_DEV_PACKAGE_env_CODEGEN_UNITS", "13")
-        .env("CARGO_PROFILE_DEV_PACKAGE_bar_OPT_LEVEL", "2")
+        .env("CRABGO_PROFILE_DEV_CODEGEN_UNITS", "5")
+        .env("CRABGO_PROFILE_DEV_BUILD_OVERRIDE_CODEGEN_UNITS", "11")
+        .env("CRABGO_PROFILE_DEV_PACKAGE_env_CODEGEN_UNITS", "13")
+        .env("CRABGO_PROFILE_DEV_PACKAGE_bar_OPT_LEVEL", "2")
         .build();
 
     // TODO: don't use actual `tomlprofile`.
-    let p: cargo_toml::TomlProfile = config.get("profile.dev").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.dev").unwrap();
     let mut packages = BTreeMap::new();
     let key =
-        cargo_toml::ProfilePackageSpec::Spec(::cargo::core::PackageIdSpec::parse("bar").unwrap());
-    let o_profile = cargo_toml::TomlProfile {
-        opt_level: Some(cargo_toml::TomlOptLevel("2".to_string())),
+        crabgo_toml::ProfilePackageSpec::Spec(::crabgo::core::PackageIdSpec::parse("bar").unwrap());
+    let o_profile = crabgo_toml::TomlProfile {
+        opt_level: Some(crabgo_toml::TomlOptLevel("2".to_string())),
         codegen_units: Some(9),
         ..Default::default()
     };
     packages.insert(key, o_profile);
     let key =
-        cargo_toml::ProfilePackageSpec::Spec(::cargo::core::PackageIdSpec::parse("env").unwrap());
-    let o_profile = cargo_toml::TomlProfile {
+        crabgo_toml::ProfilePackageSpec::Spec(::crabgo::core::PackageIdSpec::parse("env").unwrap());
+    let o_profile = crabgo_toml::TomlProfile {
         codegen_units: Some(13),
         ..Default::default()
     };
@@ -397,19 +397,19 @@ lto = false
 
     assert_eq!(
         p,
-        cargo_toml::TomlProfile {
-            opt_level: Some(cargo_toml::TomlOptLevel("s".to_string())),
-            lto: Some(cargo_toml::StringOrBool::Bool(true)),
+        crabgo_toml::TomlProfile {
+            opt_level: Some(crabgo_toml::TomlOptLevel("s".to_string())),
+            lto: Some(crabgo_toml::StringOrBool::Bool(true)),
             codegen_units: Some(5),
-            debug: Some(cargo_toml::TomlDebugInfo::Full),
+            debug: Some(crabgo_toml::TomlDebugInfo::Full),
             debug_assertions: Some(true),
             rpath: Some(true),
             panic: Some("abort".to_string()),
             overflow_checks: Some(true),
             incremental: Some(true),
             package: Some(packages),
-            build_override: Some(Box::new(cargo_toml::TomlProfile {
-                opt_level: Some(cargo_toml::TomlOptLevel("1".to_string())),
+            build_override: Some(Box::new(crabgo_toml::TomlProfile {
+                opt_level: Some(crabgo_toml::TomlOptLevel("1".to_string())),
                 codegen_units: Some(11),
                 ..Default::default()
             })),
@@ -417,11 +417,11 @@ lto = false
         }
     );
 
-    let p: cargo_toml::TomlProfile = config.get("profile.no-lto").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.no-lto").unwrap();
     assert_eq!(
         p,
-        cargo_toml::TomlProfile {
-            lto: Some(cargo_toml::StringOrBool::Bool(false)),
+        crabgo_toml::TomlProfile {
+            lto: Some(crabgo_toml::StringOrBool::Bool(false)),
             dir_name: Some(InternedString::new("without-lto")),
             inherits: Some(InternedString::new("dev")),
             ..Default::default()
@@ -429,33 +429,33 @@ lto = false
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_env_var_prefix() {
     // Check for a bug with collision on DEBUG vs DEBUG_ASSERTIONS.
     let config = ConfigBuilder::new()
-        .env("CARGO_PROFILE_DEV_DEBUG_ASSERTIONS", "false")
+        .env("CRABGO_PROFILE_DEV_DEBUG_ASSERTIONS", "false")
         .build();
-    let p: cargo_toml::TomlProfile = config.get("profile.dev").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.dev").unwrap();
     assert_eq!(p.debug_assertions, Some(false));
     assert_eq!(p.debug, None);
 
     let config = ConfigBuilder::new()
-        .env("CARGO_PROFILE_DEV_DEBUG", "1")
+        .env("CRABGO_PROFILE_DEV_DEBUG", "1")
         .build();
-    let p: cargo_toml::TomlProfile = config.get("profile.dev").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.dev").unwrap();
     assert_eq!(p.debug_assertions, None);
-    assert_eq!(p.debug, Some(cargo_toml::TomlDebugInfo::Limited));
+    assert_eq!(p.debug, Some(crabgo_toml::TomlDebugInfo::Limited));
 
     let config = ConfigBuilder::new()
-        .env("CARGO_PROFILE_DEV_DEBUG_ASSERTIONS", "false")
-        .env("CARGO_PROFILE_DEV_DEBUG", "1")
+        .env("CRABGO_PROFILE_DEV_DEBUG_ASSERTIONS", "false")
+        .env("CRABGO_PROFILE_DEV_DEBUG", "1")
         .build();
-    let p: cargo_toml::TomlProfile = config.get("profile.dev").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.dev").unwrap();
     assert_eq!(p.debug_assertions, Some(false));
-    assert_eq!(p.debug, Some(cargo_toml::TomlDebugInfo::Limited));
+    assert_eq!(p.debug, Some(crabgo_toml::TomlDebugInfo::Limited));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_deserialize_any() {
     // Some tests to exercise deserialize_any for deserializers that need to
     // be told the format.
@@ -470,9 +470,9 @@ c = ['c']
     // advanced-env
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_ENVB", "false")
-        .env("CARGO_C", "['d']")
-        .env("CARGO_ENVL", "['a', 'b']")
+        .env("CRABGO_ENVB", "false")
+        .env("CRABGO_C", "['d']")
+        .env("CRABGO_ENVL", "['a', 'b']")
         .build();
     assert_eq!(config.get::<VSOB>("a").unwrap(), VSOB::Bool(true));
     assert_eq!(
@@ -490,11 +490,11 @@ c = ['c']
     );
 
     // Demonstrate where merging logic isn't very smart. This could be improved.
-    let config = ConfigBuilder::new().env("CARGO_A", "x y").build();
+    let config = ConfigBuilder::new().env("CRABGO_A", "x y").build();
     assert_error(
         config.get::<VSOB>("a").unwrap_err(),
         "\
-error in environment variable `CARGO_A`: could not load config key `a`
+error in environment variable `CRABGO_A`: could not load config key `a`
 
 Caused by:
   invalid type: string \"x y\", expected a boolean or vector of strings",
@@ -503,8 +503,8 @@ Caused by:
     // Normal env.
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_B", "d e")
-        .env("CARGO_C", "f g")
+        .env("CRABGO_B", "d e")
+        .env("CRABGO_C", "f g")
         .build();
     assert_eq!(
         config.get::<VSOB>("b").unwrap(),
@@ -522,10 +522,10 @@ Caused by:
     assert_error(
         config.unwrap_err(),
         "\
-failed to merge --config key `a` into `[..]/.cargo/config`
+failed to merge --config key `a` into `[..]/.crabgo/config`
 
 Caused by:
-  failed to merge config value from `--config cli option` into `[..]/.cargo/config`: \
+  failed to merge config value from `--config cli option` into `[..]/.crabgo/config`: \
 expected boolean, but found array",
     );
 
@@ -534,8 +534,8 @@ expected boolean, but found array",
         .unstable_flag("advanced-env")
         .config_arg("b=['clib']")
         .config_arg("c=['clic']")
-        .env("CARGO_B", "env1 env2")
-        .env("CARGO_C", "['e1', 'e2']")
+        .env("CRABGO_B", "env1 env2")
+        .env("CRABGO_C", "['e1', 'e2']")
         .build();
     assert_eq!(
         config.get::<VSOB>("b").unwrap(),
@@ -557,7 +557,7 @@ expected boolean, but found array",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_toml_errors() {
     write_config(
         "\
@@ -570,30 +570,30 @@ opt-level = 'foo'
 
     assert_error(
         config
-            .get::<cargo_toml::TomlProfile>("profile.dev")
+            .get::<crabgo_toml::TomlProfile>("profile.dev")
             .unwrap_err(),
         "\
-error in [..]/.cargo/config: could not load config key `profile.dev.opt-level`
+error in [..]/.crabgo/config: could not load config key `profile.dev.opt-level`
 
 Caused by:
   must be `0`, `1`, `2`, `3`, `s` or `z`, but found the string: \"foo\"",
     );
 
     let config = ConfigBuilder::new()
-        .env("CARGO_PROFILE_DEV_OPT_LEVEL", "asdf")
+        .env("CRABGO_PROFILE_DEV_OPT_LEVEL", "asdf")
         .build();
 
     assert_error(
-        config.get::<cargo_toml::TomlProfile>("profile.dev").unwrap_err(),
+        config.get::<crabgo_toml::TomlProfile>("profile.dev").unwrap_err(),
         "\
-error in environment variable `CARGO_PROFILE_DEV_OPT_LEVEL`: could not load config key `profile.dev.opt-level`
+error in environment variable `CRABGO_PROFILE_DEV_OPT_LEVEL`: could not load config key `profile.dev.opt-level`
 
 Caused by:
   must be `0`, `1`, `2`, `3`, `s` or `z`, but found the string: \"asdf\"",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn load_nested() {
     write_config(
         "\
@@ -607,10 +607,10 @@ asdf = 3
 
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_NEST_foo_f2", "3")
-        .env("CARGO_NESTE_foo_f1", "1")
-        .env("CARGO_NESTE_foo_f2", "3")
-        .env("CARGO_NESTE_bar_asdf", "3")
+        .env("CRABGO_NEST_foo_f2", "3")
+        .env("CRABGO_NESTE_foo_f1", "1")
+        .env("CRABGO_NESTE_foo_f2", "3")
+        .env("CRABGO_NESTE_bar_asdf", "3")
         .build();
 
     type Nested = HashMap<String, HashMap<String, u8>>;
@@ -630,7 +630,7 @@ asdf = 3
     assert_eq!(n, expected);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn get_errors() {
     write_config(
         "\
@@ -642,8 +642,8 @@ big = 123456789
     );
 
     let config = ConfigBuilder::new()
-        .env("CARGO_E_S", "asdf")
-        .env("CARGO_E_BIG", "123456789")
+        .env("CRABGO_E_S", "asdf")
+        .env("CRABGO_E_BIG", "123456789")
         .build();
     assert_error(
         config.get::<i64>("foo").unwrap_err(),
@@ -655,12 +655,12 @@ big = 123456789
     );
     assert_error(
         config.get::<i64>("S.f2").unwrap_err(),
-        "error in [..]/.cargo/config: `S.f2` expected an integer, but found a string",
+        "error in [..]/.crabgo/config: `S.f2` expected an integer, but found a string",
     );
     assert_error(
         config.get::<u8>("S.big").unwrap_err(),
         "\
-error in [..].cargo/config: could not load config key `S.big`
+error in [..].crabgo/config: could not load config key `S.big`
 
 Caused by:
   invalid value: integer `123456789`, expected u8",
@@ -669,12 +669,12 @@ Caused by:
     // Environment variable type errors.
     assert_error(
         config.get::<i64>("e.s").unwrap_err(),
-        "error in environment variable `CARGO_E_S`: invalid digit found in string",
+        "error in environment variable `CRABGO_E_S`: invalid digit found in string",
     );
     assert_error(
         config.get::<i8>("e.big").unwrap_err(),
         "\
-error in environment variable `CARGO_E_BIG`: could not load config key `e.big`
+error in environment variable `CRABGO_E_BIG`: could not load config key `e.big`
 
 Caused by:
   invalid value: integer `123456789`, expected i8",
@@ -691,7 +691,7 @@ Caused by:
     assert_error(config.get::<S>("S").unwrap_err(), "missing field `f3`");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_option() {
     write_config(
         "\
@@ -700,7 +700,7 @@ f1 = 1
 ",
     );
 
-    let config = ConfigBuilder::new().env("CARGO_BAR_ASDF", "3").build();
+    let config = ConfigBuilder::new().env("CRABGO_BAR_ASDF", "3").build();
 
     assert_eq!(config.get::<Option<i32>>("a").unwrap(), None);
     assert_eq!(config.get::<Option<i32>>("a.b").unwrap(), None);
@@ -709,17 +709,17 @@ f1 = 1
     assert_eq!(config.get::<Option<i32>>("bar.zzzz").unwrap(), None);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_bad_toml() {
     write_config("asdf");
     let config = new_config();
     assert_error(
         config.get::<i32>("foo").unwrap_err(),
         "\
-could not load Cargo configuration
+could not load Crabgo configuration
 
 Caused by:
-  could not parse TOML configuration in `[..]/.cargo/config`
+  could not parse TOML configuration in `[..]/.crabgo/config`
 
 Caused by:
   could not parse input as TOML
@@ -733,7 +733,7 @@ expected `.`, `=`",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_list() {
     write_config(
         "\
@@ -756,17 +756,17 @@ l = ['y']
 
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_L4", "['three', 'four']")
-        .env("CARGO_L5", "['a']")
-        .env("CARGO_ENV_EMPTY", "[]")
-        .env("CARGO_ENV_BLANK", "")
-        .env("CARGO_ENV_NUM", "1")
-        .env("CARGO_ENV_NUM_LIST", "[1]")
-        .env("CARGO_ENV_TEXT", "asdf")
-        .env("CARGO_LEPAIR", "['a', 'b']")
-        .env("CARGO_NESTED2_L", "['z']")
-        .env("CARGO_NESTEDE_L", "['env']")
-        .env("CARGO_BAD_ENV", "[zzz]")
+        .env("CRABGO_L4", "['three', 'four']")
+        .env("CRABGO_L5", "['a']")
+        .env("CRABGO_ENV_EMPTY", "[]")
+        .env("CRABGO_ENV_BLANK", "")
+        .env("CRABGO_ENV_NUM", "1")
+        .env("CRABGO_ENV_NUM_LIST", "[1]")
+        .env("CRABGO_ENV_TEXT", "asdf")
+        .env("CRABGO_LEPAIR", "['a', 'b']")
+        .env("CRABGO_NESTED2_L", "['z']")
+        .env("CRABGO_NESTEDE_L", "['env']")
+        .env("CRABGO_BAD_ENV", "[zzz]")
         .build();
 
     assert_eq!(config.get::<L>("unset").unwrap(), vec![] as Vec<String>);
@@ -776,7 +776,7 @@ l = ['y']
         config.get::<L>("l3").unwrap_err(),
         "\
 invalid configuration for key `l3`
-expected a list, but found a integer for `l3` in [..]/.cargo/config",
+expected a list, but found a integer for `l3` in [..]/.crabgo/config",
     );
     assert_eq!(
         config.get::<L>("l4").unwrap(),
@@ -788,7 +788,7 @@ expected a list, but found a integer for `l3` in [..]/.cargo/config",
     assert_eq!(config.get::<L>("env-num").unwrap(), vec!["1".to_string()]);
     assert_error(
         config.get::<L>("env-num-list").unwrap_err(),
-        "error in environment variable `CARGO_ENV_NUM_LIST`: \
+        "error in environment variable `CRABGO_ENV_NUM_LIST`: \
          expected string, found integer",
     );
     assert_eq!(
@@ -799,7 +799,7 @@ expected a list, but found a integer for `l3` in [..]/.cargo/config",
     assert_error(
         config.get::<L>("bad-env").unwrap_err(),
         "\
-error in environment variable `CARGO_BAD_ENV`: could not parse TOML list: TOML parse error at line 1, column 2
+error in environment variable `CRABGO_BAD_ENV`: could not parse TOML list: TOML parse error at line 1, column 2
   |
 1 | [zzz]
   |  ^
@@ -856,7 +856,7 @@ expected `]`
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_other_types() {
     write_config(
         "\
@@ -866,8 +866,8 @@ ns2 = 456
     );
 
     let config = ConfigBuilder::new()
-        .env("CARGO_NSE", "987")
-        .env("CARGO_NS2", "654")
+        .env("CRABGO_NSE", "987")
+        .env("CRABGO_NS2", "654")
         .build();
 
     #[derive(Debug, Deserialize, Eq, PartialEq)]
@@ -882,7 +882,7 @@ ns2 = 456
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_relative_path() {
     write_config(&format!(
         "\
@@ -895,8 +895,8 @@ abs = '{}'
     ));
 
     let config = ConfigBuilder::new()
-        .env("CARGO_EPATH", "a/b")
-        .env("CARGO_P3", "d/e")
+        .env("CRABGO_EPATH", "a/b")
+        .env("CRABGO_P3", "d/e")
         .build();
 
     assert_eq!(
@@ -936,7 +936,7 @@ abs = '{}'
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_integers() {
     write_config(
         "\
@@ -947,9 +947,9 @@ i64max = 9223372036854775807
     );
 
     let config = ConfigBuilder::new()
-        .env("CARGO_EPOS", "123456789")
-        .env("CARGO_ENEG", "-1")
-        .env("CARGO_EI64MAX", "9223372036854775807")
+        .env("CRABGO_EPOS", "123456789")
+        .env("CRABGO_ENEG", "-1")
+        .env("CRABGO_EI64MAX", "9223372036854775807")
         .build();
 
     assert_eq!(
@@ -972,7 +972,7 @@ i64max = 9223372036854775807
     assert_error(
         config.get::<u32>("nneg").unwrap_err(),
         "\
-error in [..].cargo/config: could not load config key `nneg`
+error in [..].crabgo/config: could not load config key `nneg`
 
 Caused by:
   invalid value: integer `-123456789`, expected u32",
@@ -980,7 +980,7 @@ Caused by:
     assert_error(
         config.get::<u32>("eneg").unwrap_err(),
         "\
-error in environment variable `CARGO_ENEG`: could not load config key `eneg`
+error in environment variable `CRABGO_ENEG`: could not load config key `eneg`
 
 Caused by:
   invalid value: integer `-1`, expected u32",
@@ -988,7 +988,7 @@ Caused by:
     assert_error(
         config.get::<i8>("npos").unwrap_err(),
         "\
-error in [..].cargo/config: could not load config key `npos`
+error in [..].crabgo/config: could not load config key `npos`
 
 Caused by:
   invalid value: integer `123456789`, expected i8",
@@ -996,14 +996,14 @@ Caused by:
     assert_error(
         config.get::<i8>("epos").unwrap_err(),
         "\
-error in environment variable `CARGO_EPOS`: could not load config key `epos`
+error in environment variable `CRABGO_EPOS`: could not load config key `epos`
 
 Caused by:
   invalid value: integer `123456789`, expected i8",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_ssl_version_missing() {
     write_config(
         "\
@@ -1020,7 +1020,7 @@ hello = 'world'
         .is_none());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_ssl_version_single() {
     write_config(
         "\
@@ -1041,7 +1041,7 @@ ssl-version = 'tlsv1.2'
     };
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_ssl_version_min_max() {
     write_config(
         "\
@@ -1066,7 +1066,7 @@ ssl-version.max = 'tlsv1.3'
     };
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_get_ssl_version_both_forms_configured() {
     // this is not allowed
     write_config(
@@ -1085,10 +1085,10 @@ ssl-version.max = 'tlsv1.3'
             .get::<SslVersionConfig>("http.ssl-version")
             .unwrap_err(),
         "\
-could not load Cargo configuration
+could not load Crabgo configuration
 
 Caused by:
-  could not parse TOML configuration in `[..]/.cargo/config`
+  could not parse TOML configuration in `[..]/.crabgo/config`
 
 Caused by:
   could not parse input as TOML
@@ -1103,9 +1103,9 @@ dotted key `ssl-version` attempted to extend non-table type (string)
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 /// Assert that unstable options can be configured with the `unstable` table in
-/// cargo config files
+/// crabgo config files
 fn unstable_table_notation() {
     write_config(
         "\
@@ -1117,7 +1117,7 @@ print-im-a-teapot = true
     assert_eq!(config.cli_unstable().print_im_a_teapot, true);
 }
 
-#[cargo_test]
+#[crabgo_test]
 /// Assert that dotted notation works for configuring unstable options
 fn unstable_dotted_notation() {
     write_config(
@@ -1129,7 +1129,7 @@ unstable.print-im-a-teapot = true
     assert_eq!(config.cli_unstable().print_im_a_teapot, true);
 }
 
-#[cargo_test]
+#[crabgo_test]
 /// Assert that Zflags on the CLI take precedence over those from config
 fn unstable_cli_precedence() {
     write_config(
@@ -1146,7 +1146,7 @@ unstable.print-im-a-teapot = true
     assert_eq!(config.cli_unstable().print_im_a_teapot, false);
 }
 
-#[cargo_test]
+#[crabgo_test]
 /// Assert that attempting to set an unstable flag that doesn't exist via config
 /// is ignored on stable
 fn unstable_invalid_flag_ignored_on_stable() {
@@ -1158,9 +1158,9 @@ unstable.an-invalid-flag = 'yes'
     assert!(ConfigBuilder::new().build_err().is_ok());
 }
 
-#[cargo_test]
+#[crabgo_test]
 /// Assert that unstable options can be configured with the `unstable` table in
-/// cargo config files
+/// crabgo config files
 fn unstable_flags_ignored_on_stable() {
     write_config(
         "\
@@ -1173,18 +1173,18 @@ print-im-a-teapot = true
     assert_eq!(config.cli_unstable().print_im_a_teapot, false);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn table_merge_failure() {
     // Config::merge fails to merge entries in two tables.
     write_config_at(
-        "foo/.cargo/config",
+        "foo/.crabgo/config",
         "
         [table]
         key = ['foo']
         ",
     );
     write_config_at(
-        ".cargo/config",
+        ".crabgo/config",
         "
         [table]
         key = 'bar'
@@ -1200,24 +1200,24 @@ fn table_merge_failure() {
     assert_error(
         config.get::<Table>("table").unwrap_err(),
         "\
-could not load Cargo configuration
+could not load Crabgo configuration
 
 Caused by:
-  failed to merge configuration at `[..]/.cargo/config`
+  failed to merge configuration at `[..]/.crabgo/config`
 
 Caused by:
-  failed to merge key `table` between [..]/foo/.cargo/config and [..]/.cargo/config
+  failed to merge key `table` between [..]/foo/.crabgo/config and [..]/.crabgo/config
 
 Caused by:
-  failed to merge key `key` between [..]/foo/.cargo/config and [..]/.cargo/config
+  failed to merge key `key` between [..]/foo/.crabgo/config and [..]/.crabgo/config
 
 Caused by:
-  failed to merge config value from `[..]/.cargo/config` into `[..]/foo/.cargo/config`: \
+  failed to merge config value from `[..]/.crabgo/config` into `[..]/foo/.crabgo/config`: \
   expected array, but found string",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_string_in_array() {
     // Currently only strings are supported.
     write_config("foo = [1, 2, 3]");
@@ -1225,10 +1225,10 @@ fn non_string_in_array() {
     assert_error(
         config.get::<Vec<i32>>("foo").unwrap_err(),
         "\
-could not load Cargo configuration
+could not load Crabgo configuration
 
 Caused by:
-  failed to load TOML configuration from `[..]/.cargo/config`
+  failed to load TOML configuration from `[..]/.crabgo/config`
 
 Caused by:
   failed to parse key `foo`
@@ -1238,7 +1238,7 @@ Caused by:
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn struct_with_opt_inner_struct() {
     // Struct with a key that is Option of another struct.
     // Check that can be defined with environment variable.
@@ -1251,13 +1251,13 @@ fn struct_with_opt_inner_struct() {
         inner: Option<Inner>,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_FOO_INNER_VALUE", "12")
+        .env("CRABGO_FOO_INNER_VALUE", "12")
         .build();
     let f: Foo = config.get("foo").unwrap();
     assert_eq!(f.inner.unwrap().value.unwrap(), 12);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn struct_with_default_inner_struct() {
     // Struct with serde defaults.
     // Check that can be defined with environment variable.
@@ -1272,13 +1272,13 @@ fn struct_with_default_inner_struct() {
         inner: Inner,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_FOO_INNER_VALUE", "12")
+        .env("CRABGO_FOO_INNER_VALUE", "12")
         .build();
     let f: Foo = config.get("foo").unwrap();
     assert_eq!(f.inner.value, 12);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn overlapping_env_config() {
     // Issue where one key is a prefix of another.
     #[derive(Deserialize)]
@@ -1288,28 +1288,28 @@ fn overlapping_env_config() {
         debug_assertions: Option<bool>,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_AMBIG_DEBUG_ASSERTIONS", "true")
+        .env("CRABGO_AMBIG_DEBUG_ASSERTIONS", "true")
         .build();
 
     let s: Ambig = config.get("ambig").unwrap();
     assert_eq!(s.debug_assertions, Some(true));
     assert_eq!(s.debug, None);
 
-    let config = ConfigBuilder::new().env("CARGO_AMBIG_DEBUG", "0").build();
+    let config = ConfigBuilder::new().env("CRABGO_AMBIG_DEBUG", "0").build();
     let s: Ambig = config.get("ambig").unwrap();
     assert_eq!(s.debug_assertions, None);
     assert_eq!(s.debug, Some(0));
 
     let config = ConfigBuilder::new()
-        .env("CARGO_AMBIG_DEBUG", "1")
-        .env("CARGO_AMBIG_DEBUG_ASSERTIONS", "true")
+        .env("CRABGO_AMBIG_DEBUG", "1")
+        .env("CRABGO_AMBIG_DEBUG_ASSERTIONS", "true")
         .build();
     let s: Ambig = config.get("ambig").unwrap();
     assert_eq!(s.debug_assertions, Some(true));
     assert_eq!(s.debug, Some(1));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn overlapping_env_with_defaults_errors_out() {
     // Issue where one key is a prefix of another.
     // This is a limitation of mapping environment variables on to a hierarchy.
@@ -1324,26 +1324,26 @@ fn overlapping_env_with_defaults_errors_out() {
         debug_assertions: bool,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_AMBIG_DEBUG_ASSERTIONS", "true")
+        .env("CRABGO_AMBIG_DEBUG_ASSERTIONS", "true")
         .build();
     let err = config.get::<Ambig>("ambig").err().unwrap();
     assert!(format!("{}", err).contains("missing config key `ambig.debug`"));
 
-    let config = ConfigBuilder::new().env("CARGO_AMBIG_DEBUG", "5").build();
+    let config = ConfigBuilder::new().env("CRABGO_AMBIG_DEBUG", "5").build();
     let s: Ambig = config.get("ambig").unwrap();
     assert_eq!(s.debug_assertions, bool::default());
     assert_eq!(s.debug, 5);
 
     let config = ConfigBuilder::new()
-        .env("CARGO_AMBIG_DEBUG", "1")
-        .env("CARGO_AMBIG_DEBUG_ASSERTIONS", "true")
+        .env("CRABGO_AMBIG_DEBUG", "1")
+        .env("CRABGO_AMBIG_DEBUG_ASSERTIONS", "true")
         .build();
     let s: Ambig = config.get("ambig").unwrap();
     assert_eq!(s.debug_assertions, true);
     assert_eq!(s.debug, 1);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn struct_with_overlapping_inner_struct_and_defaults() {
     // Struct with serde defaults.
     // Check that can be defined with environment variable.
@@ -1367,7 +1367,7 @@ fn struct_with_overlapping_inner_struct_and_defaults() {
         inner: Inner,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_PREFIXCONTAINER_INNER_VALUE", "12")
+        .env("CRABGO_PREFIXCONTAINER_INNER_VALUE", "12")
         .build();
     let err = config
         .get::<PrefixContainer>("prefixcontainer")
@@ -1375,8 +1375,8 @@ fn struct_with_overlapping_inner_struct_and_defaults() {
         .unwrap();
     assert!(format!("{}", err).contains("missing config key `prefixcontainer.inn`"));
     let config = ConfigBuilder::new()
-        .env("CARGO_PREFIXCONTAINER_INNER_VALUE", "12")
-        .env("CARGO_PREFIXCONTAINER_INN", "true")
+        .env("CRABGO_PREFIXCONTAINER_INNER_VALUE", "12")
+        .env("CRABGO_PREFIXCONTAINER_INN", "true")
         .build();
     let f: PrefixContainer = config.get("prefixcontainer").unwrap();
     assert_eq!(f.inner.value, 12);
@@ -1396,20 +1396,20 @@ fn struct_with_overlapping_inner_struct_and_defaults() {
         inner: Inner,
     }
     let config = ConfigBuilder::new()
-        .env("CARGO_INVERSEPREFIXCONTAINER_INNER_VALUE", "12")
+        .env("CRABGO_INVERSEPREFIXCONTAINER_INNER_VALUE", "12")
         .build();
     let f: InversePrefixContainer = config.get("inverseprefixcontainer").unwrap();
     assert_eq!(f.inner_field, bool::default());
     assert_eq!(f.inner.value, 12);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn string_list_tricky_env() {
     // Make sure StringList handles typed env values.
     let config = ConfigBuilder::new()
-        .env("CARGO_KEY1", "123")
-        .env("CARGO_KEY2", "true")
-        .env("CARGO_KEY3", "1 2")
+        .env("CRABGO_KEY1", "123")
+        .env("CRABGO_KEY2", "true")
+        .env("CRABGO_KEY3", "1 2")
         .build();
     let x = config.get::<StringList>("key1").unwrap();
     assert_eq!(x.as_slice(), &["123".to_string()]);
@@ -1419,7 +1419,7 @@ fn string_list_tricky_env() {
     assert_eq!(x.as_slice(), &["1".to_string(), "2".to_string()]);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn string_list_wrong_type() {
     // What happens if StringList is given then wrong type.
     write_config("some_list = 123");
@@ -1428,7 +1428,7 @@ fn string_list_wrong_type() {
         config.get::<StringList>("some_list").unwrap_err(),
         "\
 invalid configuration for key `some_list`
-expected a string or array of strings, but found a integer for `some_list` in [..]/.cargo/config",
+expected a string or array of strings, but found a integer for `some_list` in [..]/.crabgo/config",
     );
 
     write_config("some_list = \"1 2\"");
@@ -1437,14 +1437,14 @@ expected a string or array of strings, but found a integer for `some_list` in [.
     assert_eq!(x.as_slice(), &["1".to_string(), "2".to_string()]);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn string_list_advanced_env() {
     // StringList with advanced env.
     let config = ConfigBuilder::new()
         .unstable_flag("advanced-env")
-        .env("CARGO_KEY1", "[]")
-        .env("CARGO_KEY2", "['1 2', '3']")
-        .env("CARGO_KEY3", "[123]")
+        .env("CRABGO_KEY1", "[]")
+        .env("CRABGO_KEY2", "['1 2', '3']")
+        .env("CRABGO_KEY3", "[123]")
         .build();
     let x = config.get::<StringList>("key1").unwrap();
     assert_eq!(x.as_slice(), &[] as &[String]);
@@ -1452,11 +1452,11 @@ fn string_list_advanced_env() {
     assert_eq!(x.as_slice(), &["1 2".to_string(), "3".to_string()]);
     assert_error(
         config.get::<StringList>("key3").unwrap_err(),
-        "error in environment variable `CARGO_KEY3`: expected string, found integer",
+        "error in environment variable `CRABGO_KEY3`: expected string, found integer",
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn parse_strip_with_string() {
     write_config(
         "\
@@ -1467,16 +1467,16 @@ strip = 'debuginfo'
 
     let config = new_config();
 
-    let p: cargo_toml::TomlProfile = config.get("profile.release").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.release").unwrap();
     let strip = p.strip.unwrap();
     assert_eq!(
         strip,
-        cargo_toml::StringOrBool::String("debuginfo".to_string())
+        crabgo_toml::StringOrBool::String("debuginfo".to_string())
     );
 }
 
-#[cargo_test]
-fn cargo_target_empty_cfg() {
+#[crabgo_test]
+fn crabgo_target_empty_cfg() {
     write_config(
         "\
 [build]
@@ -1488,30 +1488,30 @@ target-dir = ''
 
     assert_error(
         config.target_dir().unwrap_err(),
-        "the target directory is set to an empty string in [..]/.cargo/config",
+        "the target directory is set to an empty string in [..]/.crabgo/config",
     );
 }
 
-#[cargo_test]
-fn cargo_target_empty_env() {
+#[crabgo_test]
+fn crabgo_target_empty_env() {
     let project = project().build();
 
-    project.cargo("check")
-        .env("CARGO_TARGET_DIR", "")
-        .with_stderr("error: the target directory is set to an empty string in the `CARGO_TARGET_DIR` environment variable")
+    project.crabgo("check")
+        .env("CRABGO_TARGET_DIR", "")
+        .with_stderr("error: the target directory is set to an empty string in the `CRABGO_TARGET_DIR` environment variable")
         .with_status(101)
         .run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_profile_options() {
     // Check that all profile options can be serialized/deserialized.
-    let base_settings = cargo_toml::TomlProfile {
-        opt_level: Some(cargo_toml::TomlOptLevel("0".to_string())),
-        lto: Some(cargo_toml::StringOrBool::String("thin".to_string())),
+    let base_settings = crabgo_toml::TomlProfile {
+        opt_level: Some(crabgo_toml::TomlOptLevel("0".to_string())),
+        lto: Some(crabgo_toml::StringOrBool::String("thin".to_string())),
         codegen_backend: Some(InternedString::new("example")),
         codegen_units: Some(123),
-        debug: Some(cargo_toml::TomlDebugInfo::Limited),
+        debug: Some(crabgo_toml::TomlDebugInfo::Limited),
         split_debuginfo: Some("packed".to_string()),
         debug_assertions: Some(true),
         rpath: Some(true),
@@ -1520,29 +1520,29 @@ fn all_profile_options() {
         incremental: Some(true),
         dir_name: Some(InternedString::new("dir_name")),
         inherits: Some(InternedString::new("debug")),
-        strip: Some(cargo_toml::StringOrBool::String("symbols".to_string())),
+        strip: Some(crabgo_toml::StringOrBool::String("symbols".to_string())),
         package: None,
         build_override: None,
         rustflags: None,
     };
     let mut overrides = BTreeMap::new();
-    let key = cargo_toml::ProfilePackageSpec::Spec(PackageIdSpec::parse("foo").unwrap());
+    let key = crabgo_toml::ProfilePackageSpec::Spec(PackageIdSpec::parse("foo").unwrap());
     overrides.insert(key, base_settings.clone());
-    let profile = cargo_toml::TomlProfile {
+    let profile = crabgo_toml::TomlProfile {
         build_override: Some(Box::new(base_settings.clone())),
         package: Some(overrides),
         ..base_settings
     };
     let profile_toml = toml::to_string(&profile).unwrap();
-    let roundtrip: cargo_toml::TomlProfile = toml::from_str(&profile_toml).unwrap();
+    let roundtrip: crabgo_toml::TomlProfile = toml::from_str(&profile_toml).unwrap();
     let roundtrip_toml = toml::to_string(&roundtrip).unwrap();
     compare::assert_match_exact(&profile_toml, &roundtrip_toml);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn value_in_array() {
     // Value<String> in an array should work
-    let root_path = paths::root().join(".cargo/config.toml");
+    let root_path = paths::root().join(".crabgo/config.toml");
     write_config_at(
         &root_path,
         "\
@@ -1554,7 +1554,7 @@ known-hosts = [
 ",
     );
 
-    let foo_path = paths::root().join("foo/.cargo/config.toml");
+    let foo_path = paths::root().join("foo/.crabgo/config.toml");
     write_config_at(
         &foo_path,
         "\
@@ -1571,7 +1571,7 @@ known-hosts = [
         // space splitting, but this is included here just to validate that
         // they work (particularly if other Vec<Value> config vars are added
         // in the future).
-        .env("CARGO_NET_SSH_KNOWN_HOSTS", "env-example")
+        .env("CRABGO_NET_SSH_KNOWN_HOSTS", "env-example")
         .build();
     let net_config = config.net_config().unwrap();
     let kh = net_config
@@ -1591,14 +1591,14 @@ known-hosts = [
     assert_eq!(kh[3].val, "env-example");
     assert_eq!(
         kh[3].definition,
-        Definition::Environment("CARGO_NET_SSH_KNOWN_HOSTS".to_string())
+        Definition::Environment("CRABGO_NET_SSH_KNOWN_HOSTS".to_string())
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn debuginfo_parsing() {
     let config = ConfigBuilder::new().build();
-    let p: cargo_toml::TomlProfile = config.get("profile.dev").unwrap();
+    let p: crabgo_toml::TomlProfile = config.get("profile.dev").unwrap();
     assert_eq!(p.debug, None);
 
     let env_test_cases = [
@@ -1611,7 +1611,7 @@ fn debuginfo_parsing() {
     for (expected, config_strs) in env_test_cases {
         for &val in config_strs {
             let config = ConfigBuilder::new()
-                .env("CARGO_PROFILE_DEV_DEBUG", val)
+                .env("CRABGO_PROFILE_DEV_DEBUG", val)
                 .build();
             let debug: TomlDebugInfo = config.get("profile.dev.debug").unwrap();
             assert_eq!(debug, expected, "failed to parse {val}");

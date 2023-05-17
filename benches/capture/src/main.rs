@@ -1,4 +1,4 @@
-//! This tool helps to capture the `Cargo.toml` files of a workspace.
+//! This tool helps to capture the `Crabgo.toml` files of a workspace.
 //!
 //! Run it by passing a list of workspaces to capture.
 //! Use the `-f` flag to allow it to overwrite existing captures.
@@ -11,7 +11,7 @@ use std::process::Command;
 
 fn main() {
     let force = std::env::args().any(|arg| arg == "-f");
-    let dest = Path::new(env!("CARGO_MANIFEST_DIR"))
+    let dest = Path::new(env!("CRABGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
         .join("workspaces");
@@ -46,15 +46,15 @@ fn capture(source_root: &Path, dest: &Path, force: bool) {
     let mut ar = tar::Builder::new(encoder);
     ar.mode(tar::HeaderMode::Deterministic);
     if let Some(info) = &vcs_info {
-        add_ar_file(&mut ar, &name.join(".cargo_vcs_info.json"), info);
+        add_ar_file(&mut ar, &name.join(".crabgo_vcs_info.json"), info);
     }
 
     // Gather all local packages.
-    let metadata = cargo_metadata::MetadataCommand::new()
-        .manifest_path(source_root.join("Cargo.toml"))
-        .features(cargo_metadata::CargoOpt::AllFeatures)
+    let metadata = crabgo_metadata::MetadataCommand::new()
+        .manifest_path(source_root.join("Crabgo.toml"))
+        .features(crabgo_metadata::CrabgoOpt::AllFeatures)
         .exec()
-        .expect("cargo_metadata failed");
+        .expect("crabgo_metadata failed");
     let mut found_root = false;
     for package in &metadata.packages {
         if package.source.is_some() {
@@ -62,16 +62,16 @@ fn capture(source_root: &Path, dest: &Path, force: bool) {
         }
         let manifest_path = package.manifest_path.as_std_path();
         copy_manifest(&manifest_path, &mut ar, name, &source_root);
-        found_root |= manifest_path == source_root.join("Cargo.toml");
+        found_root |= manifest_path == source_root.join("Crabgo.toml");
     }
     if !found_root {
         // A virtual workspace.
-        let contents = fs::read_to_string(source_root.join("Cargo.toml")).unwrap();
+        let contents = fs::read_to_string(source_root.join("Crabgo.toml")).unwrap();
         assert!(!contents.contains("[package]"));
-        add_ar_file(&mut ar, &name.join("Cargo.toml"), &contents);
+        add_ar_file(&mut ar, &name.join("Crabgo.toml"), &contents);
     }
-    let lock = fs::read_to_string(source_root.join("Cargo.lock")).unwrap();
-    add_ar_file(&mut ar, &name.join("Cargo.lock"), &lock);
+    let lock = fs::read_to_string(source_root.join("Crabgo.lock")).unwrap();
+    add_ar_file(&mut ar, &name.join("Crabgo.lock"), &lock);
     let encoder = ar.into_inner().unwrap();
     encoder.finish().unwrap();
     eprintln!("created {}", dest_gz.display());
@@ -107,7 +107,7 @@ fn copy_manifest<W: std::io::Write>(
         remove(package, "default-run");
     }
     let contents = toml::to_string(&manifest).unwrap();
-    add_ar_file(ar, &relative_path.join("Cargo.toml"), &contents);
+    add_ar_file(ar, &relative_path.join("Crabgo.toml"), &contents);
     add_ar_file(ar, &relative_path.join("src").join("lib.rs"), "");
 }
 
@@ -130,8 +130,8 @@ fn capture_vcs_info(ws_root: &Path, force: bool) -> Option<String> {
             .output()
             .expect("git should be installed")
     };
-    assert!(ws_root.join("Cargo.toml").exists());
-    let relative = maybe_git("ls-files --full-name Cargo.toml");
+    assert!(ws_root.join("Crabgo.toml").exists());
+    let relative = maybe_git("ls-files --full-name Crabgo.toml");
     if !relative.status.success() {
         if !force {
             panic!("git repository not detected, use -f to force");

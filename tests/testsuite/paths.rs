@@ -1,16 +1,16 @@
 //! Tests for `paths` overrides.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn broken_path_override_warns() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.2.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -23,7 +23,7 @@ fn broken_path_override_warns() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a1/Cargo.toml",
+            "a1/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -36,7 +36,7 @@ fn broken_path_override_warns() {
         )
         .file("a1/src/lib.rs", "")
         .file(
-            "a2/Cargo.toml",
+            "a2/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -48,10 +48,10 @@ fn broken_path_override_warns() {
             "#,
         )
         .file("a2/src/lib.rs", "")
-        .file(".cargo/config", r#"paths = ["a2"]"#)
+        .file(".crabgo/config", r#"paths = ["a2"]"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -65,10 +65,10 @@ never intended to support this feature, so for now this message is just a
 warning. In the future, however, this message will become a hard error.
 
 To change the dependency graph via an override it's recommended to use the
-`[patch]` feature of Cargo instead of the path override feature. This is
+`[patch]` feature of Crabgo instead of the path override feature. This is
 documented online at the url below for more information.
 
-https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html
+https://doc.rust-lang.org/crabgo/reference/overriding-dependencies.html
 
 [DOWNLOADING] crates ...
 [DOWNLOADED] [..]
@@ -81,14 +81,14 @@ https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_to_path_dep() {
     Package::new("bar", "0.1.0").dep("baz", "0.1").publish();
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -101,7 +101,7 @@ fn override_to_path_dep() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -113,21 +113,21 @@ fn override_to_path_dep() {
             "#,
         )
         .file("bar/src/lib.rs", "")
-        .file("bar/baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("bar/baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("bar/baz/src/lib.rs", "")
-        .file(".cargo/config", r#"paths = ["bar"]"#)
+        .file(".crabgo/config", r#"paths = ["bar"]"#)
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn paths_ok_with_optional() {
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -140,7 +140,7 @@ fn paths_ok_with_optional() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -153,7 +153,7 @@ fn paths_ok_with_optional() {
         )
         .file("bar/src/lib.rs", "")
         .file(
-            "bar2/Cargo.toml",
+            "bar2/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -165,10 +165,10 @@ fn paths_ok_with_optional() {
             "#,
         )
         .file("bar2/src/lib.rs", "")
-        .file(".cargo/config", r#"paths = ["bar2"]"#)
+        .file(".crabgo/config", r#"paths = ["bar2"]"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.0 ([..]bar2)
@@ -179,13 +179,13 @@ fn paths_ok_with_optional() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn paths_add_optional_bad() {
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -197,10 +197,10 @@ fn paths_add_optional_bad() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .file(
-            "bar2/Cargo.toml",
+            "bar2/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -212,10 +212,10 @@ fn paths_add_optional_bad() {
             "#,
         )
         .file("bar2/src/lib.rs", "")
-        .file(".cargo/config", r#"paths = ["bar2"]"#)
+        .file(".crabgo/config", r#"paths = ["bar2"]"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains(
             "\
 warning: path override for crate `bar` has altered the original list of

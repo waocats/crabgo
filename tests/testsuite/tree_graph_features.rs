@@ -1,9 +1,9 @@
-//! Tests for the `cargo tree` command with -e features option.
+//! Tests for the `crabgo tree` command with -e features option.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::project;
+use crabgo_test_support::registry::{Dependency, Package};
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_feature_various() {
     // Checks different ways of setting features via dependencies.
     Package::new("optdep", "1.0.0")
@@ -34,7 +34,7 @@ fn dep_feature_various() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -49,7 +49,7 @@ fn dep_feature_various() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -88,19 +88,19 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn graph_features_ws_interdependent() {
     // A workspace with interdependent crates.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -117,7 +117,7 @@ fn graph_features_ws_interdependent() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -132,7 +132,7 @@ fn graph_features_ws_interdependent() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo/a)
@@ -148,7 +148,7 @@ b v0.1.0 ([..]/foo/b)
         )
         .run();
 
-    p.cargo("tree -e features -i a -i b")
+    p.crabgo("tree -e features -i a -i b")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo/a)
@@ -168,7 +168,7 @@ b v0.1.0 ([..]/foo/b)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn slash_feature_name() {
     // dep_name/feat_name syntax
     Package::new("opt", "1.0.0").feature("feat1", &[]).publish();
@@ -180,7 +180,7 @@ fn slash_feature_name() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -199,7 +199,7 @@ fn slash_feature_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features --features f1")
+    p.crabgo("tree -e features --features f1")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -211,7 +211,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features f1 -i foo")
+    p.crabgo("tree -e features --features f1 -i foo")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -223,7 +223,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features f1 -i notopt")
+    p.crabgo("tree -e features --features f1 -i notopt")
         .with_stdout(
             "\
 notopt v1.0.0
@@ -241,7 +241,7 @@ notopt v1.0.0
         )
         .run();
 
-    p.cargo("tree -e features --features notopt/animal -i notopt")
+    p.crabgo("tree -e features --features notopt/animal -i notopt")
         .with_stdout(
             "\
 notopt v1.0.0
@@ -255,7 +255,7 @@ notopt v1.0.0
         )
         .run();
 
-    p.cargo("tree -e features --all-features")
+    p.crabgo("tree -e features --all-features")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -269,7 +269,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --all-features -i opt2")
+    p.crabgo("tree -e features --all-features -i opt2")
         .with_stdout(
             "\
 opt2 v1.0.0
@@ -287,7 +287,7 @@ opt2 v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_enables_inactive_target() {
     // Features that enable things on targets that are not enabled.
     Package::new("optdep", "1.0.0")
@@ -305,7 +305,7 @@ fn features_enables_inactive_target() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -327,7 +327,7 @@ fn features_enables_inactive_target() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -336,7 +336,7 @@ foo v0.1.0 ([..]/foo)
 ",
         )
         .run();
-    p.cargo("tree -e features --all-features")
+    p.crabgo("tree -e features --all-features")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -345,7 +345,7 @@ foo v0.1.0 ([..]/foo)
 ",
         )
         .run();
-    p.cargo("tree -e features --all-features --target=all")
+    p.crabgo("tree -e features --all-features --target=all")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)

@@ -1,14 +1,14 @@
 //! Tests for normal registry dependencies.
 
-use cargo::core::SourceId;
-use cargo_test_support::cargo_process;
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::{
+use crabgo::core::SourceId;
+use crabgo_test_support::crabgo_process;
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::{
     self, registry_path, Dependency, Package, RegistryBuilder, Response, TestRegistry,
 };
-use cargo_test_support::{basic_manifest, project};
-use cargo_test_support::{git, install::cargo_home, t};
-use cargo_util::paths::remove_dir_all;
+use crabgo_test_support::{basic_manifest, project};
+use crabgo_test_support::{git, install::cargo_home, t};
+use crabgo_util::paths::remove_dir_all;
 use std::fmt::Write;
 use std::fs::{self, File};
 use std::path::Path;
@@ -19,19 +19,19 @@ fn setup_http() -> TestRegistry {
     RegistryBuilder::new().http_index().build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_server_stops() {
     let server = setup_http();
     server.join(); // ensure the server fully shuts down
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_http() {
     let _server = setup_http();
     simple();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_git() {
     simple();
 }
@@ -39,7 +39,7 @@ fn simple_git() {
 fn simple() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -55,7 +55,7 @@ fn simple() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -68,12 +68,12 @@ fn simple() {
         )
         .run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
-    assert!(paths::home().join(".cargo/registry/CACHEDIR.TAG").is_file());
+    assert!(paths::home().join(".crabgo/registry/CACHEDIR.TAG").is_file());
 
     // Don't download a second time
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1
@@ -84,13 +84,13 @@ fn simple() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deps_http() {
     let _server = setup_http();
     deps();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deps_git() {
     deps();
 }
@@ -98,7 +98,7 @@ fn deps_git() {
 fn deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -115,7 +115,7 @@ fn deps() {
     Package::new("baz", "0.0.1").publish();
     Package::new("bar", "0.0.1").dep("baz", "*").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -130,16 +130,16 @@ fn deps() {
         )
         .run();
 
-    assert!(paths::home().join(".cargo/registry/CACHEDIR.TAG").is_file());
+    assert!(paths::home().join(".crabgo/registry/CACHEDIR.TAG").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn nonexistent_http() {
     let _server = setup_http();
     nonexistent();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn nonexistent_git() {
     nonexistent();
 }
@@ -149,7 +149,7 @@ fn nonexistent() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -163,7 +163,7 @@ fn nonexistent() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -176,13 +176,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wrong_case_http() {
     let _server = setup_http();
     wrong_case();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wrong_case_git() {
     wrong_case();
 }
@@ -192,7 +192,7 @@ fn wrong_case() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -207,7 +207,7 @@ fn wrong_case() {
         .build();
 
     // #5678 to make this work
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -222,13 +222,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn mis_hyphenated_http() {
     let _server = setup_http();
     mis_hyphenated();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn mis_hyphenated_git() {
     mis_hyphenated();
 }
@@ -238,7 +238,7 @@ fn mis_hyphenated() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -253,7 +253,7 @@ fn mis_hyphenated() {
         .build();
 
     // #2775 to make this work
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -268,13 +268,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wrong_version_http() {
     let _server = setup_http();
     wrong_version();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wrong_version_git() {
     wrong_version();
 }
@@ -282,7 +282,7 @@ fn wrong_version_git() {
 fn wrong_version() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -299,7 +299,7 @@ fn wrong_version() {
     Package::new("foo", "0.0.1").publish();
     Package::new("foo", "0.0.2").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -314,7 +314,7 @@ required by package `foo v0.0.1 ([..])`
     Package::new("foo", "0.0.3").publish();
     Package::new("foo", "0.0.4").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -327,13 +327,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_cksum_http() {
     let _server = setup_http();
     bad_cksum();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_cksum_git() {
     bad_cksum();
 }
@@ -341,7 +341,7 @@ fn bad_cksum_git() {
 fn bad_cksum() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -359,7 +359,7 @@ fn bad_cksum() {
     pkg.publish();
     t!(File::create(&pkg.archive_dst()));
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -375,13 +375,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_registry_http() {
     let _server = setup_http();
     update_registry();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_registry_git() {
     update_registry();
 }
@@ -391,7 +391,7 @@ fn update_registry() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -405,7 +405,7 @@ fn update_registry() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -418,7 +418,7 @@ required by package `foo v0.0.1 ([..])`
 
     Package::new("notyet", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -432,13 +432,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_with_path_deps_http() {
     let _server = setup_http();
     package_with_path_deps();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_with_path_deps_git() {
     package_with_path_deps();
 }
@@ -448,7 +448,7 @@ fn package_with_path_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -464,11 +464,11 @@ fn package_with_path_deps() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("notyet/Cargo.toml", &basic_manifest("notyet", "0.0.1"))
+        .file("notyet/Crabgo.toml", &basic_manifest("notyet", "0.0.1"))
         .file("notyet/src/lib.rs", "")
         .build();
 
-    p.cargo("package")
+    p.crabgo("package")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -486,7 +486,7 @@ Caused by:
 
     Package::new("notyet", "0.0.1").publish();
 
-    p.cargo("package")
+    p.crabgo("package")
         .with_stderr(
             "\
 [PACKAGING] foo v0.0.1 ([CWD])
@@ -503,13 +503,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lockfile_locks_http() {
     let _server = setup_http();
     lockfile_locks();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lockfile_locks_git() {
     lockfile_locks();
 }
@@ -517,7 +517,7 @@ fn lockfile_locks_git() {
 fn lockfile_locks() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -533,7 +533,7 @@ fn lockfile_locks() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -549,16 +549,16 @@ fn lockfile_locks() {
     p.root().move_into_the_past();
     Package::new("bar", "0.0.2").publish();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lockfile_locks_transitively_http() {
     let _server = setup_http();
     lockfile_locks_transitively();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lockfile_locks_transitively_git() {
     lockfile_locks_transitively();
 }
@@ -566,7 +566,7 @@ fn lockfile_locks_transitively_git() {
 fn lockfile_locks_transitively() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -583,7 +583,7 @@ fn lockfile_locks_transitively() {
     Package::new("baz", "0.0.1").publish();
     Package::new("bar", "0.0.1").dep("baz", "*").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -602,16 +602,16 @@ fn lockfile_locks_transitively() {
     Package::new("baz", "0.0.2").publish();
     Package::new("bar", "0.0.2").dep("baz", "*").publish();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_are_not_used_http() {
     let _server = setup_http();
     yanks_are_not_used();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_are_not_used_git() {
     yanks_are_not_used();
 }
@@ -619,7 +619,7 @@ fn yanks_are_not_used_git() {
 fn yanks_are_not_used() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -641,7 +641,7 @@ fn yanks_are_not_used() {
         .yanked(true)
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -657,13 +657,13 @@ fn yanks_are_not_used() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn relying_on_a_yank_is_bad_http() {
     let _server = setup_http();
     relying_on_a_yank_is_bad();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn relying_on_a_yank_is_bad_git() {
     relying_on_a_yank_is_bad();
 }
@@ -671,7 +671,7 @@ fn relying_on_a_yank_is_bad_git() {
 fn relying_on_a_yank_is_bad() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -689,7 +689,7 @@ fn relying_on_a_yank_is_bad() {
     Package::new("baz", "0.0.2").yanked(true).publish();
     Package::new("bar", "0.0.1").dep("baz", "=0.0.2").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -703,13 +703,13 @@ required by package `bar v0.0.1`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_http() {
     let _server = setup_http();
     yanks_in_lockfiles_are_ok();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_git() {
     yanks_in_lockfiles_are_ok();
 }
@@ -717,7 +717,7 @@ fn yanks_in_lockfiles_are_ok_git() {
 fn yanks_in_lockfiles_are_ok() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -733,15 +733,15 @@ fn yanks_in_lockfiles_are_ok() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     registry_path().join("3").rm_rf();
 
     Package::new("bar", "0.0.1").yanked(true).publish();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
-    p.cargo("update")
+    p.crabgo("update")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -753,13 +753,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_for_other_update_http() {
     let _server = setup_http();
     yanks_in_lockfiles_are_ok_for_other_update();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_for_other_update_git() {
     yanks_in_lockfiles_are_ok_for_other_update();
 }
@@ -767,7 +767,7 @@ fn yanks_in_lockfiles_are_ok_for_other_update_git() {
 fn yanks_in_lockfiles_are_ok_for_other_update() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -785,18 +785,18 @@ fn yanks_in_lockfiles_are_ok_for_other_update() {
     Package::new("bar", "0.0.1").publish();
     Package::new("baz", "0.0.1").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     registry_path().join("3").rm_rf();
 
     Package::new("bar", "0.0.1").yanked(true).publish();
     Package::new("baz", "0.0.1").publish();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
     Package::new("baz", "0.0.2").publish();
 
-    p.cargo("update")
+    p.crabgo("update")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -807,7 +807,7 @@ required by package `foo v0.0.1 ([..])`
         )
         .run();
 
-    p.cargo("update -p baz")
+    p.crabgo("update -p baz")
         .with_stderr_contains(
             "\
 [UPDATING] `[..]` index
@@ -817,13 +817,13 @@ required by package `foo v0.0.1 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_with_new_dep_http() {
     let _server = setup_http();
     yanks_in_lockfiles_are_ok_with_new_dep();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanks_in_lockfiles_are_ok_with_new_dep_git() {
     yanks_in_lockfiles_are_ok_with_new_dep();
 }
@@ -831,7 +831,7 @@ fn yanks_in_lockfiles_are_ok_with_new_dep_git() {
 fn yanks_in_lockfiles_are_ok_with_new_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -847,7 +847,7 @@ fn yanks_in_lockfiles_are_ok_with_new_dep() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     registry_path().join("3").rm_rf();
 
@@ -855,7 +855,7 @@ fn yanks_in_lockfiles_are_ok_with_new_dep() {
     Package::new("baz", "0.0.1").publish();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -868,16 +868,16 @@ fn yanks_in_lockfiles_are_ok_with_new_dep() {
         "#,
     );
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_with_lockfile_if_packages_missing_http() {
     let _server = setup_http();
     update_with_lockfile_if_packages_missing();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_with_lockfile_if_packages_missing_git() {
     update_with_lockfile_if_packages_missing();
 }
@@ -885,7 +885,7 @@ fn update_with_lockfile_if_packages_missing_git() {
 fn update_with_lockfile_if_packages_missing() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -900,11 +900,11 @@ fn update_with_lockfile_if_packages_missing() {
         .build();
 
     Package::new("bar", "0.0.1").publish();
-    p.cargo("check").run();
+    p.crabgo("check").run();
     p.root().move_into_the_past();
 
-    paths::home().join(".cargo/registry").rm_rf();
-    p.cargo("check")
+    paths::home().join(".crabgo/registry").rm_rf();
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -916,13 +916,13 @@ fn update_with_lockfile_if_packages_missing() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_lockfile_http() {
     let _server = setup_http();
     update_lockfile();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_lockfile_git() {
     update_lockfile();
 }
@@ -930,7 +930,7 @@ fn update_lockfile_git() {
 fn update_lockfile() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -946,13 +946,13 @@ fn update_lockfile() {
 
     println!("0.0.1");
     Package::new("bar", "0.0.1").publish();
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("bar", "0.0.2").publish();
     Package::new("bar", "0.0.3").publish();
-    paths::home().join(".cargo/registry").rm_rf();
+    paths::home().join(".crabgo/registry").rm_rf();
     println!("0.0.2 update");
-    p.cargo("update -p bar --precise 0.0.2")
+    p.crabgo("update -p bar --precise 0.0.2")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -962,7 +962,7 @@ fn update_lockfile() {
         .run();
 
     println!("0.0.2 build");
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [DOWNLOADING] crates ...
@@ -975,7 +975,7 @@ fn update_lockfile() {
         .run();
 
     println!("0.0.3 update");
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -985,7 +985,7 @@ fn update_lockfile() {
         .run();
 
     println!("0.0.3 build");
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [DOWNLOADING] crates ...
@@ -1000,7 +1000,7 @@ fn update_lockfile() {
     println!("new dependencies update");
     Package::new("bar", "0.0.4").dep("spam", "0.2.5").publish();
     Package::new("spam", "0.2.5").publish();
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1012,7 +1012,7 @@ fn update_lockfile() {
 
     println!("new dependencies update");
     Package::new("bar", "0.0.5").publish();
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1023,13 +1023,13 @@ fn update_lockfile() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dependency_not_used_http() {
     let _server = setup_http();
     dev_dependency_not_used();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dependency_not_used_git() {
     dev_dependency_not_used();
 }
@@ -1037,7 +1037,7 @@ fn dev_dependency_not_used_git() {
 fn dev_dependency_not_used() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1054,7 +1054,7 @@ fn dev_dependency_not_used() {
     Package::new("baz", "0.0.1").publish();
     Package::new("bar", "0.0.1").dev_dep("baz", "*").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1068,13 +1068,13 @@ fn dev_dependency_not_used() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_license_file_http() {
     let registry = setup_http();
     bad_license_file(&registry);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_license_file_git() {
     let registry = registry::init();
     bad_license_file(&registry);
@@ -1084,7 +1084,7 @@ fn bad_license_file(registry: &TestRegistry) {
     Package::new("foo", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1097,20 +1097,20 @@ fn bad_license_file(registry: &TestRegistry) {
         )
         .file("src/main.rs", "fn main() {}")
         .build();
-    p.cargo("publish -v")
+    p.crabgo("publish -v")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[ERROR] the license file `foo` does not exist")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn updating_a_dep_http() {
     let _server = setup_http();
     updating_a_dep();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn updating_a_dep_git() {
     updating_a_dep();
 }
@@ -1118,7 +1118,7 @@ fn updating_a_dep_git() {
 fn updating_a_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1131,7 +1131,7 @@ fn updating_a_dep() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1147,7 +1147,7 @@ fn updating_a_dep() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1160,16 +1160,16 @@ fn updating_a_dep() {
 ",
         )
         .run();
-    assert!(paths::home().join(".cargo/registry/CACHEDIR.TAG").is_file());
+    assert!(paths::home().join(".crabgo/registry/CACHEDIR.TAG").is_file());
 
     // Now delete the CACHEDIR.TAG file: this is the situation we'll be in after
-    // upgrading from a version of Cargo that doesn't mark this directory, to one that
+    // upgrading from a version of Crabgo that doesn't mark this directory, to one that
     // does. It should be recreated.
-    fs::remove_file(paths::home().join(".cargo/registry/CACHEDIR.TAG"))
+    fs::remove_file(paths::home().join(".crabgo/registry/CACHEDIR.TAG"))
         .expect("remove CACHEDIR.TAG");
 
     p.change_file(
-        "a/Cargo.toml",
+        "a/Crabgo.toml",
         r#"
         [package]
         name = "a"
@@ -1183,7 +1183,7 @@ fn updating_a_dep() {
     Package::new("bar", "0.1.0").publish();
 
     println!("second");
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1198,18 +1198,18 @@ fn updating_a_dep() {
         .run();
 
     assert!(
-        paths::home().join(".cargo/registry/CACHEDIR.TAG").is_file(),
+        paths::home().join(".crabgo/registry/CACHEDIR.TAG").is_file(),
         "CACHEDIR.TAG recreated in existing registry"
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_and_registry_dep_http() {
     let _server = setup_http();
     git_and_registry_dep();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_and_registry_dep_git() {
     git_and_registry_dep();
 }
@@ -1217,7 +1217,7 @@ fn git_and_registry_dep_git() {
 fn git_and_registry_dep() {
     let b = git::repo(&paths::root().join("b"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1232,7 +1232,7 @@ fn git_and_registry_dep() {
         .build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1255,7 +1255,7 @@ fn git_and_registry_dep() {
     Package::new("a", "0.0.1").publish();
 
     p.root().move_into_the_past();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -1272,26 +1272,26 @@ fn git_and_registry_dep() {
     p.root().move_into_the_past();
 
     println!("second");
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_publish_then_update_http() {
     let _server = setup_http();
     update_publish_then_update();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_publish_then_update_git() {
     update_publish_then_update();
 }
 
 fn update_publish_then_update() {
-    // First generate a Cargo.lock and a clone of the registry index at the
+    // First generate a Crabgo.lock and a clone of the registry index at the
     // "head" of the current registry.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1305,21 +1305,21 @@ fn update_publish_then_update() {
         .file("src/main.rs", "fn main() {}")
         .build();
     Package::new("a", "0.1.0").publish();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     // Next, publish a new package and back up the copy of the registry we just
     // created.
     Package::new("a", "0.1.1").publish();
-    let registry = paths::home().join(".cargo/registry");
+    let registry = paths::home().join(".crabgo/registry");
     let backup = paths::root().join("registry-backup");
     t!(fs::rename(&registry, &backup));
 
-    // Generate a Cargo.lock with the newer version, and then move the old copy
+    // Generate a Crabgo.lock with the newer version, and then move the old copy
     // of the registry back into place.
     let p2 = project()
         .at("foo2")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1332,18 +1332,18 @@ fn update_publish_then_update() {
         )
         .file("src/main.rs", "fn main() {}")
         .build();
-    p2.cargo("build").run();
+    p2.crabgo("build").run();
     registry.rm_rf();
     t!(fs::rename(&backup, &registry));
     t!(fs::rename(
-        p2.root().join("Cargo.lock"),
-        p.root().join("Cargo.lock")
+        p2.root().join("Crabgo.lock"),
+        p.root().join("Crabgo.lock")
     ));
 
-    // Finally, build the first project again (with our newer Cargo.lock) which
+    // Finally, build the first project again (with our newer Crabgo.lock) which
     // should force an update of the old registry, download the new crate, and
     // then build everything again.
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -1357,13 +1357,13 @@ fn update_publish_then_update() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_downloads_http() {
     let _server = setup_http();
     fetch_downloads();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_downloads_git() {
     fetch_downloads();
 }
@@ -1371,7 +1371,7 @@ fn fetch_downloads_git() {
 fn fetch_downloads() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1387,7 +1387,7 @@ fn fetch_downloads() {
 
     Package::new("a", "0.1.0").publish();
 
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1398,13 +1398,13 @@ fn fetch_downloads() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_transitive_dependency_http() {
     let _server = setup_http();
     update_transitive_dependency();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_transitive_dependency_git() {
     update_transitive_dependency();
 }
@@ -1412,7 +1412,7 @@ fn update_transitive_dependency_git() {
 fn update_transitive_dependency() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1429,11 +1429,11 @@ fn update_transitive_dependency() {
     Package::new("a", "0.1.0").dep("b", "*").publish();
     Package::new("b", "0.1.0").publish();
 
-    p.cargo("fetch").run();
+    p.crabgo("fetch").run();
 
     Package::new("b", "0.1.1").publish();
 
-    p.cargo("update -pb")
+    p.crabgo("update -pb")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1442,7 +1442,7 @@ fn update_transitive_dependency() {
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [DOWNLOADING] crates ...
@@ -1456,13 +1456,13 @@ fn update_transitive_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_backtracking_ok_http() {
     let _server = setup_http();
     update_backtracking_ok();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_backtracking_ok_git() {
     update_backtracking_ok();
 }
@@ -1470,7 +1470,7 @@ fn update_backtracking_ok_git() {
 fn update_backtracking_ok() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1496,7 +1496,7 @@ fn update_backtracking_ok() {
         .publish();
     Package::new("openssl", "0.1.0").publish();
 
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
 
     Package::new("openssl", "0.1.1").publish();
     Package::new("hyper", "0.6.6")
@@ -1504,7 +1504,7 @@ fn update_backtracking_ok() {
         .dep("cookie", "0.1.0")
         .publish();
 
-    p.cargo("update -p hyper")
+    p.crabgo("update -p hyper")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1515,13 +1515,13 @@ fn update_backtracking_ok() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_multiple_packages_http() {
     let _server = setup_http();
     update_multiple_packages();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_multiple_packages_git() {
     update_multiple_packages();
 }
@@ -1529,7 +1529,7 @@ fn update_multiple_packages_git() {
 fn update_multiple_packages() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1549,13 +1549,13 @@ fn update_multiple_packages() {
     Package::new("b", "0.1.0").publish();
     Package::new("c", "0.1.0").publish();
 
-    p.cargo("fetch").run();
+    p.crabgo("fetch").run();
 
     Package::new("a", "0.1.1").publish();
     Package::new("b", "0.1.1").publish();
     Package::new("c", "0.1.1").publish();
 
-    p.cargo("update -pa -pb")
+    p.crabgo("update -pa -pb")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1565,7 +1565,7 @@ fn update_multiple_packages() {
         )
         .run();
 
-    p.cargo("update -pb -pc")
+    p.crabgo("update -pb -pc")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1574,7 +1574,7 @@ fn update_multiple_packages() {
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains("[DOWNLOADED] a v0.1.1 (registry `dummy-registry`)")
         .with_stderr_contains("[DOWNLOADED] b v0.1.1 (registry `dummy-registry`)")
         .with_stderr_contains("[DOWNLOADED] c v0.1.1 (registry `dummy-registry`)")
@@ -1585,13 +1585,13 @@ fn update_multiple_packages() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bundled_crate_in_registry_http() {
     let _server = setup_http();
     bundled_crate_in_registry();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bundled_crate_in_registry_git() {
     bundled_crate_in_registry();
 }
@@ -1599,7 +1599,7 @@ fn bundled_crate_in_registry_git() {
 fn bundled_crate_in_registry() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1618,7 +1618,7 @@ fn bundled_crate_in_registry() {
     Package::new("baz", "0.1.0")
         .dep("bar", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -1630,20 +1630,20 @@ fn bundled_crate_in_registry() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .publish();
 
-    p.cargo("run").run();
+    p.crabgo("run").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_same_prefix_oh_my_how_was_this_a_bug_http() {
     let _server = setup_http();
     update_same_prefix_oh_my_how_was_this_a_bug();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_same_prefix_oh_my_how_was_this_a_bug_git() {
     update_same_prefix_oh_my_how_was_this_a_bug();
 }
@@ -1651,7 +1651,7 @@ fn update_same_prefix_oh_my_how_was_this_a_bug_git() {
 fn update_same_prefix_oh_my_how_was_this_a_bug() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "ugh"
@@ -1670,17 +1670,17 @@ fn update_same_prefix_oh_my_how_was_this_a_bug() {
         .dep("foobar", "0.2.0")
         .publish();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("update -pfoobar --precise=0.2.0").run();
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("update -pfoobar --precise=0.2.0").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn use_semver_http() {
     let _server = setup_http();
     use_semver();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn use_semver_git() {
     use_semver();
 }
@@ -1688,7 +1688,7 @@ fn use_semver_git() {
 fn use_semver() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1704,16 +1704,16 @@ fn use_semver() {
 
     Package::new("foo", "1.2.3-alpha.0").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn use_semver_package_incorrectly_http() {
     let _server = setup_http();
     use_semver_package_incorrectly();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn use_semver_package_incorrectly_git() {
     use_semver_package_incorrectly();
 }
@@ -1721,14 +1721,14 @@ fn use_semver_package_incorrectly_git() {
 fn use_semver_package_incorrectly() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1737,7 +1737,7 @@ fn use_semver_package_incorrectly() {
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -1752,7 +1752,7 @@ fn use_semver_package_incorrectly() {
         .file("b/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1767,13 +1767,13 @@ required by package `b v0.1.0 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn only_download_relevant_http() {
     let _server = setup_http();
     only_download_relevant();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn only_download_relevant_git() {
     only_download_relevant();
 }
@@ -1781,7 +1781,7 @@ fn only_download_relevant_git() {
 fn only_download_relevant() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1803,7 +1803,7 @@ fn only_download_relevant() {
     Package::new("bar", "0.1.0").publish();
     Package::new("baz", "0.1.0").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1817,13 +1817,13 @@ fn only_download_relevant() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolve_and_backtracking_http() {
     let _server = setup_http();
     resolve_and_backtracking();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolve_and_backtracking_git() {
     resolve_and_backtracking();
 }
@@ -1831,7 +1831,7 @@ fn resolve_and_backtracking_git() {
 fn resolve_and_backtracking() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1850,16 +1850,16 @@ fn resolve_and_backtracking() {
         .publish();
     Package::new("foo", "0.1.0").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn upstream_warnings_on_extra_verbose_http() {
     let _server = setup_http();
     upstream_warnings_on_extra_verbose();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn upstream_warnings_on_extra_verbose_git() {
     upstream_warnings_on_extra_verbose();
 }
@@ -1867,7 +1867,7 @@ fn upstream_warnings_on_extra_verbose_git() {
 fn upstream_warnings_on_extra_verbose() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1885,17 +1885,17 @@ fn upstream_warnings_on_extra_verbose() {
         .file("src/lib.rs", "fn unused() {}")
         .publish();
 
-    p.cargo("check -vv")
+    p.crabgo("check -vv")
         .with_stderr_contains("[WARNING] [..]unused[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn disallow_network_http() {
     let _server = setup_http();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1909,7 +1909,7 @@ fn disallow_network_http() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check --frozen")
+    p.crabgo("check --frozen")
         .with_status(101)
         .with_stderr(
             "\
@@ -1926,12 +1926,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn disallow_network_git() {
     let _server = RegistryBuilder::new().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1945,7 +1945,7 @@ fn disallow_network_git() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check --frozen")
+    p.crabgo("check --frozen")
         .with_status(101)
         .with_stderr(
             "\
@@ -1967,13 +1967,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_dep_dont_update_registry_http() {
     let _server = setup_http();
     add_dep_dont_update_registry();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_dep_dont_update_registry_git() {
     add_dep_dont_update_registry();
 }
@@ -1981,7 +1981,7 @@ fn add_dep_dont_update_registry_git() {
 fn add_dep_dont_update_registry() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1994,7 +1994,7 @@ fn add_dep_dont_update_registry() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -2010,10 +2010,10 @@ fn add_dep_dont_update_registry() {
 
     Package::new("remote", "0.3.4").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
         [package]
         name = "bar"
@@ -2026,7 +2026,7 @@ fn add_dep_dont_update_registry() {
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.5.0 ([..])
@@ -2036,13 +2036,13 @@ fn add_dep_dont_update_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bump_version_dont_update_registry_http() {
     let _server = setup_http();
     bump_version_dont_update_registry();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bump_version_dont_update_registry_git() {
     bump_version_dont_update_registry();
 }
@@ -2050,7 +2050,7 @@ fn bump_version_dont_update_registry_git() {
 fn bump_version_dont_update_registry() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2063,7 +2063,7 @@ fn bump_version_dont_update_registry() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -2079,10 +2079,10 @@ fn bump_version_dont_update_registry() {
 
     Package::new("remote", "0.3.4").publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
         [package]
         name = "bar"
@@ -2094,7 +2094,7 @@ fn bump_version_dont_update_registry() {
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.6.0 ([..])
@@ -2104,13 +2104,13 @@ fn bump_version_dont_update_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn toml_lies_but_index_is_truth_http() {
     let _server = setup_http();
     toml_lies_but_index_is_truth();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn toml_lies_but_index_is_truth_git() {
     toml_lies_but_index_is_truth();
 }
@@ -2120,7 +2120,7 @@ fn toml_lies_but_index_is_truth() {
     Package::new("bar", "0.3.0")
         .dep("foo", "0.2.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2136,7 +2136,7 @@ fn toml_lies_but_index_is_truth() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2150,16 +2150,16 @@ fn toml_lies_but_index_is_truth() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vv_prints_warnings_http() {
     let _server = setup_http();
     vv_prints_warnings();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vv_prints_warnings_git() {
     vv_prints_warnings();
 }
@@ -2174,7 +2174,7 @@ fn vv_prints_warnings() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "fo"
@@ -2188,16 +2188,16 @@ fn vv_prints_warnings() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -vv").run();
+    p.crabgo("check -vv").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_and_or_malicious_packages_rejected_http() {
     let _server = setup_http();
     bad_and_or_malicious_packages_rejected();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_and_or_malicious_packages_rejected_git() {
     bad_and_or_malicious_packages_rejected();
 }
@@ -2209,7 +2209,7 @@ fn bad_and_or_malicious_packages_rejected() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "fo"
@@ -2223,7 +2223,7 @@ fn bad_and_or_malicious_packages_rejected() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -vv")
+    p.crabgo("check -vv")
         .with_status(101)
         .with_stderr(
             "\
@@ -2242,13 +2242,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_init_templatedir_missing_http() {
     let _server = setup_http();
     git_init_templatedir_missing();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_init_templatedir_missing_git() {
     git_init_templatedir_missing();
 }
@@ -2259,7 +2259,7 @@ fn git_init_templatedir_missing() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "fo"
@@ -2273,9 +2273,9 @@ fn git_init_templatedir_missing() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
-    remove_dir_all(paths::home().join(".cargo/registry")).unwrap();
+    remove_dir_all(paths::home().join(".crabgo/registry")).unwrap();
     fs::write(
         paths::home().join(".gitconfig"),
         r#"
@@ -2285,17 +2285,17 @@ fn git_init_templatedir_missing() {
     )
     .unwrap();
 
-    p.cargo("check").run();
-    p.cargo("check").run();
+    p.crabgo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_deps_and_features_http() {
     let _server = setup_http();
     rename_deps_and_features();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_deps_and_features_git() {
     rename_deps_and_features();
 }
@@ -2333,7 +2333,7 @@ fn rename_deps_and_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2353,18 +2353,18 @@ fn rename_deps_and_features() {
         )
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check --features bar/foo01").run();
-    p.cargo("check --features bar/another").run();
+    p.crabgo("check").run();
+    p.crabgo("check --features bar/foo01").run();
+    p.crabgo("check --features bar/another").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_invalid_json_lines_http() {
     let _server = setup_http();
     ignore_invalid_json_lines();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_invalid_json_lines_git() {
     ignore_invalid_json_lines();
 }
@@ -2376,7 +2376,7 @@ fn ignore_invalid_json_lines() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2391,16 +2391,16 @@ fn ignore_invalid_json_lines() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn readonly_registry_still_works_http() {
     let _server = setup_http();
     readonly_registry_still_works();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn readonly_registry_still_works_git() {
     readonly_registry_still_works();
 }
@@ -2410,7 +2410,7 @@ fn readonly_registry_still_works() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2424,11 +2424,11 @@ fn readonly_registry_still_works() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("fetch --locked").run();
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("fetch --locked").run();
     chmod_readonly(&paths::home(), true);
-    p.cargo("check").run();
-    // make sure we un-readonly the files afterwards so "cargo clean" can remove them (#6934)
+    p.crabgo("check").run();
+    // make sure we un-readonly the files afterwards so "crabgo clean" can remove them (#6934)
     chmod_readonly(&paths::home(), false);
 
     fn chmod_readonly(path: &Path, readonly: bool) {
@@ -2451,13 +2451,13 @@ fn readonly_registry_still_works() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_index_rejected_http() {
     let _server = setup_http();
     registry_index_rejected();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_index_rejected_git() {
     registry_index_rejected();
 }
@@ -2467,14 +2467,14 @@ fn registry_index_rejected() {
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [registry]
             index = "https://example.com/"
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2487,11 +2487,11 @@ fn registry_index_rejected() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   the `registry.index` config value is no longer supported
@@ -2500,7 +2500,7 @@ Caused by:
         )
         .run();
 
-    p.cargo("login")
+    p.crabgo("login")
         .with_status(101)
         .with_stderr(
             "\
@@ -2511,12 +2511,12 @@ Use `[source]` replacement to alter the default index for crates.io.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_lock_inside_package_is_overwritten() {
     let registry = registry::init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2532,29 +2532,29 @@ fn package_lock_inside_package_is_overwritten() {
 
     Package::new("bar", "0.0.1")
         .file("src/lib.rs", "")
-        .file(".cargo-ok", "")
+        .file(".crabgo-ok", "")
         .publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     let id = SourceId::for_registry(registry.index_url()).unwrap();
-    let hash = cargo::util::hex::short_hash(&id);
+    let hash = crabgo::util::hex::short_hash(&id);
     let ok = cargo_home()
         .join("registry")
         .join("src")
         .join(format!("-{}", hash))
         .join("bar-0.0.1")
-        .join(".cargo-ok");
+        .join(".crabgo-ok");
 
     assert_eq!(ok.metadata().unwrap().len(), 2);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_lock_as_a_symlink_inside_package_is_overwritten() {
     let registry = registry::init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2570,19 +2570,19 @@ fn package_lock_as_a_symlink_inside_package_is_overwritten() {
 
     Package::new("bar", "0.0.1")
         .file("src/lib.rs", "pub fn f() {}")
-        .symlink(".cargo-ok", "src/lib.rs")
+        .symlink(".crabgo-ok", "src/lib.rs")
         .publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     let id = SourceId::for_registry(registry.index_url()).unwrap();
-    let hash = cargo::util::hex::short_hash(&id);
+    let hash = crabgo::util::hex::short_hash(&id);
     let pkg_root = cargo_home()
         .join("registry")
         .join("src")
         .join(format!("-{}", hash))
         .join("bar-0.0.1");
-    let ok = pkg_root.join(".cargo-ok");
+    let ok = pkg_root.join(".crabgo-ok");
     let librs = pkg_root.join("src/lib.rs");
 
     // Is correctly overwritten and doesn't affect the file linked to
@@ -2590,13 +2590,13 @@ fn package_lock_as_a_symlink_inside_package_is_overwritten() {
     assert_eq!(fs::read_to_string(librs).unwrap(), "pub fn f() {}");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignores_unknown_index_version_http() {
     let _server = setup_http();
     ignores_unknown_index_version();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignores_unknown_index_version_git() {
     ignores_unknown_index_version();
 }
@@ -2608,7 +2608,7 @@ fn ignores_unknown_index_version() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2621,7 +2621,7 @@ fn ignores_unknown_index_version() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "foo v0.1.0 [..]\n\
              └── bar v1.0.0\n\
@@ -2630,30 +2630,30 @@ fn ignores_unknown_index_version() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn protocol() {
-    cargo_process("install bar")
+    crabgo_process("install bar")
         .with_status(101)
-        .env("CARGO_REGISTRIES_CRATES_IO_PROTOCOL", "invalid")
-        .with_stderr("[ERROR] unsupported registry protocol `invalid` (defined in environment variable `CARGO_REGISTRIES_CRATES_IO_PROTOCOL`)")
+        .env("CRABGO_REGISTRIES_CRATES_IO_PROTOCOL", "invalid")
+        .with_stderr("[ERROR] unsupported registry protocol `invalid` (defined in environment variable `CRABGO_REGISTRIES_CRATES_IO_PROTOCOL`)")
         .run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn http_requires_trailing_slash() {
-    cargo_process("install bar --index sparse+https://invalid.crates.io/test")
+    crabgo_process("install bar --index sparse+https://invalid.crates.io/test")
         .with_status(101)
         .with_stderr("[ERROR] sparse registry url must end in a slash `/`: sparse+https://invalid.crates.io/test")
         .run()
 }
 
-// Limit the test to debug builds so that `__CARGO_TEST_MAX_UNPACK_SIZE` will take affect.
+// Limit the test to debug builds so that `__CRABGO_TEST_MAX_UNPACK_SIZE` will take affect.
 #[cfg(debug_assertions)]
-#[cargo_test]
+#[crabgo_test]
 fn reach_max_unpack_size() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2669,9 +2669,9 @@ fn reach_max_unpack_size() {
     // Size of bar.crate is around 180 bytes.
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
-        .env("__CARGO_TEST_MAX_UNPACK_SIZE", "8") // hit 8 bytes limit and boom!
-        .env("__CARGO_TEST_MAX_UNPACK_RATIO", "0")
+    p.crabgo("check")
+        .env("__CRABGO_TEST_MAX_UNPACK_SIZE", "8") // hit 8 bytes limit and boom!
+        .env("__CRABGO_TEST_MAX_UNPACK_RATIO", "0")
         .with_status(101)
         .with_stderr(
             "\
@@ -2693,8 +2693,8 @@ Caused by:
         .run();
 
     // Restore to the default ratio and it should compile.
-    p.cargo("check")
-        .env("__CARGO_TEST_MAX_UNPACK_SIZE", "8")
+    p.crabgo("check")
+        .env("__CRABGO_TEST_MAX_UNPACK_SIZE", "8")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1
@@ -2705,7 +2705,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn sparse_retry_single() {
     let fail_count = Mutex::new(0);
     let _registry = RegistryBuilder::new()
@@ -2723,7 +2723,7 @@ fn sparse_retry_single() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2739,7 +2739,7 @@ fn sparse_retry_single() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2759,7 +2759,7 @@ internal server error
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn sparse_retry_multiple() {
     // Tests retry behavior of downloading lots of packages with various
     // failure rates accessing the sparse index.
@@ -2781,7 +2781,7 @@ fn sparse_retry_multiple() {
 
     let mut builder = RegistryBuilder::new().http_index();
     let fail_counts: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(vec![0; pkgs.len()]));
-    let mut cargo_toml = r#"
+    let mut crabgo_toml = r#"
         [package]
         name = "foo"
         version = "0.1.0"
@@ -2809,7 +2809,7 @@ fn sparse_retry_multiple() {
                 server.index(req)
             }
         });
-        write!(&mut cargo_toml, "{name} = \"1.0.0\"\n").unwrap();
+        write!(&mut crabgo_toml, "{name} = \"1.0.0\"\n").unwrap();
         for retry in 0..retries {
             let remain = 3 - retry;
             write!(
@@ -2833,13 +2833,13 @@ fn sparse_retry_multiple() {
         Package::new(name, "1.0.0").publish();
     }
     let p = project()
-        .file("Cargo.toml", &cargo_toml)
+        .file("Crabgo.toml", &crabgo_toml)
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch").with_stderr_unordered(expected).run();
+    p.crabgo("fetch").with_stderr_unordered(expected).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dl_retry_single() {
     // Tests retry behavior of downloading a package.
     // This tests a single package which exercises the code path that causes
@@ -2860,7 +2860,7 @@ fn dl_retry_single() {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2872,7 +2872,7 @@ fn dl_retry_single() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr("\
 [UPDATING] `dummy-registry` index
 [DOWNLOADING] crates ...
@@ -2900,7 +2900,7 @@ fn rand_prefix() -> String {
         .collect()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dl_retry_multiple() {
     // Tests retry behavior of downloading lots of packages with various
     // failure rates.
@@ -2922,7 +2922,7 @@ fn dl_retry_multiple() {
 
     let mut builder = RegistryBuilder::new().http_index();
     let fail_counts: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(vec![0; pkgs.len()]));
-    let mut cargo_toml = r#"
+    let mut crabgo_toml = r#"
         [package]
         name = "foo"
         version = "0.1.0"
@@ -2949,7 +2949,7 @@ fn dl_retry_multiple() {
                     server.dl(req)
                 }
             });
-        write!(&mut cargo_toml, "{name} = \"1.0.0\"\n").unwrap();
+        write!(&mut crabgo_toml, "{name} = \"1.0.0\"\n").unwrap();
         for retry in 0..retries {
             let remain = 3 - retry;
             write!(
@@ -2973,20 +2973,20 @@ fn dl_retry_multiple() {
         Package::new(name, "1.0.0").publish();
     }
     let p = project()
-        .file("Cargo.toml", &cargo_toml)
+        .file("Crabgo.toml", &crabgo_toml)
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch").with_stderr_unordered(expected).run();
+    p.crabgo("fetch").with_stderr_unordered(expected).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deleted_entry() {
     // Checks the behavior when a package is removed from the index.
     // This is done occasionally on crates.io to handle things like
     // copyright takedowns.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3005,7 +3005,7 @@ fn deleted_entry() {
     let bar_reg_path = registry_path().join(&bar_path);
     let old_index = fs::read_to_string(&bar_reg_path).unwrap();
     Package::new("bar", "0.1.1").publish();
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -3030,8 +3030,8 @@ foo v0.1.0 ([ROOT]/foo)
     index.write().unwrap();
     git::commit(&repo);
 
-    // With `Cargo.lock` unchanged, it shouldn't have an impact.
-    p.cargo("tree")
+    // With `Crabgo.lock` unchanged, it shouldn't have an impact.
+    p.crabgo("tree")
         .with_stderr("")
         .with_stdout(
             "\
@@ -3041,9 +3041,9 @@ foo v0.1.0 ([ROOT]/foo)
         )
         .run();
 
-    // Regenerating Cargo.lock should switch to old version.
-    fs::remove_file(p.root().join("Cargo.lock")).unwrap();
-    p.cargo("tree")
+    // Regenerating Crabgo.lock should switch to old version.
+    fs::remove_file(p.root().join("Crabgo.lock")).unwrap();
+    p.crabgo("tree")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -3067,8 +3067,8 @@ foo v0.1.0 ([ROOT]/foo)
     git::commit(&repo);
     fs::remove_file(&bar_reg_path).unwrap();
 
-    // With `Cargo.lock` unchanged, it shouldn't have an impact.
-    p.cargo("tree")
+    // With `Crabgo.lock` unchanged, it shouldn't have an impact.
+    p.crabgo("tree")
         .with_stderr("")
         .with_stdout(
             "\
@@ -3078,9 +3078,9 @@ foo v0.1.0 ([ROOT]/foo)
         )
         .run();
 
-    // Regenerating Cargo.lock should fail.
-    fs::remove_file(p.root().join("Cargo.lock")).unwrap();
-    p.cargo("tree")
+    // Regenerating Crabgo.lock should fail.
+    fs::remove_file(p.root().join("Crabgo.lock")).unwrap();
+    p.crabgo("tree")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -3093,14 +3093,14 @@ required by package `foo v0.1.0 ([ROOT]/foo)`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn corrupted_ok_overwritten() {
-    // Checks what happens if .cargo-ok gets truncated, such as if the file is
+    // Checks what happens if .crabgo-ok gets truncated, such as if the file is
     // created, but the flush/close is interrupted.
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3112,7 +3112,7 @@ fn corrupted_ok_overwritten() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -3123,7 +3123,7 @@ fn corrupted_ok_overwritten() {
         .run();
     let ok = glob::glob(
         paths::home()
-            .join(".cargo/registry/src/*/bar-1.0.0/.cargo-ok")
+            .join(".crabgo/registry/src/*/bar-1.0.0/.crabgo-ok")
             .to_str()
             .unwrap(),
     )
@@ -3131,14 +3131,14 @@ fn corrupted_ok_overwritten() {
     .next()
     .unwrap()
     .unwrap();
-    // Simulate cargo being interrupted, or filesystem corruption.
+    // Simulate crabgo being interrupted, or filesystem corruption.
     fs::write(&ok, "").unwrap();
     assert_eq!(fs::read_to_string(&ok).unwrap(), "");
-    p.cargo("fetch").with_stderr("").run();
+    p.crabgo("fetch").with_stderr("").run();
     assert_eq!(fs::read_to_string(&ok).unwrap(), "ok");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn not_found_permutations() {
     // Test for querying permutations for a missing dependency.
     let misses = Arc::new(Mutex::new(Vec::new()));
@@ -3158,7 +3158,7 @@ fn not_found_permutations() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3172,7 +3172,7 @@ fn not_found_permutations() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -3196,17 +3196,17 @@ required by package `foo v0.0.1 ([ROOT]/foo)`
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_auth_error() {
     // Check for the error message for an authentication error when default is set.
     let crates_io = RegistryBuilder::new().http_api().build();
     let _alternative = RegistryBuilder::new().http_api().alternative().build();
 
-    paths::home().join(".cargo/credentials.toml").rm_rf();
+    paths::home().join(".crabgo/credentials.toml").rm_rf();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3219,32 +3219,32 @@ fn default_auth_error() {
         .build();
 
     // Test output before setting the default.
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
 [UPDATING] crates.io index
-error: no token found, please run `cargo login`
-or use environment variable CARGO_REGISTRY_TOKEN
+error: no token found, please run `crabgo login`
+or use environment variable CRABGO_REGISTRY_TOKEN
 ",
         )
         .with_status(101)
         .run();
 
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
 [UPDATING] `alternative` index
-error: no token found for `alternative`, please run `cargo login --registry alternative`
-or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN
+error: no token found for `alternative`, please run `crabgo login --registry alternative`
+or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN
 ",
         )
         .with_status(101)
         .run();
 
     // Test the output with the default.
-    cargo_util::paths::append(
+    crabgo_util::paths::append(
         &cargo_home().join("config"),
         br#"
             [registry]
@@ -3253,25 +3253,25 @@ or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN
     )
     .unwrap();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
 [UPDATING] `alternative` index
-error: no token found for `alternative`, please run `cargo login --registry alternative`
-or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN
+error: no token found for `alternative`, please run `crabgo login --registry alternative`
+or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN
 ",
         )
         .with_status(101)
         .run();
 
-    p.cargo("publish --no-verify --registry crates-io")
+    p.crabgo("publish --no-verify --registry crates-io")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
 [UPDATING] crates.io index
-error: no token found, please run `cargo login --registry crates-io`
-or use environment variable CARGO_REGISTRY_TOKEN
+error: no token found, please run `crabgo login --registry crates-io`
+or use environment variable CRABGO_REGISTRY_TOKEN
 ",
         )
         .with_status(101)
@@ -3289,7 +3289,7 @@ const SAMPLE_HEADERS: &[&str] = &[
     "via: 1.1 bcbc5b46216015493e082cfbcf77ef10.cloudfront.net (CloudFront)",
 ];
 
-#[cargo_test]
+#[crabgo_test]
 fn debug_header_message_index() {
     // The error message should include some headers for debugging purposes.
     let _server = RegistryBuilder::new()
@@ -3304,7 +3304,7 @@ fn debug_header_message_index() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3316,7 +3316,7 @@ fn debug_header_message_index() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch").with_status(101).with_stderr("\
+    p.crabgo("fetch").with_status(101).with_stderr("\
 [UPDATING] `dummy-registry` index
 warning: spurious network error (3 tries remaining): \
     failed to get successful HTTP response from `http://127.0.0.1:[..]/index/3/b/bar` (127.0.0.1), got 503
@@ -3349,7 +3349,7 @@ Caused by:
 ").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn debug_header_message_dl() {
     // Same as debug_header_message_index, but for the dl endpoint which goes
     // through a completely different code path.
@@ -3364,7 +3364,7 @@ fn debug_header_message_dl() {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3377,7 +3377,7 @@ fn debug_header_message_dl() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fetch").with_status(101).with_stderr("\
+    p.crabgo("fetch").with_status(101).with_stderr("\
 [UPDATING] `dummy-registry` index
 [DOWNLOADING] crates ...
 warning: spurious network error (3 tries remaining): \

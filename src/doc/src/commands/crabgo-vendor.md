@@ -1,0 +1,194 @@
+# crabgo-vendor(1)
+
+## NAME
+
+crabgo-vendor --- Vendor all dependencies locally
+
+## SYNOPSIS
+
+`crabgo vendor` [_options_] [_path_]
+
+## DESCRIPTION
+
+This crabgo subcommand will vendor all crates.io and git dependencies for a
+project into the specified directory at `<path>`. After this command completes
+the vendor directory specified by `<path>` will contain all remote sources from
+dependencies specified. Additional manifests beyond the default one can be
+specified with the `-s` option.
+
+The `crabgo vendor` command will also print out the configuration necessary
+to use the vendored sources, which you will need to add to `.crabgo/config.toml`.
+
+## OPTIONS
+
+### Vendor Options
+
+<dl>
+
+<dt class="option-term" id="option-crabgo-vendor--s"><a class="option-anchor" href="#option-crabgo-vendor--s"></a><code>-s</code> <em>manifest</em></dt>
+<dt class="option-term" id="option-crabgo-vendor---sync"><a class="option-anchor" href="#option-crabgo-vendor---sync"></a><code>--sync</code> <em>manifest</em></dt>
+<dd class="option-desc">Specify an extra <code>Crabgo.toml</code> manifest to workspaces which should also be
+vendored and synced to the output. May be specified multiple times.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---no-delete"><a class="option-anchor" href="#option-crabgo-vendor---no-delete"></a><code>--no-delete</code></dt>
+<dd class="option-desc">Don’t delete the “vendor” directory when vendoring, but rather keep all
+existing contents of the vendor directory</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---respect-source-config"><a class="option-anchor" href="#option-crabgo-vendor---respect-source-config"></a><code>--respect-source-config</code></dt>
+<dd class="option-desc">Instead of ignoring <code>[source]</code> configuration by default in <code>.crabgo/config.toml</code>
+read it and use it when downloading crates from crates.io, for example</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---versioned-dirs"><a class="option-anchor" href="#option-crabgo-vendor---versioned-dirs"></a><code>--versioned-dirs</code></dt>
+<dd class="option-desc">Normally versions are only added to disambiguate multiple versions of the
+same package. This option causes all directories in the “vendor” directory
+to be versioned, which makes it easier to track the history of vendored
+packages over time, and can help with the performance of re-vendoring when
+only a subset of the packages have changed.</dd>
+
+
+</dl>
+
+### Manifest Options
+
+<dl>
+
+<dt class="option-term" id="option-crabgo-vendor---manifest-path"><a class="option-anchor" href="#option-crabgo-vendor---manifest-path"></a><code>--manifest-path</code> <em>path</em></dt>
+<dd class="option-desc">Path to the <code>Crabgo.toml</code> file. By default, Crabgo searches for the
+<code>Crabgo.toml</code> file in the current directory or any parent directory.</dd>
+
+
+
+<dt class="option-term" id="option-crabgo-vendor---frozen"><a class="option-anchor" href="#option-crabgo-vendor---frozen"></a><code>--frozen</code></dt>
+<dt class="option-term" id="option-crabgo-vendor---locked"><a class="option-anchor" href="#option-crabgo-vendor---locked"></a><code>--locked</code></dt>
+<dd class="option-desc">Either of these flags requires that the <code>Crabgo.lock</code> file is
+up-to-date. If the lock file is missing, or it needs to be updated, Crabgo will
+exit with an error. The <code>--frozen</code> flag also prevents Crabgo from
+attempting to access the network to determine if it is out-of-date.</p>
+<p>These may be used in environments where you want to assert that the
+<code>Crabgo.lock</code> file is up-to-date (such as a CI build) or want to avoid network
+access.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---offline"><a class="option-anchor" href="#option-crabgo-vendor---offline"></a><code>--offline</code></dt>
+<dd class="option-desc">Prevents Crabgo from accessing the network for any reason. Without this
+flag, Crabgo will stop with an error if it needs to access the network and
+the network is not available. With this flag, Crabgo will attempt to
+proceed without the network if possible.</p>
+<p>Beware that this may result in different dependency resolution than online
+mode. Crabgo will restrict itself to crates that are downloaded locally, even
+if there might be a newer version as indicated in the local copy of the index.
+See the <a href="crabgo-fetch.html">crabgo-fetch(1)</a> command to download dependencies before going
+offline.</p>
+<p>May also be specified with the <code>net.offline</code> <a href="../reference/config.html">config value</a>.</dd>
+
+
+
+</dl>
+
+### Display Options
+
+<dl>
+
+<dt class="option-term" id="option-crabgo-vendor--v"><a class="option-anchor" href="#option-crabgo-vendor--v"></a><code>-v</code></dt>
+<dt class="option-term" id="option-crabgo-vendor---verbose"><a class="option-anchor" href="#option-crabgo-vendor---verbose"></a><code>--verbose</code></dt>
+<dd class="option-desc">Use verbose output. May be specified twice for “very verbose” output which
+includes extra output such as dependency warnings and build script output.
+May also be specified with the <code>term.verbose</code>
+<a href="../reference/config.html">config value</a>.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor--q"><a class="option-anchor" href="#option-crabgo-vendor--q"></a><code>-q</code></dt>
+<dt class="option-term" id="option-crabgo-vendor---quiet"><a class="option-anchor" href="#option-crabgo-vendor---quiet"></a><code>--quiet</code></dt>
+<dd class="option-desc">Do not print crabgo log messages.
+May also be specified with the <code>term.quiet</code>
+<a href="../reference/config.html">config value</a>.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---color"><a class="option-anchor" href="#option-crabgo-vendor---color"></a><code>--color</code> <em>when</em></dt>
+<dd class="option-desc">Control when colored output is used. Valid values:</p>
+<ul>
+<li><code>auto</code> (default): Automatically detect if color support is available on the
+terminal.</li>
+<li><code>always</code>: Always display colors.</li>
+<li><code>never</code>: Never display colors.</li>
+</ul>
+<p>May also be specified with the <code>term.color</code>
+<a href="../reference/config.html">config value</a>.</dd>
+
+
+
+</dl>
+
+### Common Options
+
+<dl>
+
+<dt class="option-term" id="option-crabgo-vendor-+toolchain"><a class="option-anchor" href="#option-crabgo-vendor-+toolchain"></a><code>+</code><em>toolchain</em></dt>
+<dd class="option-desc">If Crabgo has been installed with rustup, and the first argument to <code>crabgo</code>
+begins with <code>+</code>, it will be interpreted as a rustup toolchain name (such
+as <code>+stable</code> or <code>+nightly</code>).
+See the <a href="https://rust-lang.github.io/rustup/overrides.html">rustup documentation</a>
+for more information about how toolchain overrides work.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor---config"><a class="option-anchor" href="#option-crabgo-vendor---config"></a><code>--config</code> <em>KEY=VALUE</em> or <em>PATH</em></dt>
+<dd class="option-desc">Overrides a Crabgo configuration value. The argument should be in TOML syntax of <code>KEY=VALUE</code>,
+or provided as a path to an extra configuration file. This flag may be specified multiple times.
+See the <a href="../reference/config.html#command-line-overrides">command-line overrides section</a> for more information.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor--C"><a class="option-anchor" href="#option-crabgo-vendor--C"></a><code>-C</code> <em>PATH</em></dt>
+<dd class="option-desc">Changes the current working directory before executing any specified operations. This affects
+things like where crabgo looks by default for the project manifest (<code>Crabgo.toml</code>), as well as
+the directories searched for discovering <code>.crabgo/config.toml</code>, for example. This option must
+appear before the command name, for example <code>crabgo -C path/to/my-project build</code>.</p>
+<p>This option is only available on the <a href="https://doc.rust-lang.org/book/appendix-07-nightly-rust.html">nightly
+channel</a> and
+requires the <code>-Z unstable-options</code> flag to enable (see
+<a href="https://github.com/rust-lang/crabgo/issues/10098">#10098</a>).</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor--h"><a class="option-anchor" href="#option-crabgo-vendor--h"></a><code>-h</code></dt>
+<dt class="option-term" id="option-crabgo-vendor---help"><a class="option-anchor" href="#option-crabgo-vendor---help"></a><code>--help</code></dt>
+<dd class="option-desc">Prints help information.</dd>
+
+
+<dt class="option-term" id="option-crabgo-vendor--Z"><a class="option-anchor" href="#option-crabgo-vendor--Z"></a><code>-Z</code> <em>flag</em></dt>
+<dd class="option-desc">Unstable (nightly-only) flags to Crabgo. Run <code>crabgo -Z help</code> for details.</dd>
+
+
+</dl>
+
+
+## ENVIRONMENT
+
+See [the reference](../reference/environment-variables.html) for
+details on environment variables that Crabgo reads.
+
+
+## EXIT STATUS
+
+* `0`: Crabgo succeeded.
+* `101`: Crabgo failed to complete.
+
+
+## EXAMPLES
+
+1. Vendor all dependencies into a local "vendor" folder
+
+       crabgo vendor
+
+2. Vendor all dependencies into a local "third-party/vendor" folder
+
+       crabgo vendor third-party/vendor
+
+3. Vendor the current workspace as well as another to "vendor"
+
+       crabgo vendor -s ../path/to/Crabgo.toml
+
+## SEE ALSO
+[crabgo(1)](crabgo.html)
+

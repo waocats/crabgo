@@ -6,7 +6,7 @@
 //!         build-man
 //!
 //! DESCRIPTION
-//!         Build the man pages for packages `mdman` and `cargo`.
+//!         Build the man pages for packages `mdman` and `crabgo`.
 //!         For more, read their doc comments.
 //! ```
 
@@ -18,7 +18,7 @@ use std::process::Command;
 
 fn main() -> io::Result<()> {
     build_mdman()?;
-    build_cargo()?;
+    build_crabgo()?;
     Ok(())
 }
 
@@ -33,7 +33,7 @@ fn build_mdman() -> io::Result<()> {
     build_man("mdman", src_paths, &outs, &[])
 }
 
-/// Builds the man pages for Cargo.
+/// Builds the man pages for Crabgo.
 ///
 /// The source for the man pages are located in src/doc/man/ in markdown format.
 /// These also are handlebars templates, see crates/mdman/README.md for details.
@@ -41,16 +41,16 @@ fn build_mdman() -> io::Result<()> {
 /// The generated man pages are placed in the src/etc/man/ directory. The pages
 /// are also expanded into markdown (after being expanded by handlebars) and
 /// saved in the src/doc/src/commands/ directory. These are included in the
-/// Cargo book, which is converted to HTML by mdbook.
-fn build_cargo() -> io::Result<()> {
-    // Find all `src/doc/man/cargo-*.md`
+/// Crabgo book, which is converted to HTML by mdbook.
+fn build_crabgo() -> io::Result<()> {
+    // Find all `src/doc/man/crabgo-*.md`
     let src_paths = {
         let mut src_paths = Vec::new();
         for entry in fs::read_dir("src/doc/man")? {
             let entry = entry?;
             let file_name = entry.file_name();
             let file_name = file_name.to_str().unwrap();
-            if file_name.starts_with("cargo-") && file_name.ends_with(".md") {
+            if file_name.starts_with("crabgo-") && file_name.ends_with(".md") {
                 src_paths.push(entry.path());
             }
         }
@@ -63,20 +63,20 @@ fn build_cargo() -> io::Result<()> {
     ];
     let args = [
         "--url",
-        "https://doc.rust-lang.org/cargo/commands/",
+        "https://doc.rust-lang.org/crabgo/commands/",
         "--man",
         "rustc:1=https://doc.rust-lang.org/rustc/index.html",
         "--man",
         "rustdoc:1=https://doc.rust-lang.org/rustdoc/index.html",
     ];
-    build_man("cargo", &src_paths[..], &outs, &args)
+    build_man("crabgo", &src_paths[..], &outs, &args)
 }
 
 /// Change to workspace root.
 ///
 /// Assumed this xtask is located in `[WORKSPACE]/crates/xtask-build-man`.
 fn cwd_to_workspace_root() -> io::Result<()> {
-    let pkg_root = std::env!("CARGO_MANIFEST_DIR");
+    let pkg_root = std::env!("CRABGO_MANIFEST_DIR");
     let ws_root = format!("{pkg_root}/../..");
     std::env::set_current_dir(ws_root)
 }
@@ -90,7 +90,7 @@ fn build_man(
 ) -> io::Result<()> {
     for (format, dst_path) in outs {
         eprintln!("Start converting `{format}` for package `{pkg_name}`...");
-        let mut cmd = Command::new(std::env!("CARGO"));
+        let mut cmd = Command::new(std::env!("CRABGO"));
         cmd.args(["run", "--package", "mdman", "--"])
             .args(["-t", format, "-o", dst_path])
             .args(src_paths)

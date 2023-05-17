@@ -2,8 +2,8 @@
 
 use std::fs;
 
-use cargo_test_support::registry::{Package, RegistryBuilder, TestRegistry};
-use cargo_test_support::{cargo_process, paths, project, t};
+use crabgo_test_support::registry::{Package, RegistryBuilder, TestRegistry};
+use crabgo_test_support::{crabgo_process, paths, project, t};
 
 fn setup_replacement(config: &str) -> TestRegistry {
     let crates_io = RegistryBuilder::new()
@@ -12,12 +12,12 @@ fn setup_replacement(config: &str) -> TestRegistry {
         .build();
 
     let root = paths::root();
-    t!(fs::create_dir(&root.join(".cargo")));
-    t!(fs::write(root.join(".cargo/config"), config,));
+    t!(fs::create_dir(&root.join(".crabgo")));
+    t!(fs::write(root.join(".crabgo/config"), config,));
     crates_io
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crates_io_token_not_sent_to_replacement() {
     // verifies that the crates.io token is not sent to a replacement registry during publish.
     let crates_io = setup_replacement(
@@ -34,7 +34,7 @@ fn crates_io_token_not_sent_to_replacement() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -47,13 +47,13 @@ fn crates_io_token_not_sent_to_replacement() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry crates-io")
+    p.crabgo("publish --no-verify --registry crates-io")
         .replace_crates_io(crates_io.index_url())
         .with_stderr_contains("[UPDATING] crates.io index")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn token_sent_to_correct_registry() {
     // verifies that the crates.io token is not sent to a replacement registry during yank.
     let crates_io = setup_replacement(
@@ -64,7 +64,7 @@ fn token_sent_to_correct_registry() {
     );
     let _alternative = RegistryBuilder::new().alternative().http_api().build();
 
-    cargo_process("yank foo@0.0.1 --registry crates-io")
+    crabgo_process("yank foo@0.0.1 --registry crates-io")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
@@ -74,7 +74,7 @@ fn token_sent_to_correct_registry() {
         )
         .run();
 
-    cargo_process("yank foo@0.0.1 --registry alternative")
+    crabgo_process("yank foo@0.0.1 --registry alternative")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
@@ -85,7 +85,7 @@ fn token_sent_to_correct_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ambiguous_registry() {
     // verifies that an error is issued when a source-replacement is configured
     // and no --registry argument is given.
@@ -101,7 +101,7 @@ fn ambiguous_registry() {
         .no_configure_token()
         .build();
 
-    cargo_process("yank foo@0.0.1")
+    crabgo_process("yank foo@0.0.1")
         .replace_crates_io(crates_io.index_url())
         .with_status(101)
         .with_stderr(
@@ -113,7 +113,7 @@ include `--registry alternative` or `--registry crates-io`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yank_with_default_crates_io() {
     // verifies that no error is given when registry.default is used.
     let crates_io = setup_replacement(
@@ -127,7 +127,7 @@ fn yank_with_default_crates_io() {
     );
     let _alternative = RegistryBuilder::new().alternative().http_api().build();
 
-    cargo_process("yank foo@0.0.1")
+    crabgo_process("yank foo@0.0.1")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
@@ -138,7 +138,7 @@ fn yank_with_default_crates_io() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yank_with_default_alternative() {
     // verifies that no error is given when registry.default is an alt registry.
     let crates_io = setup_replacement(
@@ -152,7 +152,7 @@ fn yank_with_default_alternative() {
     );
     let _alternative = RegistryBuilder::new().alternative().http_api().build();
 
-    cargo_process("yank foo@0.0.1")
+    crabgo_process("yank foo@0.0.1")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
@@ -163,7 +163,7 @@ fn yank_with_default_alternative() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_replacement() {
     // verifies that the crates.io token is not sent to a replacement registry during publish.
     let crates_io = setup_replacement(
@@ -184,7 +184,7 @@ fn publish_with_replacement() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -203,13 +203,13 @@ fn publish_with_replacement() {
     // Verifies that the crates.io index is used to find the publishing endpoint
     // and that the crate is sent to crates.io. The source replacement is only used
     // for the verification step.
-    p.cargo("publish --registry crates-io")
+    p.crabgo("publish --registry crates-io")
         .replace_crates_io(crates_io.index_url())
         .with_stderr(
             "\
 [UPDATING] crates.io index
 [WARNING] manifest has no documentation, homepage or repository.
-See https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info.
+See https://doc.rust-lang.org/crabgo/reference/manifest.html#package-metadata for more info.
 [PACKAGING] foo v0.0.1 ([..])
 [VERIFYING] foo v0.0.1 ([..])
 [UPDATING] `alternative` index
@@ -229,7 +229,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn undefined_default() {
     // verifies that no error is given when registry.default is used.
     let crates_io = setup_replacement(
@@ -239,7 +239,7 @@ fn undefined_default() {
     "#,
     );
 
-    cargo_process("yank foo@0.0.1")
+    crabgo_process("yank foo@0.0.1")
         .replace_crates_io(crates_io.index_url())
         .with_status(101)
         .with_stderr(

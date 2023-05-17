@@ -1,25 +1,25 @@
 //! Tests for build.rs scripts.
 
-use cargo_test_support::compare::assert_match_exact;
-use cargo_test_support::install::cargo_home;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::Package;
-use cargo_test_support::tools;
-use cargo_test_support::{
-    basic_manifest, cargo_exe, cross_compile, is_coarse_mtime, project, project_in,
+use crabgo_test_support::compare::assert_match_exact;
+use crabgo_test_support::install::cargo_home;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::tools;
+use crabgo_test_support::{
+    basic_manifest, crabgo_exe, cross_compile, is_coarse_mtime, project, project_in,
 };
-use cargo_test_support::{rustc_host, sleep_ms, slow_cpu_multiplier, symlink_supported};
-use cargo_util::paths::{self, remove_dir_all};
+use crabgo_test_support::{rustc_host, sleep_ms, slow_cpu_multiplier, symlink_supported};
+use crabgo_util::paths::{self, remove_dir_all};
 use std::env;
 use std::fs;
 use std::io;
 use std::thread;
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_failed() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -32,7 +32,7 @@ fn custom_build_script_failed() {
         .file("src/main.rs", "fn main() {}")
         .file("build.rs", "fn main() { std::process::exit(101); }")
         .build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -47,7 +47,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_failed_backtraces_message() {
     // In this situation (no dependency sharing), debuginfo is turned off in
     // `dev.build-override`. However, if an error occurs running e.g. a build
@@ -55,7 +55,7 @@ fn custom_build_script_failed_backtraces_message() {
     // improve backtraces is also displayed.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -68,7 +68,7 @@ fn custom_build_script_failed_backtraces_message() {
         .file("src/main.rs", "fn main() {}")
         .file("build.rs", "fn main() { std::process::exit(101); }")
         .build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .env("RUST_BACKTRACE", "1")
         .with_status(101)
         .with_stderr(
@@ -78,14 +78,14 @@ fn custom_build_script_failed_backtraces_message() {
 [RUNNING] `[..]/build-script-build`
 [ERROR] failed to run custom build command for `foo v0.5.0 ([CWD])`
 note: To improve backtraces for build dependencies, set the \
-CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable [..]
+CRABGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable [..]
 
 Caused by:
   process didn't exit successfully: `[..]/build-script-build` (exit [..]: 101)",
         )
         .run();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .env("RUST_BACKTRACE", "1")
         .with_status(101)
         .with_stderr(
@@ -94,7 +94,7 @@ Caused by:
 [RUNNING] `[..]/build-script-build`
 [ERROR] failed to run custom build command for `foo v0.5.0 ([CWD])`
 note: To improve backtraces for build dependencies, set the \
-CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable [..]
+CRABGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable [..]
 
 Caused by:
   process didn't exit successfully: `[..]/build-script-build` (exit [..]: 101)",
@@ -102,14 +102,14 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_failed_backtraces_message_with_debuginfo() {
     // This is the same test as `custom_build_script_failed_backtraces_message` above, this time
     // ensuring that the message dedicated to improving backtraces by requesting debuginfo is not
     // shown when debuginfo is already turned on.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -122,9 +122,9 @@ fn custom_build_script_failed_backtraces_message_with_debuginfo() {
         .file("src/main.rs", "fn main() {}")
         .file("build.rs", "fn main() { std::process::exit(101); }")
         .build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .env("RUST_BACKTRACE", "1")
-        .env("CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG", "true")
+        .env("CRABGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG", "true")
         .with_status(101)
         .with_stderr(
             "\
@@ -139,11 +139,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_vars() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -160,7 +160,7 @@ fn custom_build_env_vars() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -175,8 +175,8 @@ fn custom_build_env_vars() {
         )
         .file("bar/src/lib.rs", "pub fn hello() {}");
 
-    let cargo = cargo_exe().canonicalize().unwrap();
-    let cargo = cargo.to_str().unwrap();
+    let crabgo = crabgo_exe().canonicalize().unwrap();
+    let crabgo = crabgo.to_str().unwrap();
     let rustc = paths::resolve_executable("rustc".as_ref())
         .unwrap()
         .canonicalize()
@@ -190,7 +190,7 @@ fn custom_build_env_vars() {
             fn main() {{
                 let _target = env::var("TARGET").unwrap();
                 let _ncpus = env::var("NUM_JOBS").unwrap();
-                let _dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+                let _dir = env::var("CRABGO_MANIFEST_DIR").unwrap();
 
                 let opt = env::var("OPT_LEVEL").unwrap();
                 assert_eq!(opt, "0");
@@ -207,13 +207,13 @@ fn custom_build_env_vars() {
 
                 let _host = env::var("HOST").unwrap();
 
-                let _feat = env::var("CARGO_FEATURE_FOO").unwrap();
+                let _feat = env::var("CRABGO_FEATURE_FOO").unwrap();
 
-                let cargo = env::var("CARGO").unwrap();
-                if env::var_os("CHECK_CARGO_IS_RUSTC").is_some() {{
-                    assert_eq!(cargo, r#"{rustc}"#);
+                let crabgo = env::var("CRABGO").unwrap();
+                if env::var_os("CHECK_CRABGO_IS_RUSTC").is_some() {{
+                    assert_eq!(crabgo, r#"{rustc}"#);
                 }} else {{
-                    assert_eq!(cargo, r#"{cargo}"#);
+                    assert_eq!(crabgo, r#"{crabgo}"#);
                 }}
 
                 let rustc = env::var("RUSTC").unwrap();
@@ -228,7 +228,7 @@ fn custom_build_env_vars() {
                 assert!(env::var("RUSTC_LINKER").is_err());
 
                 assert!(env::var("RUSTFLAGS").is_err());
-                let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap();
+                let rustflags = env::var("CRABGO_ENCODED_RUSTFLAGS").unwrap();
                 assert_eq!(rustflags, "");
             }}
         "##,
@@ -241,21 +241,21 @@ fn custom_build_env_vars() {
 
     let p = p.file("bar/build.rs", &file_content).build();
 
-    p.cargo("build --features bar_feat").run();
-    p.cargo("build --features bar_feat")
-        // we use rustc since $CARGO is only used if it points to a path that exists
-        .env("CHECK_CARGO_IS_RUSTC", "1")
-        .env(cargo::CARGO_ENV, rustc)
+    p.crabgo("build --features bar_feat").run();
+    p.crabgo("build --features bar_feat")
+        // we use rustc since $CRABGO is only used if it points to a path that exists
+        .env("CHECK_CRABGO_IS_RUSTC", "1")
+        .env(crabgo::CRABGO_ENV, rustc)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustflags() {
     let rustflags = "--cfg=special";
     let rustflags_alt = "--cfg=notspecial";
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [build]
@@ -275,9 +275,9 @@ fn custom_build_env_var_rustflags() {
                     assert!(env::var("RUSTFLAGS").is_err());
                     let x;
                     #[cfg(special)]
-                    {{ assert_eq!(env::var("CARGO_ENCODED_RUSTFLAGS").unwrap(), "{}"); x = String::new(); }}
+                    {{ assert_eq!(env::var("CRABGO_ENCODED_RUSTFLAGS").unwrap(), "{}"); x = String::new(); }}
                     #[cfg(notspecial)]
-                    {{ assert_eq!(env::var("CARGO_ENCODED_RUSTFLAGS").unwrap(), "{}"); x = String::new(); }}
+                    {{ assert_eq!(env::var("CRABGO_ENCODED_RUSTFLAGS").unwrap(), "{}"); x = String::new(); }}
                     let _ = x;
                 }}
                 "#,
@@ -287,20 +287,20 @@ fn custom_build_env_var_rustflags() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // RUSTFLAGS overrides build.rustflags, so --cfg=special shouldn't be passed
-    p.cargo("check").env("RUSTFLAGS", rustflags_alt).run();
+    p.crabgo("check").env("RUSTFLAGS", rustflags_alt).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_encoded_rustflags() {
     // NOTE: We use "-Clink-arg=-B nope" here rather than, say, "-A missing_docs", since for the
     // latter it won't matter if the whitespace accidentally gets split, as rustc will do the right
     // thing either way.
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["-Clink-arg=-B nope", "--cfg=foo"]
@@ -312,17 +312,17 @@ fn custom_build_env_var_encoded_rustflags() {
                 use std::env;
 
                 fn main() {{
-                    assert_eq!(env::var("CARGO_ENCODED_RUSTFLAGS").unwrap(), "-Clink-arg=-B nope\x1f--cfg=foo");
+                    assert_eq!(env::var("CRABGO_ENCODED_RUSTFLAGS").unwrap(), "-Clink-arg=-B nope\x1f--cfg=foo");
                 }}
                 "#,
         )
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_wrapper() {
     let wrapper = tools::echo_wrapper();
     let p = project()
@@ -334,7 +334,7 @@ fn custom_build_env_var_rustc_wrapper() {
             fn main() {{
                 assert_eq!(
                     env::var("RUSTC_WRAPPER").unwrap(),
-                    env::var("CARGO_RUSTC_WRAPPER_CHECK").unwrap()
+                    env::var("CRABGO_RUSTC_WRAPPER_CHECK").unwrap()
                 );
             }}
             "#,
@@ -342,13 +342,13 @@ fn custom_build_env_var_rustc_wrapper() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
-        .env("CARGO_BUILD_RUSTC_WRAPPER", &wrapper)
-        .env("CARGO_RUSTC_WRAPPER_CHECK", &wrapper)
+    p.crabgo("check")
+        .env("CRABGO_BUILD_RUSTC_WRAPPER", &wrapper)
+        .env("CRABGO_RUSTC_WRAPPER_CHECK", &wrapper)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_workspace_wrapper() {
     let wrapper = tools::echo_wrapper();
 
@@ -362,7 +362,7 @@ fn custom_build_env_var_rustc_workspace_wrapper() {
             fn main() {{
                 assert_eq!(
                     env::var("RUSTC_WORKSPACE_WRAPPER").unwrap(),
-                    env::var("CARGO_RUSTC_WORKSPACE_WRAPPER_CHECK").unwrap()
+                    env::var("CRABGO_RUSTC_WORKSPACE_WRAPPER_CHECK").unwrap()
                 );
             }}
             "#,
@@ -370,15 +370,15 @@ fn custom_build_env_var_rustc_workspace_wrapper() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
-        .env("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER", &wrapper)
-        .env("CARGO_RUSTC_WORKSPACE_WRAPPER_CHECK", &wrapper)
+    p.crabgo("check")
+        .env("CRABGO_BUILD_RUSTC_WORKSPACE_WRAPPER", &wrapper)
+        .env("CRABGO_RUSTC_WORKSPACE_WRAPPER_CHECK", &wrapper)
         .run();
 
     // But should not be set for a crate from the registry, as then it's not in a workspace.
     Package::new("bar", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -400,7 +400,7 @@ fn custom_build_env_var_rustc_workspace_wrapper() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -413,12 +413,12 @@ fn custom_build_env_var_rustc_workspace_wrapper() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
-        .env("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER", &wrapper)
+    p.crabgo("check")
+        .env("CRABGO_BUILD_RUSTC_WORKSPACE_WRAPPER", &wrapper)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_linker() {
     if cross_compile::disabled() {
         return;
@@ -426,7 +426,7 @@ fn custom_build_env_var_rustc_linker() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.{}]
@@ -450,15 +450,15 @@ fn custom_build_env_var_rustc_linker() {
 
     // no crate type set => linker never called => build succeeds if and
     // only if build.rs succeeds, despite linker binary not existing.
-    p.cargo("build --target").arg(&target).run();
+    p.crabgo("build --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_linker_bad_host_target() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.{}]
@@ -472,7 +472,7 @@ fn custom_build_env_var_rustc_linker_bad_host_target() {
         .build();
 
     // build.rs should fail since host == target when no target is set
-    p.cargo("build --verbose")
+    p.crabgo("build --verbose")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -484,12 +484,12 @@ fn custom_build_env_var_rustc_linker_bad_host_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_linker_host_target() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 target-applies-to-host = false
@@ -514,18 +514,18 @@ fn custom_build_env_var_rustc_linker_host_target() {
 
     // no crate type set => linker never called => build succeeds if and
     // only if build.rs succeeds, despite linker binary not existing.
-    p.cargo("build -Z target-applies-to-host --target")
+    p.crabgo("build -Z target-applies-to-host --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_linker_host_target_env() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.{}]
@@ -549,19 +549,19 @@ fn custom_build_env_var_rustc_linker_host_target_env() {
 
     // no crate type set => linker never called => build succeeds if and
     // only if build.rs succeeds, despite linker binary not existing.
-    p.cargo("build -Z target-applies-to-host --target")
-        .env("CARGO_TARGET_APPLIES_TO_HOST", "false")
+    p.crabgo("build -Z target-applies-to-host --target")
+        .env("CRABGO_TARGET_APPLIES_TO_HOST", "false")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_invalid_host_config_feature_flag() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.{}]
@@ -575,9 +575,9 @@ fn custom_build_invalid_host_config_feature_flag() {
         .build();
 
     // build.rs should fail due to -Zhost-config being set without -Ztarget-applies-to-host
-    p.cargo("build -Z host-config --target")
+    p.crabgo("build -Z host-config --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["host-config"])
+        .masquerade_as_nightly_crabgo(&["host-config"])
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -587,12 +587,12 @@ error: the -Zhost-config flag requires the -Ztarget-applies-to-host flag to be s
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_linker_host_target_with_bad_host_config() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [host]
@@ -608,9 +608,9 @@ fn custom_build_linker_host_target_with_bad_host_config() {
         .build();
 
     // build.rs should fail due to bad host linker being set
-    p.cargo("build -Z target-applies-to-host -Z host-config --verbose --target")
+    p.crabgo("build -Z target-applies-to-host -Z host-config --verbose --target")
             .arg(&target)
-            .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+            .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
             .with_status(101)
             .with_stderr_contains(
                 "\
@@ -622,12 +622,12 @@ fn custom_build_linker_host_target_with_bad_host_config() {
             .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_linker_bad_host() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [host]
@@ -643,9 +643,9 @@ fn custom_build_linker_bad_host() {
         .build();
 
     // build.rs should fail due to bad host linker being set
-    p.cargo("build -Z target-applies-to-host -Z host-config --verbose --target")
+    p.crabgo("build -Z target-applies-to-host -Z host-config --verbose --target")
             .arg(&target)
-            .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+            .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
             .with_status(101)
             .with_stderr_contains(
                 "\
@@ -657,12 +657,12 @@ fn custom_build_linker_bad_host() {
             .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_linker_bad_host_with_arch() {
     let target = rustc_host();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [host]
@@ -680,9 +680,9 @@ fn custom_build_linker_bad_host_with_arch() {
         .build();
 
     // build.rs should fail due to bad host linker being set
-    p.cargo("build -Z target-applies-to-host -Z host-config --verbose --target")
+    p.crabgo("build -Z target-applies-to-host -Z host-config --verbose --target")
             .arg(&target)
-            .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+            .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
             .with_status(101)
             .with_stderr_contains(
                 "\
@@ -694,13 +694,13 @@ fn custom_build_linker_bad_host_with_arch() {
             .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_env_var_rustc_linker_cross_arch_host() {
     let target = rustc_host();
     let cross_target = cross_compile::alternate();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [host.{}]
@@ -726,19 +726,19 @@ fn custom_build_env_var_rustc_linker_cross_arch_host() {
 
     // build.rs should be built fine since cross target != host target.
     // assertion should succeed since it's still passed the target linker
-    p.cargo("build -Z target-applies-to-host -Z host-config --verbose --target")
+    p.crabgo("build -Z target-applies-to-host -Z host-config --verbose --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_linker_bad_cross_arch_host() {
     let target = rustc_host();
     let cross_target = cross_compile::alternate();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [host]
@@ -756,9 +756,9 @@ fn custom_build_linker_bad_cross_arch_host() {
         .build();
 
     // build.rs should fail due to bad host linker being set
-    p.cargo("build -Z target-applies-to-host -Z host-config --verbose --target")
+    p.crabgo("build -Z target-applies-to-host -Z host-config --verbose --target")
             .arg(&target)
-            .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+            .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
             .with_status(101)
             .with_stderr_contains(
                 "\
@@ -770,11 +770,11 @@ fn custom_build_linker_bad_cross_arch_host() {
             .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_wrong_rustc_flags() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -787,11 +787,11 @@ fn custom_build_script_wrong_rustc_flags() {
         .file("src/main.rs", "fn main() {}")
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-flags=-aaa -bbb"); }"#,
+            r#"fn main() { println!("crabgo:rustc-flags=-aaa -bbb"); }"#,
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr_contains(
             "[ERROR] Only `-l` and `-L` flags are allowed in build script of `foo v0.5.0 ([CWD])`: \
@@ -800,11 +800,11 @@ fn custom_build_script_wrong_rustc_flags() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_rustc_flags() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -818,7 +818,7 @@ fn custom_build_script_rustc_flags() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
 
@@ -833,13 +833,13 @@ fn custom_build_script_rustc_flags() {
             "foo/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-l nonexistinglib -L /dummy/path1 -L /dummy/path2");
+                    println!("crabgo:rustc-flags=-l nonexistinglib -L /dummy/path1 -L /dummy/path2");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build --verbose")
+    p.crabgo("build --verbose")
         .with_stderr(
             "\
 [COMPILING] foo [..]
@@ -859,11 +859,11 @@ fn custom_build_script_rustc_flags() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_script_rustc_flags_no_space() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -877,7 +877,7 @@ fn custom_build_script_rustc_flags_no_space() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
 
@@ -892,13 +892,13 @@ fn custom_build_script_rustc_flags_no_space() {
             "foo/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-lnonexistinglib -L/dummy/path1 -L/dummy/path2");
+                    println!("crabgo:rustc-flags=-lnonexistinglib -L/dummy/path1 -L/dummy/path2");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build --verbose")
+    p.crabgo("build --verbose")
         .with_stderr(
             "\
 [COMPILING] foo [..]
@@ -918,11 +918,11 @@ fn custom_build_script_rustc_flags_no_space() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_no_build_cmd() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -934,11 +934,11 @@ fn links_no_build_cmd() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   package `foo v0.5.0 ([CWD])` specifies that it links to `a` but does \
@@ -948,12 +948,12 @@ not have a custom build script
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_duplicates() {
     // this tests that the links_duplicates are caught at resolver time
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -969,7 +969,7 @@ fn links_duplicates() {
         .file("src/lib.rs", "")
         .file("build.rs", "")
         .file(
-            "a-sys/Cargo.toml",
+            "a-sys/Crabgo.toml",
             r#"
                 [package]
                 name = "a-sys"
@@ -983,7 +983,7 @@ fn links_duplicates() {
         .file("a-sys/build.rs", "")
         .build();
 
-    p.cargo("build").with_status(101)
+    p.crabgo("build").with_status(101)
                        .with_stderr("\
 error: failed to select a version for `a-sys`.
     ... required by package `foo v0.5.0 ([..])`
@@ -991,18 +991,18 @@ versions that meet the requirements `*` are: 0.5.0
 
 the package `a-sys` links to the native library `a`, but it conflicts with a previous package which links to `a` as well:
 package `foo v0.5.0 ([..])`
-Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a-sys' value. For more information, see https://doc.rust-lang.org/cargo/reference/resolver.html#links.
+Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a-sys' value. For more information, see https://doc.rust-lang.org/crabgo/reference/resolver.html#links.
 
 failed to select a version for `a-sys` which could resolve this conflict
 ").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_duplicates_old_registry() {
     // Test old links validator. See `validate_links`.
     Package::new("bar", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1016,7 +1016,7 @@ fn links_duplicates_old_registry() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1031,7 +1031,7 @@ fn links_duplicates_old_registry() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -1052,12 +1052,12 @@ also links to native library `a`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_duplicates_deep_dependency() {
     // this tests that the links_duplicates are caught at resolver time
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1073,7 +1073,7 @@ fn links_duplicates_deep_dependency() {
         .file("src/lib.rs", "")
         .file("build.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1088,7 +1088,7 @@ fn links_duplicates_deep_dependency() {
         .file("a/src/lib.rs", "")
         .file("a/build.rs", "")
         .file(
-            "a/a-sys/Cargo.toml",
+            "a/a-sys/Crabgo.toml",
             r#"
                 [package]
                 name = "a-sys"
@@ -1102,7 +1102,7 @@ fn links_duplicates_deep_dependency() {
         .file("a/a-sys/build.rs", "")
         .build();
 
-    p.cargo("build").with_status(101)
+    p.crabgo("build").with_status(101)
                        .with_stderr("\
 error: failed to select a version for `a-sys`.
     ... required by package `a v0.5.0 ([..])`
@@ -1111,19 +1111,19 @@ versions that meet the requirements `*` are: 0.5.0
 
 the package `a-sys` links to the native library `a`, but it conflicts with a previous package which links to `a` as well:
 package `foo v0.5.0 ([..])`
-Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a-sys' value. For more information, see https://doc.rust-lang.org/cargo/reference/resolver.html#links.
+Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a-sys' value. For more information, see https://doc.rust-lang.org/crabgo/reference/resolver.html#links.
 
 failed to select a version for `a-sys` which could resolve this conflict
 ").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn overrides_and_links() {
     let target = rustc_host();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1149,7 +1149,7 @@ fn overrides_and_links() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.foo]
@@ -1161,7 +1161,7 @@ fn overrides_and_links() {
             ),
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1175,7 +1175,7 @@ fn overrides_and_links() {
         .file("a/build.rs", "not valid rust code")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [..]
@@ -1190,13 +1190,13 @@ fn overrides_and_links() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_overrides() {
     let target = rustc_host();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1208,7 +1208,7 @@ fn unused_overrides() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.foo]
@@ -1221,14 +1221,14 @@ fn unused_overrides() {
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_passes_env_vars() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1252,7 +1252,7 @@ fn links_passes_env_vars() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1268,24 +1268,24 @@ fn links_passes_env_vars() {
             r#"
                 use std::env;
                 fn main() {
-                    let lib = env::var("CARGO_MANIFEST_LINKS").unwrap();
+                    let lib = env::var("CRABGO_MANIFEST_LINKS").unwrap();
                     assert_eq!(lib, "foo");
 
-                    println!("cargo:foo=bar");
-                    println!("cargo:bar=baz");
+                    println!("crabgo:foo=bar");
+                    println!("crabgo:bar=baz");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn only_rerun_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1298,13 +1298,13 @@ fn only_rerun_build_script() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
     p.root().move_into_the_past();
 
     p.change_file("some-new-file", "");
     p.root().move_into_the_past();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([CWD]): the precalculated components changed
@@ -1317,12 +1317,12 @@ fn only_rerun_build_script() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rebuild_continues_to_pass_env_vars() {
     let a = project()
         .at("a")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1338,8 +1338,8 @@ fn rebuild_continues_to_pass_env_vars() {
             r#"
                 use std::time::Duration;
                 fn main() {
-                    println!("cargo:foo=bar");
-                    println!("cargo:bar=baz");
+                    println!("crabgo:foo=bar");
+                    println!("crabgo:bar=baz");
                     std::thread::sleep(Duration::from_millis(500));
                 }
             "#,
@@ -1349,7 +1349,7 @@ fn rebuild_continues_to_pass_env_vars() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1377,20 +1377,20 @@ fn rebuild_continues_to_pass_env_vars() {
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
     p.root().move_into_the_past();
 
     p.change_file("some-new-file", "");
     p.root().move_into_the_past();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn testing_and_such() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1404,14 +1404,14 @@ fn testing_and_such() {
         .build();
 
     println!("build");
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
     p.root().move_into_the_past();
 
     p.change_file("src/lib.rs", "");
     p.root().move_into_the_past();
 
     println!("test");
-    p.cargo("test -vj1")
+    p.crabgo("test -vj1")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([CWD]): the precalculated components changed
@@ -1428,7 +1428,7 @@ fn testing_and_such() {
         .run();
 
     println!("doc");
-    p.cargo("doc -v")
+    p.crabgo("doc -v")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.5.0 ([CWD])
@@ -1440,7 +1440,7 @@ fn testing_and_such() {
 
     p.change_file("src/main.rs", "fn main() {}");
     println!("run");
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -1451,12 +1451,12 @@ fn testing_and_such() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn propagation_of_l_flags() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1468,7 +1468,7 @@ fn propagation_of_l_flags() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1484,10 +1484,10 @@ fn propagation_of_l_flags() {
         .file("a/src/lib.rs", "")
         .file(
             "a/build.rs",
-            r#"fn main() { println!("cargo:rustc-flags=-L bar"); }"#,
+            r#"fn main() { println!("crabgo:rustc-flags=-L bar"); }"#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1500,7 +1500,7 @@ fn propagation_of_l_flags() {
         .file("b/src/lib.rs", "")
         .file("b/build.rs", "bad file")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.foo]
@@ -1511,7 +1511,7 @@ fn propagation_of_l_flags() {
         )
         .build();
 
-    p.cargo("build -v -j1")
+    p.crabgo("build -v -j1")
         .with_stderr_contains(
             "\
 [RUNNING] `rustc --crate-name a [..] -L bar[..]-L foo[..]`
@@ -1522,12 +1522,12 @@ fn propagation_of_l_flags() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn propagation_of_l_flags_new() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1539,7 +1539,7 @@ fn propagation_of_l_flags_new() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1557,12 +1557,12 @@ fn propagation_of_l_flags_new() {
             "a/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=bar");
+                    println!("crabgo:rustc-link-search=bar");
                 }
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1575,7 +1575,7 @@ fn propagation_of_l_flags_new() {
         .file("b/src/lib.rs", "")
         .file("b/build.rs", "bad file")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.foo]
@@ -1586,7 +1586,7 @@ fn propagation_of_l_flags_new() {
         )
         .build();
 
-    p.cargo("build -v -j1")
+    p.crabgo("build -v -j1")
         .with_stderr_contains(
             "\
 [RUNNING] `rustc --crate-name a [..] -L bar[..]-L foo[..]`
@@ -1597,11 +1597,11 @@ fn propagation_of_l_flags_new() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_deps_simple() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1621,11 +1621,11 @@ fn build_deps_simple() {
             fn main() {}
         ",
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "0.5.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.5.0"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] a v0.5.0 ([CWD]/a)
@@ -1640,12 +1640,12 @@ fn build_deps_simple() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_deps_not_for_normal() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1668,11 +1668,11 @@ fn build_deps_not_for_normal() {
             fn main() {}
         ",
         )
-        .file("a/Cargo.toml", &basic_manifest("aaaaa", "0.5.0"))
+        .file("a/Crabgo.toml", &basic_manifest("aaaaa", "0.5.0"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_status(101)
         .with_stderr_contains("[..]can't find crate for `aaaaa`[..]")
@@ -1687,11 +1687,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_cmd_with_a_build_cmd() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1713,7 +1713,7 @@ fn build_cmd_with_a_build_cmd() {
         ",
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1730,11 +1730,11 @@ fn build_cmd_with_a_build_cmd() {
             "a/build.rs",
             "#[allow(unused_extern_crates)] extern crate b; fn main() {}",
         )
-        .file("b/Cargo.toml", &basic_manifest("b", "0.5.0"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.5.0"))
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] b v0.5.0 ([CWD]/b)
@@ -1765,11 +1765,11 @@ fn build_cmd_with_a_build_cmd() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn out_dir_is_preserved() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1794,7 +1794,7 @@ fn out_dir_is_preserved() {
         .build();
 
     // Make the file
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     // Change to asserting that it's there
     p.change_file(
@@ -1809,7 +1809,7 @@ fn out_dir_is_preserved() {
             }
         "#,
     );
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo [..]: the file `build.rs` has changed ([..])
@@ -1823,7 +1823,7 @@ fn out_dir_is_preserved() {
         .run();
 
     // Run a fresh build where file should be preserved
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [FRESH] foo [..]
@@ -1834,7 +1834,7 @@ fn out_dir_is_preserved() {
 
     // One last time to make sure it's still there.
     p.change_file("foo", "");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo [..]: the precalculated components changed
@@ -1847,11 +1847,11 @@ fn out_dir_is_preserved() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn output_separate_lines() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1865,13 +1865,13 @@ fn output_separate_lines() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-L foo");
-                    println!("cargo:rustc-flags=-l static=foo");
+                    println!("crabgo:rustc-flags=-L foo");
+                    println!("crabgo:rustc-flags=-l static=foo");
                 }
             "#,
         )
         .build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -1885,11 +1885,11 @@ fn output_separate_lines() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn output_separate_lines_new() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1903,16 +1903,16 @@ fn output_separate_lines_new() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=foo");
-                    println!("cargo:rustc-link-lib=static=foo");
-                    println!("cargo:rustc-link-lib=bar");
-                    println!("cargo:rustc-link-search=bar");
+                    println!("crabgo:rustc-link-search=foo");
+                    println!("crabgo:rustc-link-lib=static=foo");
+                    println!("crabgo:rustc-link-lib=bar");
+                    println!("crabgo:rustc-link-search=bar");
                 }
             "#,
         )
         .build();
     // The order of the arguments passed to rustc is important.
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -1927,11 +1927,11 @@ fn output_separate_lines_new() {
 }
 
 #[cfg(not(windows))] // FIXME(#867)
-#[cargo_test]
+#[crabgo_test]
 fn code_generation() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1971,7 +1971,7 @@ fn code_generation() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -1981,14 +1981,14 @@ fn code_generation() {
         .with_stdout("Hello, World!")
         .run();
 
-    p.cargo("test").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn release_with_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2006,14 +2006,14 @@ fn release_with_build_script() {
         )
         .build();
 
-    p.cargo("build -v --release").run();
+    p.crabgo("build -v --release").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_only() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                   [package]
                   name = "foo"
@@ -2024,7 +2024,7 @@ fn build_script_only() {
         )
         .file("build.rs", r#"fn main() {}"#)
         .build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -2037,11 +2037,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shared_dep_with_a_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2059,7 +2059,7 @@ fn shared_dep_with_a_build_script() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2071,7 +2071,7 @@ fn shared_dep_with_a_build_script() {
         .file("a/build.rs", "fn main() {}")
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2084,14 +2084,14 @@ fn shared_dep_with_a_build_script() {
         )
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn transitive_dep_host() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2106,7 +2106,7 @@ fn transitive_dep_host() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2119,7 +2119,7 @@ fn transitive_dep_host() {
         .file("a/build.rs", "fn main() {}")
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2136,14 +2136,14 @@ fn transitive_dep_host() {
         )
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_a_lib_with_a_build_command() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2179,14 +2179,14 @@ fn test_a_lib_with_a_build_command() {
             "#,
         )
         .build();
-    p.cargo("test").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_dev_dep_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2199,7 +2199,7 @@ fn test_dev_dep_build_script() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2212,15 +2212,15 @@ fn test_dev_dep_build_script() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("test").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_dynamic_native_dependency() {
     let build = project()
         .at("builder")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "builder"
@@ -2237,7 +2237,7 @@ fn build_script_with_dynamic_native_dependency() {
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2252,7 +2252,7 @@ fn build_script_with_dynamic_native_dependency() {
         .file("build.rs", "extern crate bar; fn main() { bar::bar() }")
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2281,7 +2281,7 @@ fn build_script_with_dynamic_native_dependency() {
                         fs::copy(root.join("builder.dll.lib"),
                                  out_dir.join("builder.dll.lib")).unwrap();
                     }
-                    println!("cargo:rustc-link-search=native={}", out_dir.display());
+                    println!("crabgo:rustc-link-search=native={}", out_dir.display());
                 }
             "#,
         )
@@ -2299,22 +2299,22 @@ fn build_script_with_dynamic_native_dependency() {
         .build();
 
     build
-        .cargo("build -v")
-        .env("CARGO_LOG", "cargo::ops::cargo_rustc")
+        .crabgo("build -v")
+        .env("CRABGO_LOG", "crabgo::ops::crabgo_rustc")
         .run();
 
     let root = build.root().join("target").join("debug");
-    foo.cargo("build -v")
+    foo.crabgo("build -v")
         .env("BUILDER_ROOT", root)
-        .env("CARGO_LOG", "cargo::ops::cargo_rustc")
+        .env("CRABGO_LOG", "crabgo::ops::crabgo_rustc")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_and_opt_level_set_correctly() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2337,14 +2337,14 @@ fn profile_and_opt_level_set_correctly() {
             "#,
         )
         .build();
-    p.cargo("bench").run();
+    p.crabgo("bench").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_debug_0() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2368,14 +2368,14 @@ fn profile_debug_0() {
             "#,
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_lto() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2390,14 +2390,14 @@ fn build_script_with_lto() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_duplicate_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2426,18 +2426,18 @@ fn test_duplicate_deps() {
                 fn main() { bar::do_nothing() }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn do_nothing() {}")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_feedback() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2449,19 +2449,19 @@ fn cfg_feedback() {
         .file("src/main.rs", "#[cfg(foo)] fn main() {}")
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-cfg=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-cfg=foo"); }"#,
         )
         .build();
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_override() {
     let target = rustc_host();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2474,7 +2474,7 @@ fn cfg_override() {
         .file("src/main.rs", "#[cfg(foo)] fn main() {}")
         .file("build.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.a]
@@ -2485,14 +2485,14 @@ fn cfg_override() {
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_test() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2503,7 +2503,7 @@ fn cfg_test() {
         )
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-cfg=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-cfg=foo"); }"#,
         )
         .file(
             "src/lib.rs",
@@ -2529,7 +2529,7 @@ fn cfg_test() {
         )
         .file("tests/test.rs", "#[cfg(foo)] #[test] fn test_bar() {}")
         .build();
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -2550,11 +2550,11 @@ fn cfg_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_doc() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2568,11 +2568,11 @@ fn cfg_doc() {
         )
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-cfg=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-cfg=foo"); }"#,
         )
         .file("src/lib.rs", "#[cfg(foo)] pub fn foo() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2583,21 +2583,21 @@ fn cfg_doc() {
         )
         .file(
             "bar/build.rs",
-            r#"fn main() { println!("cargo:rustc-cfg=bar"); }"#,
+            r#"fn main() { println!("crabgo:rustc-cfg=bar"); }"#,
         )
         .file("bar/src/lib.rs", "#[cfg(bar)] pub fn bar() {}")
         .build();
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     assert!(p.root().join("target/doc").is_dir());
     assert!(p.root().join("target/doc/foo/fn.foo.html").is_file());
     assert!(p.root().join("target/doc/bar/fn.bar.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_override_test() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2609,7 +2609,7 @@ fn cfg_override_test() {
         )
         .file("build.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.a]
@@ -2642,7 +2642,7 @@ fn cfg_override_test() {
         )
         .file("tests/test.rs", "#[cfg(foo)] #[test] fn test_bar() {}")
         .build();
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -2661,11 +2661,11 @@ fn cfg_override_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_override_doc() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2679,7 +2679,7 @@ fn cfg_override_doc() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{target}.a]
@@ -2693,7 +2693,7 @@ fn cfg_override_doc() {
         .file("build.rs", "")
         .file("src/lib.rs", "#[cfg(foo)] pub fn foo() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2706,17 +2706,17 @@ fn cfg_override_doc() {
         .file("bar/build.rs", "")
         .file("bar/src/lib.rs", "#[cfg(bar)] pub fn bar() {}")
         .build();
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     assert!(p.root().join("target/doc").is_dir());
     assert!(p.root().join("target/doc/foo/fn.foo.html").is_file());
     assert!(p.root().join("target/doc/bar/fn.bar.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_build() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2736,18 +2736,18 @@ fn env_build() {
         )
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-env=FOO=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-env=FOO=foo"); }"#,
         )
         .build();
-    p.cargo("build -v").run();
-    p.cargo("run -v").with_stdout("foo\n").run();
+    p.crabgo("build -v").run();
+    p.crabgo("run -v").with_stdout("foo\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_test() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2758,7 +2758,7 @@ fn env_test() {
         )
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-env=FOO=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-env=FOO=foo"); }"#,
         )
         .file(
             "src/lib.rs",
@@ -2776,7 +2776,7 @@ fn env_test() {
             "#,
         )
         .build();
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -2796,11 +2796,11 @@ fn env_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_doc() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2818,17 +2818,17 @@ fn env_doc() {
         )
         .file(
             "build.rs",
-            r#"fn main() { println!("cargo:rustc-env=FOO=foo"); }"#,
+            r#"fn main() { println!("crabgo:rustc-env=FOO=foo"); }"#,
         )
         .build();
-    p.cargo("doc -v").run();
+    p.crabgo("doc -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn flags_go_into_tests() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2842,7 +2842,7 @@ fn flags_go_into_tests() {
         .file("src/lib.rs", "")
         .file("tests/foo.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2854,7 +2854,7 @@ fn flags_go_into_tests() {
         )
         .file("b/src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2868,13 +2868,13 @@ fn flags_go_into_tests() {
             "a/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=test");
+                    println!("crabgo:rustc-link-search=test");
                 }
             "#,
         )
         .build();
 
-    p.cargo("test -v --test=foo")
+    p.crabgo("test -v --test=foo")
         .with_stderr(
             "\
 [COMPILING] a v0.5.0 ([..]
@@ -2892,7 +2892,7 @@ fn flags_go_into_tests() {
         .with_stdout_contains("running 0 tests")
         .run();
 
-    p.cargo("test -v -pb --lib")
+    p.crabgo("test -v -pb --lib")
         .with_stderr(
             "\
 [FRESH] a v0.5.0 ([..]
@@ -2905,11 +2905,11 @@ fn flags_go_into_tests() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn diamond_passes_args_only_once() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2924,7 +2924,7 @@ fn diamond_passes_args_only_once() {
         .file("src/lib.rs", "")
         .file("tests/foo.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2937,7 +2937,7 @@ fn diamond_passes_args_only_once() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2949,7 +2949,7 @@ fn diamond_passes_args_only_once() {
         )
         .file("b/src/lib.rs", "")
         .file(
-            "c/Cargo.toml",
+            "c/Crabgo.toml",
             r#"
                 [package]
                 name = "c"
@@ -2962,14 +2962,14 @@ fn diamond_passes_args_only_once() {
             "c/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=native=test");
+                    println!("crabgo:rustc-link-search=native=test");
                 }
             "#,
         )
         .file("c/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] c v0.5.0 ([..]
@@ -2988,12 +2988,12 @@ fn diamond_passes_args_only_once() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn adding_an_override_invalidates() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3004,18 +3004,18 @@ fn adding_an_override_invalidates() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file(".cargo/config", "")
+        .file(".crabgo/config", "")
         .file(
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=native=foo");
+                    println!("crabgo:rustc-link-search=native=foo");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..]
@@ -3028,7 +3028,7 @@ fn adding_an_override_invalidates() {
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         &format!(
             "
                 [target.{}.foo]
@@ -3038,7 +3038,7 @@ fn adding_an_override_invalidates() {
         ),
     );
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..]
@@ -3049,12 +3049,12 @@ fn adding_an_override_invalidates() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn changing_an_override_invalidates() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3066,7 +3066,7 @@ fn changing_an_override_invalidates() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}.foo]
@@ -3078,7 +3078,7 @@ fn changing_an_override_invalidates() {
         .file("build.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..]
@@ -3089,7 +3089,7 @@ fn changing_an_override_invalidates() {
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         &format!(
             "
                 [target.{}.foo]
@@ -3099,7 +3099,7 @@ fn changing_an_override_invalidates() {
         ),
     );
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the precalculated components changed
@@ -3111,13 +3111,13 @@ fn changing_an_override_invalidates() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fresh_builds_possible_with_link_libs() {
     // The bug is non-deterministic. Sometimes you can get a fresh build
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3129,7 +3129,7 @@ fn fresh_builds_possible_with_link_libs() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}.nativefoo]
@@ -3143,7 +3143,7 @@ fn fresh_builds_possible_with_link_libs() {
         .file("build.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..]
@@ -3153,7 +3153,7 @@ fn fresh_builds_possible_with_link_libs() {
         )
         .run();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [FRESH] foo v0.5.0 ([..])
@@ -3163,13 +3163,13 @@ fn fresh_builds_possible_with_link_libs() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fresh_builds_possible_with_multiple_metadata_overrides() {
     // The bug is non-deterministic. Sometimes you can get a fresh build
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3181,7 +3181,7 @@ fn fresh_builds_possible_with_multiple_metadata_overrides() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}.foo]
@@ -3197,7 +3197,7 @@ fn fresh_builds_possible_with_multiple_metadata_overrides() {
         .file("build.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..]
@@ -3207,8 +3207,8 @@ fn fresh_builds_possible_with_multiple_metadata_overrides() {
         )
         .run();
 
-    p.cargo("build -v")
-        .env("CARGO_LOG", "cargo::ops::cargo_rustc::fingerprint=info")
+    p.crabgo("build -v")
+        .env("CRABGO_LOG", "crabgo::ops::crabgo_rustc::fingerprint=info")
         .with_stderr(
             "\
 [FRESH] foo v0.5.0 ([..])
@@ -3218,14 +3218,14 @@ fn fresh_builds_possible_with_multiple_metadata_overrides() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn generate_good_d_files() {
     // this is here to stop regression on an issue where build.rs rerun-if-changed paths aren't
     // made absolute properly, which in turn interacts poorly with the dep-info-basedir setting,
     // and the dep-info files have other-crate-relative paths spat out in them
     let p = project()
         .file(
-            "awoo/Cargo.toml",
+            "awoo/Crabgo.toml",
             r#"
                 [package]
                 name = "awoo"
@@ -3238,13 +3238,13 @@ fn generate_good_d_files() {
             "awoo/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rerun-if-changed=build.rs");
-                    println!("cargo:rerun-if-changed=barkbarkbark");
+                    println!("crabgo:rerun-if-changed=build.rs");
+                    println!("crabgo:rerun-if-changed=barkbarkbark");
                 }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "meow"
@@ -3256,7 +3256,7 @@ fn generate_good_d_files() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     let dot_d_path = p.bin("meow").with_extension("d");
     println!("*meow at* {:?}", dot_d_path);
@@ -3275,13 +3275,13 @@ fn generate_good_d_files() {
         .any(|v| v == "barkbarkbark" || v == "build.rs"));
 
     p.change_file(
-        ".cargo/config.toml",
+        ".crabgo/config.toml",
         r#"
         [build]
         dep-info-basedir="."
     "#,
     );
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     let dot_d = fs::read_to_string(&dot_d_path).unwrap();
 
@@ -3298,13 +3298,13 @@ fn generate_good_d_files() {
         .any(|v| v == "barkbarkbark" || v == "build.rs"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn generate_good_d_files_for_external_tools() {
     // This tests having a relative paths going out of the
     // project root in config's dep-info-basedir
     let p = project_in("rust_things")
         .file(
-            "awoo/Cargo.toml",
+            "awoo/Crabgo.toml",
             r#"
                 [package]
                 name = "awoo"
@@ -3317,13 +3317,13 @@ fn generate_good_d_files_for_external_tools() {
             "awoo/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rerun-if-changed=build.rs");
-                    println!("cargo:rerun-if-changed=barkbarkbark");
+                    println!("crabgo:rerun-if-changed=build.rs");
+                    println!("crabgo:rerun-if-changed=barkbarkbark");
                 }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "meow"
@@ -3334,7 +3334,7 @@ fn generate_good_d_files_for_external_tools() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [build]
                 dep-info-basedir="../.."
@@ -3342,7 +3342,7 @@ fn generate_good_d_files_for_external_tools() {
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     let dot_d_path = p.bin("meow").with_extension("d");
     let dot_d = fs::read_to_string(&dot_d_path).unwrap();
@@ -3361,11 +3361,11 @@ fn generate_good_d_files_for_external_tools() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rebuild_only_on_explicit_paths() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3379,18 +3379,18 @@ fn rebuild_only_on_explicit_paths() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rerun-if-changed=foo");
-                    println!("cargo:rerun-if-changed=bar");
+                    println!("crabgo:rerun-if-changed=foo");
+                    println!("crabgo:rerun-if-changed=bar");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     // files don't exist, so should always rerun if they don't exist
     println!("run without");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the file `foo` is missing
@@ -3409,7 +3409,7 @@ fn rebuild_only_on_explicit_paths() {
 
     // now the exist, so run once, catch the mtime, then shouldn't run again
     println!("run with");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the file `foo` has changed ([..])
@@ -3422,7 +3422,7 @@ fn rebuild_only_on_explicit_paths() {
         .run();
 
     println!("run with2");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [FRESH] foo v0.5.0 ([..])
@@ -3436,7 +3436,7 @@ fn rebuild_only_on_explicit_paths() {
     // random other files do not affect freshness
     println!("run baz");
     p.change_file("baz", "");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [FRESH] foo v0.5.0 ([..])
@@ -3448,7 +3448,7 @@ fn rebuild_only_on_explicit_paths() {
     // but changing dependent files does
     println!("run foo change");
     p.change_file("foo", "");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the file `foo` has changed ([..])
@@ -3463,7 +3463,7 @@ fn rebuild_only_on_explicit_paths() {
     // .. as does deleting a file
     println!("run bar delete");
     fs::remove_file(p.root().join("bar")).unwrap();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the file `bar` is missing
@@ -3476,11 +3476,11 @@ fn rebuild_only_on_explicit_paths() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doctest_receives_build_link_args() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3492,7 +3492,7 @@ fn doctest_receives_build_link_args() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -3507,24 +3507,24 @@ fn doctest_receives_build_link_args() {
             "a/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=native=bar");
+                    println!("crabgo:rustc-link-search=native=bar");
                 }
             "#,
         )
         .build();
 
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo --test [..]-L native=bar[..]`",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn please_respect_the_dag() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3541,12 +3541,12 @@ fn please_respect_the_dag() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=native=foo");
+                    println!("crabgo:rustc-link-search=native=foo");
                 }
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -3561,22 +3561,22 @@ fn please_respect_the_dag() {
             "a/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=native=bar");
+                    println!("crabgo:rustc-link-search=native=bar");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_contains("[RUNNING] `rustc [..] -L native=foo -L native=bar[..]`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_utf8_output() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3595,8 +3595,8 @@ fn non_utf8_output() {
                     // print something that's not utf8
                     out.write_all(b"\xff\xff\n").unwrap();
 
-                    // now print some cargo metadata that's utf8
-                    println!("cargo:rustc-cfg=foo");
+                    // now print some crabgo metadata that's utf8
+                    println!("crabgo:rustc-cfg=foo");
 
                     // now print more non-utf8
                     out.write_all(b"\xff\xff\n").unwrap();
@@ -3606,14 +3606,14 @@ fn non_utf8_output() {
         .file("src/main.rs", "#[cfg(foo)] fn main() {}")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_target_dir() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3626,14 +3626,14 @@ fn custom_target_dir() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [build]
                 target-dir = 'test'
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -3646,14 +3646,14 @@ fn custom_target_dir() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn panic_abort_with_build_scripts() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3673,7 +3673,7 @@ fn panic_abort_with_build_scripts() {
         )
         .file("build.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -3691,7 +3691,7 @@ fn panic_abort_with_build_scripts() {
             "#[allow(unused_extern_crates)] extern crate b; fn main() {}",
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -3702,20 +3702,20 @@ fn panic_abort_with_build_scripts() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --release").run();
+    p.crabgo("build -v --release").run();
 
     p.root().join("target").rm_rf();
 
-    p.cargo("test --release -v")
+    p.crabgo("test --release -v")
         .with_stderr_does_not_contain("[..]panic=abort[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warnings_emitted() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3729,14 +3729,14 @@ fn warnings_emitted() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:warning=foo");
-                    println!("cargo:warning=bar");
+                    println!("crabgo:warning=foo");
+                    println!("crabgo:warning=bar");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([..])
@@ -3751,11 +3751,11 @@ warning: bar
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warnings_emitted_when_build_script_panics() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3769,35 +3769,35 @@ fn warnings_emitted_when_build_script_panics() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:warning=foo");
-                    println!("cargo:warning=bar");
+                    println!("crabgo:warning=foo");
+                    println!("crabgo:warning=bar");
                     panic!();
                 }
             "#,
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stdout("")
         .with_stderr_contains("warning: foo\nwarning: bar")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warnings_hidden_for_upstream() {
     Package::new("bar", "0.1.0")
         .file(
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:warning=foo");
-                    println!("cargo:warning=bar");
+                    println!("crabgo:warning=foo");
+                    println!("crabgo:warning=bar");
                 }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -3811,7 +3811,7 @@ fn warnings_hidden_for_upstream() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3825,7 +3825,7 @@ fn warnings_hidden_for_upstream() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -3843,20 +3843,20 @@ fn warnings_hidden_for_upstream() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warnings_printed_on_vv() {
     Package::new("bar", "0.1.0")
         .file(
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:warning=foo");
-                    println!("cargo:warning=bar");
+                    println!("crabgo:warning=foo");
+                    println!("crabgo:warning=bar");
                 }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -3870,7 +3870,7 @@ fn warnings_printed_on_vv() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3884,7 +3884,7 @@ fn warnings_printed_on_vv() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -vv")
+    p.crabgo("build -vv")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -3904,11 +3904,11 @@ warning: bar
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn output_shows_on_vv() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3931,7 +3931,7 @@ fn output_shows_on_vv() {
         )
         .build();
 
-    p.cargo("build -vv")
+    p.crabgo("build -vv")
         .with_stdout("[foo 0.5.0] stdout")
         .with_stderr(
             "\
@@ -3946,13 +3946,13 @@ fn output_shows_on_vv() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_with_dots() {
     let target = rustc_host();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3967,12 +3967,12 @@ fn links_with_dots() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-link-search=bar")
+                    println!("crabgo:rustc-link-search=bar")
                 }
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.'a.b']
@@ -3983,16 +3983,16 @@ fn links_with_dots() {
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_contains("[RUNNING] `rustc --crate-name foo [..] [..] -L foo[..]`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_and_rustdoc_set_correctly() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4014,14 +4014,14 @@ fn rustc_and_rustdoc_set_correctly() {
             "#,
         )
         .build();
-    p.cargo("bench").run();
+    p.crabgo("bench").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_env_vars_available() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4037,7 +4037,7 @@ fn cfg_env_vars_available() {
                 use std::env;
 
                 fn main() {
-                    let fam = env::var("CARGO_CFG_TARGET_FAMILY").unwrap();
+                    let fam = env::var("CRABGO_CFG_TARGET_FAMILY").unwrap();
                     if cfg!(unix) {
                         assert_eq!(fam, "unix");
                     } else {
@@ -4047,14 +4047,14 @@ fn cfg_env_vars_available() {
             "#,
         )
         .build();
-    p.cargo("bench").run();
+    p.crabgo("bench").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn switch_features_rerun() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4085,7 +4085,7 @@ fn switch_features_rerun() {
                     let out_dir = env::var_os("OUT_DIR").unwrap();
                     let output = Path::new(&out_dir).join("output");
 
-                    if env::var_os("CARGO_FEATURE_FOO").is_some() {
+                    if env::var_os("CRABGO_FEATURE_FOO").is_some() {
                         fs::write(output, "foo").unwrap();
                     } else {
                         fs::write(output, "bar").unwrap();
@@ -4095,17 +4095,17 @@ fn switch_features_rerun() {
         )
         .build();
 
-    p.cargo("build -v --features=foo").run();
+    p.crabgo("build -v --features=foo").run();
     p.rename_run("foo", "with_foo").with_stdout("foo\n").run();
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
     p.rename_run("foo", "without_foo")
         .with_stdout("bar\n")
         .run();
-    p.cargo("build -v --features=foo").run();
+    p.crabgo("build -v --features=foo").run();
     p.rename_run("foo", "with_foo2").with_stdout("foo\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn assume_build_script_when_build_rs_present() {
     let p = project()
         .file(
@@ -4122,20 +4122,20 @@ fn assume_build_script_when_build_rs_present() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-cfg=foo");
+                    println!("crabgo:rustc-cfg=foo");
                 }
             "#,
         )
         .build();
 
-    p.cargo("run -v").run();
+    p.crabgo("run -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn if_build_set_to_false_dont_treat_build_rs_as_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4158,23 +4158,23 @@ fn if_build_set_to_false_dont_treat_build_rs_as_build_script() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-cfg=foo");
+                    println!("crabgo:rustc-cfg=foo");
                 }
             "#,
         )
         .build();
 
-    p.cargo("run -v").run();
+    p.crabgo("run -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deterministic_rustc_dependency_flags() {
     // This bug is non-deterministic hence the large number of dependencies
     // in the hopes it will have a much higher chance of triggering it.
 
     Package::new("dep1", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "dep1"
@@ -4187,7 +4187,7 @@ fn deterministic_rustc_dependency_flags() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-L native=test1");
+                    println!("crabgo:rustc-flags=-L native=test1");
                 }
             "#,
         )
@@ -4195,7 +4195,7 @@ fn deterministic_rustc_dependency_flags() {
         .publish();
     Package::new("dep2", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "dep2"
@@ -4208,7 +4208,7 @@ fn deterministic_rustc_dependency_flags() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-L native=test2");
+                    println!("crabgo:rustc-flags=-L native=test2");
                 }
             "#,
         )
@@ -4216,7 +4216,7 @@ fn deterministic_rustc_dependency_flags() {
         .publish();
     Package::new("dep3", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "dep3"
@@ -4229,7 +4229,7 @@ fn deterministic_rustc_dependency_flags() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-L native=test3");
+                    println!("crabgo:rustc-flags=-L native=test3");
                 }
             "#,
         )
@@ -4237,7 +4237,7 @@ fn deterministic_rustc_dependency_flags() {
         .publish();
     Package::new("dep4", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "dep4"
@@ -4250,7 +4250,7 @@ fn deterministic_rustc_dependency_flags() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-flags=-L native=test4");
+                    println!("crabgo:rustc-flags=-L native=test4");
                 }
             "#,
         )
@@ -4259,7 +4259,7 @@ fn deterministic_rustc_dependency_flags() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4276,7 +4276,7 @@ fn deterministic_rustc_dependency_flags() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_contains(
             "\
 [RUNNING] `rustc --crate-name foo [..] -L native=test1 -L native=test2 \
@@ -4286,12 +4286,12 @@ fn deterministic_rustc_dependency_flags() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_duplicates_with_cycle() {
     // this tests that the links_duplicates are caught at resolver time
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4310,7 +4310,7 @@ fn links_duplicates_with_cycle() {
         .file("src/lib.rs", "")
         .file("build.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -4323,7 +4323,7 @@ fn links_duplicates_with_cycle() {
         .file("a/src/lib.rs", "")
         .file("a/build.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -4337,7 +4337,7 @@ fn links_duplicates_with_cycle() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("build").with_status(101)
+    p.crabgo("build").with_status(101)
                        .with_stderr("\
 error: failed to select a version for `a`.
     ... required by package `foo v0.5.0 ([..])`
@@ -4345,18 +4345,18 @@ versions that meet the requirements `*` are: 0.5.0
 
 the package `a` links to the native library `a`, but it conflicts with a previous package which links to `a` as well:
 package `foo v0.5.0 ([..])`
-Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a' value. For more information, see https://doc.rust-lang.org/cargo/reference/resolver.html#links.
+Only one package in the dependency graph may specify the same links value. This helps ensure that only one copy of a native library is linked in the final binary. Try to adjust your dependencies so that only one package uses the links ='a' value. For more information, see https://doc.rust-lang.org/crabgo/reference/resolver.html#links.
 
 failed to select a version for `a` which could resolve this conflict
 ").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_with_link_search_path() {
     _rename_with_link_search_path(false);
 }
 
-#[cargo_test]
+#[crabgo_test]
 #[cfg_attr(
     target_os = "macos",
     ignore = "don't have a cdylib cross target on macos"
@@ -4377,7 +4377,7 @@ fn _rename_with_link_search_path(cross: bool) {
     };
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4390,15 +4390,15 @@ fn _rename_with_link_search_path(cross: bool) {
         )
         .file(
             "src/lib.rs",
-            "#[no_mangle] pub extern fn cargo_test_foo() {}",
+            "#[no_mangle] pub extern fn crabgo_test_foo() {}",
         );
     let p = p.build();
 
-    p.cargo(&format!("build{}", target_arg)).run();
+    p.crabgo(&format!("build{}", target_arg)).run();
 
     let p2 = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file(
             "build.rs",
             r#"
@@ -4408,9 +4408,9 @@ fn _rename_with_link_search_path(cross: bool) {
 
                 fn main() {
                     // Move the `libfoo.so` from the root of our project into the
-                    // build directory. This way Cargo should automatically manage
+                    // build directory. This way Crabgo should automatically manage
                     // `LD_LIBRARY_PATH` and such.
-                    let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
+                    let root = PathBuf::from(env::var_os("CRABGO_MANIFEST_DIR").unwrap());
                     let file = format!("{}foo{}", env::consts::DLL_PREFIX, env::consts::DLL_SUFFIX);
                     let src = root.join(&file);
 
@@ -4421,13 +4421,13 @@ fn _rename_with_link_search_path(cross: bool) {
                     // handle windows, like below
                     drop(fs::copy(root.join("foo.dll.lib"), dst_dir.join("foo.dll.lib")));
 
-                    println!("cargo:rerun-if-changed=build.rs");
+                    println!("crabgo:rerun-if-changed=build.rs");
                     if cfg!(target_env = "msvc") {
-                        println!("cargo:rustc-link-lib=foo.dll");
+                        println!("crabgo:rustc-link-lib=foo.dll");
                     } else {
-                        println!("cargo:rustc-link-lib=foo");
+                        println!("crabgo:rustc-link-lib=foo");
                     }
-                    println!("cargo:rustc-link-search=all={}",
+                    println!("crabgo:rustc-link-search=all={}",
                              dst.parent().unwrap().display());
                 }
             "#,
@@ -4436,7 +4436,7 @@ fn _rename_with_link_search_path(cross: bool) {
             "src/main.rs",
             r#"
                 extern {
-                    #[link_name = "cargo_test_foo"]
+                    #[link_name = "crabgo_test_foo"]
                     fn foo();
                 }
 
@@ -4474,9 +4474,9 @@ fn _rename_with_link_search_path(cross: bool) {
     remove_dir_all(p.root()).unwrap();
 
     // Everything should work the first time
-    p2.cargo(&format!("run{}", target_arg)).run();
+    p2.crabgo(&format!("run{}", target_arg)).run();
 
-    // Now rename the root directory and rerun `cargo run`. Not only should we
+    // Now rename the root directory and rerun `crabgo run`. Not only should we
     // not build anything but we also shouldn't crash.
     let mut new = p2.root();
     new.pop();
@@ -4484,7 +4484,7 @@ fn _rename_with_link_search_path(cross: bool) {
 
     // For whatever reason on Windows right after we execute a binary it's very
     // unlikely that we're able to successfully delete or rename that binary.
-    // It's not really clear why this is the case or if it's a bug in Cargo
+    // It's not really clear why this is the case or if it's a bug in Crabgo
     // holding a handle open too long. In an effort to reduce the flakiness of
     // this test though we throw this in a loop
     //
@@ -4503,7 +4503,7 @@ fn _rename_with_link_search_path(cross: bool) {
         thread::sleep(slow_cpu_multiplier(100));
     }
 
-    p2.cargo(&format!("run{}", target_arg))
+    p2.crabgo(&format!("run{}", target_arg))
         .cwd(&new)
         .with_stderr(
             "\
@@ -4514,11 +4514,11 @@ fn _rename_with_link_search_path(cross: bool) {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn optional_build_script_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4540,10 +4540,10 @@ fn optional_build_script_dep() {
 
                 fn main() {
                     #[cfg(feature = "bar")] {
-                        println!("cargo:rustc-env=FOO={}", bar::bar());
+                        println!("crabgo:rustc-env=FOO={}", bar::bar());
                         return
                     }
-                    println!("cargo:rustc-env=FOO=0");
+                    println!("crabgo:rustc-env=FOO=0");
                 }
             "#,
         )
@@ -4558,19 +4558,19 @@ fn optional_build_script_dep() {
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file("bar/src/lib.rs", "pub fn bar() -> u32 { 1 }");
     let p = p.build();
 
-    p.cargo("run").with_stdout("0\n").run();
-    p.cargo("run --features bar").with_stdout("1\n").run();
+    p.crabgo("run").with_stdout("0\n").run();
+    p.crabgo("run --features bar").with_stdout("1\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn optional_build_dep_and_required_normal_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -4601,11 +4601,11 @@ fn optional_build_dep_and_required_normal_dep() {
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file("bar/src/lib.rs", "pub fn bar() -> u32 { 1 }");
     let p = p.build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stdout("0")
         .with_stderr(
             "\
@@ -4616,7 +4616,7 @@ fn optional_build_dep_and_required_normal_dep() {
         )
         .run();
 
-    p.cargo("run --all-features")
+    p.crabgo("run --all-features")
         .with_stdout("1")
         .with_stderr(
             "\
@@ -4628,11 +4628,11 @@ fn optional_build_dep_and_required_normal_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn using_rerun_if_changed_does_not_rebuild() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4644,18 +4644,18 @@ fn using_rerun_if_changed_does_not_rebuild() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rerun-if-changed=build.rs");
+                    println!("crabgo:rerun-if-changed=build.rs");
                 }
             "#,
         )
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
-    p.cargo("build").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("build").run();
+    p.crabgo("build").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn links_interrupted_can_restart() {
     // Test for a `links` dependent build script getting canceled and then
     // restarted. Steps:
@@ -4667,7 +4667,7 @@ fn links_interrupted_can_restart() {
     let bar = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -4682,7 +4682,7 @@ fn links_interrupted_can_restart() {
             "build.rs",
             r#"
             fn main() {
-                println!("cargo:rerun-if-env-changed=SOMEVAR");
+                println!("crabgo:rerun-if-env-changed=SOMEVAR");
             }
             "#,
         )
@@ -4690,7 +4690,7 @@ fn links_interrupted_can_restart() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -4711,7 +4711,7 @@ fn links_interrupted_can_restart() {
             r#"
             use std::env;
             fn main() {
-                println!("cargo:rebuild-if-changed=build.rs");
+                println!("crabgo:rebuild-if-changed=build.rs");
                 if std::path::Path::new("abort").exists() {
                     panic!("Crash!");
                 }
@@ -4720,11 +4720,11 @@ fn links_interrupted_can_restart() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     // Simulate the user hitting Ctrl-C during a build.
     p.change_file("abort", "");
     // Set SOMEVAR to trigger a rebuild.
-    p.cargo("build")
+    p.crabgo("build")
         .env("SOMEVAR", "1")
         .with_stderr_contains("[..]Crash![..]")
         .with_status(101)
@@ -4732,17 +4732,17 @@ fn links_interrupted_can_restart() {
     fs::remove_file(p.root().join("abort")).unwrap();
     // Try again without aborting the script.
     // ***This is currently broken, the script does not re-run.
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .env("SOMEVAR", "1")
         .with_stderr_contains("[RUNNING] [..]/foo-[..]/build-script-build[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dep_with_links() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4757,7 +4757,7 @@ fn dev_dep_with_links() {
         .file("build.rs", "fn main() {}")
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -4772,10 +4772,10 @@ fn dev_dep_with_links() {
         .file("bar/build.rs", "fn main() {}")
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("check --tests").run()
+    p.crabgo("check --tests").run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rerun_if_directory() {
     if !symlink_supported() {
         return;
@@ -4783,13 +4783,13 @@ fn rerun_if_directory() {
 
     // rerun-if-changed of a directory should rerun if any file in the directory changes.
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("src/lib.rs", "")
         .file(
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rerun-if-changed=somedir");
+                    println!("crabgo:rerun-if-changed=somedir");
                 }
             "#,
         )
@@ -4808,7 +4808,7 @@ fn rerun_if_directory() {
             ""
         };
 
-        p.cargo("check -v")
+        p.crabgo("check -v")
             .with_stderr(format!(
                 "\
 {dirty_line}\
@@ -4822,13 +4822,13 @@ fn rerun_if_directory() {
     };
 
     let fresh = || {
-        p.cargo("check").with_stderr("[FINISHED] [..]").run();
+        p.crabgo("check").with_stderr("[FINISHED] [..]").run();
     };
 
     // Start with a missing directory.
     dirty("", true);
     // Because the directory doesn't exist, it will trigger a rebuild every time.
-    // https://github.com/rust-lang/cargo/issues/6003
+    // https://github.com/rust-lang/crabgo/issues/6003
     dirty(
         "[DIRTY] foo v0.1.0 ([..]): the file `somedir` is missing",
         false,
@@ -4897,7 +4897,7 @@ fn rerun_if_directory() {
     fresh();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rerun_if_published_directory() {
     // build script of a dependency contains a `rerun-if-changed` pointing to a directory
     Package::new("mylib-sys", "1.0.0")
@@ -4908,7 +4908,7 @@ fn rerun_if_published_directory() {
             r#"
                 fn main() {
                     // Changing to mylib/balrog.c will not trigger a rebuild
-                    println!("cargo:rerun-if-changed=mylib");
+                    println!("crabgo:rerun-if-changed=mylib");
                 }
             "#,
         )
@@ -4916,7 +4916,7 @@ fn rerun_if_published_directory() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4929,12 +4929,12 @@ fn rerun_if_published_directory() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Delete regitry src to make directories being recreated with the latest timestamp.
     cargo_home().join("registry/src").rm_rf();
 
-    p.cargo("check --verbose")
+    p.crabgo("check --verbose")
         .with_stderr(
             "\
 [FRESH] mylib-sys v1.0.0
@@ -4953,15 +4953,15 @@ fn rerun_if_published_directory() {
             "build.rs",
             r#"
                     fn main() {
-                        println!("cargo:rerun-if-changed=mylib");
+                        println!("crabgo:rerun-if-changed=mylib");
                     }
                 "#,
         )
         .publish();
-    p.cargo("update").run();
-    p.cargo("fetch").run();
+    p.crabgo("update").run();
+    p.crabgo("fetch").run();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr(format!(
             "\
 [COMPILING] mylib-sys [..]
@@ -4975,11 +4975,11 @@ fn rerun_if_published_directory() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_with_dep_metadata() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -4999,7 +4999,7 @@ fn test_with_dep_metadata() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -5012,15 +5012,15 @@ fn test_with_dep_metadata() {
             "bar/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:foo=bar");
+                    println!("crabgo:foo=bar");
                 }
             "#,
         )
         .build();
-    p.cargo("test --lib").run();
+    p.crabgo("test --lib").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_script_with_extra_env() {
     // Test where a build script is run twice, that emits different rustc-env
     // and rustc-cfg values. In this case, one is run for host, the other for
@@ -5032,14 +5032,14 @@ fn duplicate_script_with_extra_env() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "pm"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -5075,13 +5075,13 @@ fn duplicate_script_with_extra_env() {
             "foo/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-env=CRATE_TARGET={}", std::env::var("TARGET").unwrap());
-                    println!("cargo:rustc-cfg=mycfg=\"{}\"", std::env::var("TARGET").unwrap());
+                    println!("crabgo:rustc-env=CRATE_TARGET={}", std::env::var("TARGET").unwrap());
+                    println!("crabgo:rustc-cfg=mycfg=\"{}\"", std::env::var("TARGET").unwrap());
                 }
             "#,
         )
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -5099,21 +5099,21 @@ fn duplicate_script_with_extra_env() {
         .file("pm/src/lib.rs", "")
         .build();
 
-    p.cargo("test --workspace --target")
+    p.crabgo("test --workspace --target")
         .arg(&target)
         .with_stdout_contains("test check_target ... ok")
         .run();
 
-    if cargo_test_support::is_nightly() {
-        p.cargo("test --workspace -Z doctest-xcompile --doc --target")
+    if crabgo_test_support::is_nightly() {
+        p.crabgo("test --workspace -Z doctest-xcompile --doc --target")
             .arg(&target)
-            .masquerade_as_nightly_cargo(&["doctest-xcompile"])
+            .masquerade_as_nightly_crabgo(&["doctest-xcompile"])
             .with_stdout_contains("test src/lib.rs - (line 2) ... ok")
             .run();
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wrong_output() {
     let p = project()
         .file("src/lib.rs", "")
@@ -5121,33 +5121,33 @@ fn wrong_output() {
             "build.rs",
             r#"
                 fn main() {
-                    println!("cargo:example");
+                    println!("crabgo:example");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
 [COMPILING] foo [..]
-error: invalid output in build script of `foo v0.0.1 ([ROOT]/foo)`: `cargo:example`
-Expected a line with `cargo:key=value` with an `=` character, but none was found.
-See https://doc.rust-lang.org/cargo/reference/build-scripts.html#outputs-of-the-build-script \
+error: invalid output in build script of `foo v0.0.1 ([ROOT]/foo)`: `crabgo:example`
+Expected a line with `crabgo:key=value` with an `=` character, but none was found.
+See https://doc.rust-lang.org/crabgo/reference/build-scripts.html#outputs-of-the-build-script \
 for more information about build script outputs.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_build_closes_stdin() {
     // Ensure stdin is closed to prevent deadlock.
-    // See https://github.com/rust-lang/cargo/issues/11196
+    // See https://github.com/rust-lang/crabgo/issues/11196
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -5164,5 +5164,5 @@ fn custom_build_closes_stdin() {
             }"#,
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }

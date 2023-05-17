@@ -1,6 +1,6 @@
 {{#option "`--target-dir` _directory_"}}
 Directory for all generated artifacts and intermediate files. May also be
-specified with the `CARGO_TARGET_DIR` environment variable, or the
+specified with the `CRABGO_TARGET_DIR` environment variable, or the
 `build.target-dir` [config value](../reference/config.html).
 {{#if temp-target-dir}} Defaults to a new temporary folder located in the
 temporary directory of the platform. 

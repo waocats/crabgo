@@ -1,12 +1,12 @@
 ## Package Layout
 
-Cargo uses conventions for file placement to make it easy to dive into a new
-Cargo [package][def-package]:
+Crabgo uses conventions for file placement to make it easy to dive into a new
+Crabgo [package][def-package]:
 
 ```text
 .
-├── Cargo.lock
-├── Cargo.toml
+├── Crabgo.lock
+├── Crabgo.toml
 ├── src/
 │   ├── lib.rs
 │   ├── main.rs
@@ -33,7 +33,7 @@ Cargo [package][def-package]:
         └── test_module.rs
 ```
 
-* `Cargo.toml` and `Cargo.lock` are stored in the root of your package (*package
+* `Crabgo.toml` and `Crabgo.lock` are stored in the root of your package (*package
   root*).
 * Source code goes in the `src` directory.
 * The default library file is `src/lib.rs`.
@@ -51,11 +51,11 @@ directory. The name of the executable will be the directory name.
 You can learn more about Rust's module system in [the book][book-modules].
 
 See [Configuring a target] for more details on manually configuring targets.
-See [Target auto-discovery] for more information on controlling how Cargo
+See [Target auto-discovery] for more information on controlling how Crabgo
 automatically infers target names.
 
 [book-modules]: ../../book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html
-[Configuring a target]: ../reference/cargo-targets.md#configuring-a-target
+[Configuring a target]: ../reference/crabgo-targets.md#configuring-a-target
 [def-package]:           ../appendix/glossary.md#package          '"package" (glossary entry)'
 [def-module]:            ../appendix/glossary.md#module           '"module" (glossary entry)'
-[Target auto-discovery]: ../reference/cargo-targets.md#target-auto-discovery
+[Target auto-discovery]: ../reference/crabgo-targets.md#target-auto-discovery

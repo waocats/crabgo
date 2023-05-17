@@ -1,10 +1,10 @@
 # Filesystem
 
-Cargo tends to get run on a very wide array of file systems. Different file
-systems can have a wide range of capabilities, and Cargo should strive to do
+Crabgo tends to get run on a very wide array of file systems. Different file
+systems can have a wide range of capabilities, and Crabgo should strive to do
 its best to handle them. Some examples of issues to deal with:
 
-* Not all file systems support locking. Cargo tries to detect if locking is
+* Not all file systems support locking. Crabgo tries to detect if locking is
   supported, and if not, will ignore lock errors. This isn't ideal, but it is
   difficult to deal with.
 * The [`fs::canonicalize`] function doesn't work on all file systems
@@ -17,5 +17,5 @@ its best to handle them. Some examples of issues to deal with:
   fractional part of the time stamp.
 * Symlinks are not always supported, particularly on Windows.
 
-[`fingerprint`]: https://github.com/rust-lang/cargo/blob/master/src/cargo/core/compiler/fingerprint/mod.rs
+[`fingerprint`]: https://github.com/rust-lang/crabgo/blob/master/src/crabgo/core/compiler/fingerprint/mod.rs
 [`fs::canonicalize`]: https://doc.rust-lang.org/std/fs/fn.canonicalize.html

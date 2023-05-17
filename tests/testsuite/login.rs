@@ -1,9 +1,9 @@
-//! Tests for the `cargo login` command.
+//! Tests for the `crabgo login` command.
 
-use cargo_test_support::cargo_process;
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::{self, RegistryBuilder};
-use cargo_test_support::t;
+use crabgo_test_support::crabgo_process;
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::{self, RegistryBuilder};
+use crabgo_test_support::t;
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,7 +12,7 @@ const TOKEN2: &str = "test-token2";
 const ORIGINAL_TOKEN: &str = "api-token";
 
 fn credentials_toml() -> PathBuf {
-    paths::home().join(".cargo/credentials.toml")
+    paths::home().join(".crabgo/credentials.toml")
 }
 
 fn setup_new_credentials() {
@@ -67,7 +67,7 @@ pub fn check_token(expected_token: Option<&str>, registry: Option<&str>) {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_credentials() {
     let _alternative = RegistryBuilder::new().alternative().build();
     let _alternative2 = RegistryBuilder::new()
@@ -78,7 +78,7 @@ fn registry_credentials() {
 
     let reg = "alternative";
 
-    cargo_process("login --registry").arg(reg).arg(TOKEN).run();
+    crabgo_process("login --registry").arg(reg).arg(TOKEN).run();
 
     // Ensure that we have not updated the default token
     check_token(Some(ORIGINAL_TOKEN), None);
@@ -87,19 +87,19 @@ fn registry_credentials() {
     check_token(Some(TOKEN), Some(reg));
 
     let reg2 = "alternative2";
-    cargo_process("login --registry")
+    crabgo_process("login --registry")
         .arg(reg2)
         .arg(TOKEN2)
         .run();
 
     // Ensure not overwriting 1st alternate registry token with
-    // 2nd alternate registry token (see rust-lang/cargo#7701).
+    // 2nd alternate registry token (see rust-lang/crabgo#7701).
     check_token(Some(ORIGINAL_TOKEN), None);
     check_token(Some(TOKEN), Some(reg));
     check_token(Some(TOKEN2), Some(reg2));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn empty_login_token() {
     let registry = RegistryBuilder::new()
         .no_configure_registry()
@@ -107,7 +107,7 @@ fn empty_login_token() {
         .build();
     setup_new_credentials();
 
-    cargo_process("login")
+    crabgo_process("login")
         .replace_crates_io(registry.index_url())
         .with_stdout("please paste the token found on [..]/me below")
         .with_stdin("\t\n")
@@ -120,7 +120,7 @@ fn empty_login_token() {
         .with_status(101)
         .run();
 
-    cargo_process("login")
+    crabgo_process("login")
         .replace_crates_io(registry.index_url())
         .arg("")
         .with_stderr(
@@ -132,7 +132,7 @@ fn empty_login_token() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_login_token() {
     let registry = RegistryBuilder::new()
         .no_configure_registry()
@@ -141,7 +141,7 @@ fn invalid_login_token() {
     setup_new_credentials();
 
     let check = |stdin: &str, stderr: &str, status: i32| {
-        cargo_process("login")
+        crabgo_process("login")
             .replace_crates_io(registry.index_url())
             .with_stdout("please paste the token found on [..]/me below")
             .with_stdin(stdin)
@@ -182,29 +182,29 @@ Only printable ISO-8859-1 characters are allowed as it is sent in a HTTPS header
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_asymmetric_token_args() {
     // These cases are kept brief as the implementation is covered by clap, so this is only smoke testing that we have clap configured correctly.
-    cargo_process("login --key-subject=foo tok")
+    crabgo_process("login --key-subject=foo tok")
         .with_stderr_contains(
             "error: the argument '--key-subject <SUBJECT>' cannot be used with '[token]'",
         )
         .with_status(1)
         .run();
 
-    cargo_process("login --generate-keypair tok")
+    crabgo_process("login --generate-keypair tok")
         .with_stderr_contains(
             "error: the argument '--generate-keypair' cannot be used with '[token]'",
         )
         .with_status(1)
         .run();
 
-    cargo_process("login --secret-key tok")
+    crabgo_process("login --secret-key tok")
         .with_stderr_contains("error: the argument '--secret-key' cannot be used with '[token]'")
         .with_status(1)
         .run();
 
-    cargo_process("login --generate-keypair --secret-key")
+    crabgo_process("login --generate-keypair --secret-key")
         .with_stderr_contains(
             "error: the argument '--generate-keypair' cannot be used with '--secret-key'",
         )
@@ -212,71 +212,71 @@ fn bad_asymmetric_token_args() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn asymmetric_requires_nightly() {
     let registry = registry::init();
-    cargo_process("login --key-subject=foo")          
+    crabgo_process("login --key-subject=foo")          
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[ERROR] the `key-subject` flag is unstable, pass `-Z registry-auth` to enable it\n\
-            See https://github.com/rust-lang/cargo/issues/10519 for more information about the `key-subject` flag.")
+            See https://github.com/rust-lang/crabgo/issues/10519 for more information about the `key-subject` flag.")
         .run();
-    cargo_process("login --generate-keypair")
+    crabgo_process("login --generate-keypair")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[ERROR] the `generate-keypair` flag is unstable, pass `-Z registry-auth` to enable it\n\
-            See https://github.com/rust-lang/cargo/issues/10519 for more information about the `generate-keypair` flag.")
+            See https://github.com/rust-lang/crabgo/issues/10519 for more information about the `generate-keypair` flag.")
         .run();
-    cargo_process("login --secret-key")
+    crabgo_process("login --secret-key")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[ERROR] the `secret-key` flag is unstable, pass `-Z registry-auth` to enable it\n\
-            See https://github.com/rust-lang/cargo/issues/10519 for more information about the `secret-key` flag.")
+            See https://github.com/rust-lang/crabgo/issues/10519 for more information about the `secret-key` flag.")
         .run();
 }
 
-#[cargo_test]
-fn login_with_no_cargo_dir() {
+#[crabgo_test]
+fn login_with_no_crabgo_dir() {
     // Create a config in the root directory because `login` requires the
     // index to be updated, and we don't want to hit crates.io.
     let registry = registry::init();
-    fs::rename(paths::home().join(".cargo"), paths::root().join(".cargo")).unwrap();
+    fs::rename(paths::home().join(".crabgo"), paths::root().join(".crabgo")).unwrap();
     paths::home().rm_rf();
-    cargo_process("login foo -v")
+    crabgo_process("login foo -v")
         .replace_crates_io(registry.index_url())
         .run();
     let credentials = fs::read_to_string(credentials_toml()).unwrap();
     assert_eq!(credentials, "[registry]\ntoken = \"foo\"\n");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_differently_sized_token() {
     // Verify that the configuration file gets properly truncated.
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login lmaolmaolmao -v")
+    crabgo_process("login lmaolmaolmao -v")
         .replace_crates_io(registry.index_url())
         .run();
-    cargo_process("login lmao -v")
+    crabgo_process("login lmao -v")
         .replace_crates_io(registry.index_url())
         .run();
-    cargo_process("login lmaolmaolmao -v")
+    crabgo_process("login lmaolmaolmao -v")
         .replace_crates_io(registry.index_url())
         .run();
     let credentials = fs::read_to_string(&credentials).unwrap();
     assert_eq!(credentials, "[registry]\ntoken = \"lmaolmaolmao\"\n");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_token_on_stdin() {
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login lmao -v")
+    crabgo_process("login lmao -v")
         .replace_crates_io(registry.index_url())
         .run();
-    cargo_process("login")
+    crabgo_process("login")
         .replace_crates_io(registry.index_url())
         .with_stdout("please paste the token found on [..]/me below")
         .with_stdin("some token")
@@ -285,13 +285,13 @@ fn login_with_token_on_stdin() {
     assert_eq!(credentials, "[registry]\ntoken = \"some token\"\n");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_asymmetric_token_and_subject_on_stdin() {
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login --key-subject=foo --secret-key -v -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --key-subject=foo --secret-key -v -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_stdout(
             "\
@@ -306,13 +306,13 @@ k3.public.AmDwjlyf8jAV3gm5Z7Kz9xAOcsKslt_Vwp5v-emjFzBHLCtcANzTaVEghTNEMj9PkQ",
     assert!(credentials.contains("secret-key = \"k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36\"\n"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_asymmetric_token_on_stdin() {
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login --secret-key -v -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --secret-key -v -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_stdout(
             "\
@@ -325,21 +325,21 @@ k3.public.AmDwjlyf8jAV3gm5Z7Kz9xAOcsKslt_Vwp5v-emjFzBHLCtcANzTaVEghTNEMj9PkQ",
     assert_eq!(credentials, "[registry]\nsecret-key = \"k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36\"\n");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_asymmetric_key_subject_without_key() {
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login --key-subject=foo -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --key-subject=foo -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_stderr_contains("error: need a secret_key to set a key_subject")
         .with_status(101)
         .run();
 
     // ok so add a secret_key to the credentials
-    cargo_process("login --secret-key -v -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --secret-key -v -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_stdout(
             "please paste the API secret key below
@@ -349,8 +349,8 @@ k3.public.AmDwjlyf8jAV3gm5Z7Kz9xAOcsKslt_Vwp5v-emjFzBHLCtcANzTaVEghTNEMj9PkQ",
         .run();
 
     // and then it should work
-    cargo_process("login --key-subject=foo -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --key-subject=foo -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .run();
 
@@ -360,13 +360,13 @@ k3.public.AmDwjlyf8jAV3gm5Z7Kz9xAOcsKslt_Vwp5v-emjFzBHLCtcANzTaVEghTNEMj9PkQ",
     assert!(credentials.contains("secret-key = \"k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36\"\n"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_with_generate_asymmetric_token() {
     let registry = registry::init();
     let credentials = credentials_toml();
     fs::remove_file(&credentials).unwrap();
-    cargo_process("login --generate-keypair -Z registry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("login --generate-keypair -Z registry-auth")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_stdout("k3.public.[..]")
         .run();
@@ -374,13 +374,13 @@ fn login_with_generate_asymmetric_token() {
     assert!(credentials.contains("secret-key = \"k3.secret."));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_registry_configured() {
     // When registry.default is set, login should use that one when
     // --registry is not used.
     let _alternative = RegistryBuilder::new().alternative().build();
-    let cargo_home = paths::home().join(".cargo");
-    cargo_util::paths::append(
+    let cargo_home = paths::home().join(".crabgo");
+    crabgo_util::paths::append(
         &cargo_home.join("config"),
         br#"
             [registry]
@@ -389,7 +389,7 @@ fn default_registry_configured() {
     )
     .unwrap();
 
-    cargo_process("login")
+    crabgo_process("login")
         .arg("a-new-token")
         .with_stderr(
             "\

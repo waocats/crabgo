@@ -1,21 +1,21 @@
 //! Tests for workspace member errors.
 
-use cargo::core::resolver::ResolveError;
-use cargo::core::{compiler::CompileMode, Shell, Workspace};
-use cargo::ops::{self, CompileOptions};
-use cargo::util::{config::Config, errors::ManifestError};
+use crabgo::core::resolver::ResolveError;
+use crabgo::core::{compiler::CompileMode, Shell, Workspace};
+use crabgo::ops::{self, CompileOptions};
+use crabgo::util::{config::Config, errors::ManifestError};
 
-use cargo_test_support::install::cargo_home;
-use cargo_test_support::project;
-use cargo_test_support::registry;
+use crabgo_test_support::install::cargo_home;
+use crabgo_test_support::project;
+use crabgo_test_support::registry;
 
 /// Tests inclusion of a `ManifestError` pointing to a member manifest
 /// when that manifest fails to deserialize.
-#[cargo_test]
+#[crabgo_test]
 fn toml_deserialize_manifest_error() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -30,7 +30,7 @@ fn toml_deserialize_manifest_error() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -44,8 +44,8 @@ fn toml_deserialize_manifest_error() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    let root_manifest_path = p.root().join("Cargo.toml");
-    let member_manifest_path = p.root().join("bar").join("Cargo.toml");
+    let root_manifest_path = p.root().join("Crabgo.toml");
+    let member_manifest_path = p.root().join("bar").join("Crabgo.toml");
 
     let error = Workspace::new(&root_manifest_path, &Config::default().unwrap()).unwrap_err();
     eprintln!("{:?}", error);
@@ -60,11 +60,11 @@ fn toml_deserialize_manifest_error() {
 
 /// Tests inclusion of a `ManifestError` pointing to a member manifest
 /// when that manifest has an invalid dependency path.
-#[cargo_test]
+#[crabgo_test]
 fn member_manifest_path_io_error() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -79,7 +79,7 @@ fn member_manifest_path_io_error() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -93,9 +93,9 @@ fn member_manifest_path_io_error() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    let root_manifest_path = p.root().join("Cargo.toml");
-    let member_manifest_path = p.root().join("bar").join("Cargo.toml");
-    let missing_manifest_path = p.root().join("bar").join("nosuch").join("Cargo.toml");
+    let root_manifest_path = p.root().join("Crabgo.toml");
+    let member_manifest_path = p.root().join("bar").join("Crabgo.toml");
+    let missing_manifest_path = p.root().join("bar").join("nosuch").join("Crabgo.toml");
 
     let error = Workspace::new(&root_manifest_path, &Config::default().unwrap()).unwrap_err();
     eprintln!("{:?}", error);
@@ -110,11 +110,11 @@ fn member_manifest_path_io_error() {
 }
 
 /// Tests dependency version errors provide which package failed via a `ResolveError`.
-#[cargo_test]
+#[crabgo_test]
 fn member_manifest_version_error() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -129,7 +129,7 @@ fn member_manifest_version_error() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -143,14 +143,14 @@ fn member_manifest_version_error() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    // Prevent this test from accessing the network by setting up .cargo/config.
+    // Prevent this test from accessing the network by setting up .crabgo/config.
     registry::init();
     let config = Config::new(
         Shell::from_write(Box::new(Vec::new())),
         cargo_home(),
         cargo_home(),
     );
-    let ws = Workspace::new(&p.root().join("Cargo.toml"), &config).unwrap();
+    let ws = Workspace::new(&p.root().join("Crabgo.toml"), &config).unwrap();
     let compile_options = CompileOptions::new(&config, CompileMode::Build).unwrap();
     let member_bar = ws.members().find(|m| &*m.name() == "bar").unwrap();
 

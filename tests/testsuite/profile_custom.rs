@@ -1,13 +1,13 @@
 //! Tests for named profiles.
 
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::{basic_lib_manifest, project};
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::{basic_lib_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn inherits_on_release() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -21,7 +21,7 @@ fn inherits_on_release() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -31,11 +31,11 @@ fn inherits_on_release() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn missing_inherits() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -49,7 +49,7 @@ fn missing_inherits() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -60,11 +60,11 @@ fn missing_inherits() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_profile_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -79,7 +79,7 @@ fn invalid_profile_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -93,7 +93,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 // We are currently uncertain if dir-name will ever be exposed to the user.
 // The code for it still roughly exists, but only for the internal profiles.
 // This test was kept in case we ever want to enable support for it again.
@@ -101,7 +101,7 @@ Caused by:
 fn invalid_dir_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -117,7 +117,7 @@ fn invalid_dir_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -129,11 +129,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dir_name_disabled() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -148,11 +148,11 @@ fn dir_name_disabled() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   dir-name=\"lto\" in profile `release-lto` is not currently allowed, \
@@ -162,11 +162,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_inherits() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -181,7 +181,7 @@ fn invalid_inherits() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "error: profile `release-lto` inherits from `.release`, \
@@ -190,11 +190,11 @@ fn invalid_inherits() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_existent_inherits() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -209,7 +209,7 @@ fn non_existent_inherits() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -219,11 +219,11 @@ fn non_existent_inherits() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn self_inherits() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -238,7 +238,7 @@ fn self_inherits() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -248,11 +248,11 @@ fn self_inherits() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherits_loop() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -271,7 +271,7 @@ fn inherits_loop() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
@@ -281,11 +281,11 @@ fn inherits_loop() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn overrides_with_custom() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -313,15 +313,15 @@ fn overrides_with_custom() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("xxx/Cargo.toml", &basic_lib_manifest("xxx"))
+        .file("xxx/Crabgo.toml", &basic_lib_manifest("xxx"))
         .file("xxx/src/lib.rs", "")
-        .file("yyy/Cargo.toml", &basic_lib_manifest("yyy"))
+        .file("yyy/Crabgo.toml", &basic_lib_manifest("yyy"))
         .file("yyy/src/lib.rs", "")
         .build();
 
     // profile overrides are inherited between profiles using inherits and have a
     // higher priority than profile options provided by custom profiles
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_unordered(
             "\
 [COMPILING] xxx [..]
@@ -336,7 +336,7 @@ fn overrides_with_custom() {
         .run();
 
     // This also verifies that the custom profile names appears in the finished line.
-    p.cargo("build --profile=other -v")
+    p.crabgo("build --profile=other -v")
         .with_stderr_unordered(
             "\
 [COMPILING] xxx [..]
@@ -351,11 +351,11 @@ fn overrides_with_custom() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn conflicting_usage() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -366,7 +366,7 @@ fn conflicting_usage() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --profile=dev --release")
+    p.crabgo("build --profile=dev --release")
         .with_status(101)
         .with_stderr(
             "\
@@ -377,7 +377,7 @@ Remove one flag or the other to continue.
         )
         .run();
 
-    p.cargo("install --profile=release --debug")
+    p.crabgo("install --profile=release --debug")
         .with_status(101)
         .with_stderr(
             "\
@@ -388,7 +388,7 @@ Remove one flag or the other to continue.
         )
         .run();
 
-    p.cargo("rustc --profile=dev --release")
+    p.crabgo("rustc --profile=dev --release")
         .with_stderr(
             "\
 warning: the `--release` flag should not be specified with the `--profile` flag
@@ -400,7 +400,7 @@ This was historically accepted, but will become an error in a future release.
         )
         .run();
 
-    p.cargo("check --profile=dev --release")
+    p.crabgo("check --profile=dev --release")
         .with_status(101)
         .with_stderr(
             "\
@@ -411,7 +411,7 @@ Remove one flag or the other to continue.
         )
         .run();
 
-    p.cargo("check --profile=test --release")
+    p.crabgo("check --profile=test --release")
         .with_stderr(
             "\
 warning: the `--release` flag should not be specified with the `--profile` flag
@@ -424,7 +424,7 @@ This was historically accepted, but will become an error in a future release.
         .run();
 
     // This is OK since the two are the same.
-    p.cargo("rustc --profile=release --release")
+    p.crabgo("rustc --profile=release --release")
         .with_stderr(
             "\
 [COMPILING] foo [..]
@@ -433,7 +433,7 @@ This was historically accepted, but will become an error in a future release.
         )
         .run();
 
-    p.cargo("build --profile=release --release")
+    p.crabgo("build --profile=release --release")
         .with_stderr(
             "\
 [FINISHED] release [..]
@@ -441,7 +441,7 @@ This was historically accepted, but will become an error in a future release.
         )
         .run();
 
-    p.cargo("install --path . --profile=dev --debug")
+    p.crabgo("install --path . --profile=dev --debug")
         .with_stderr(
             "\
 [INSTALLING] foo [..]
@@ -453,7 +453,7 @@ This was historically accepted, but will become an error in a future release.
         )
         .run();
 
-    p.cargo("install --path . --profile=release --debug")
+    p.crabgo("install --path . --profile=release --debug")
         .with_status(101)
         .with_stderr(
             "\
@@ -465,11 +465,11 @@ Remove one flag or the other to continue.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_custom_dirname() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -483,7 +483,7 @@ fn clean_custom_dirname() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --release")
+    p.crabgo("build --release")
         .with_stdout("")
         .with_stderr(
             "\
@@ -493,9 +493,9 @@ fn clean_custom_dirname() {
         )
         .run();
 
-    p.cargo("clean -p foo").run();
+    p.crabgo("clean -p foo").run();
 
-    p.cargo("build --release")
+    p.crabgo("build --release")
         .with_stdout("")
         .with_stderr(
             "\
@@ -504,9 +504,9 @@ fn clean_custom_dirname() {
         )
         .run();
 
-    p.cargo("clean -p foo --release").run();
+    p.crabgo("clean -p foo --release").run();
 
-    p.cargo("build --release")
+    p.crabgo("build --release")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -515,7 +515,7 @@ fn clean_custom_dirname() {
         )
         .run();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stdout("")
         .with_stderr(
             "\
@@ -525,7 +525,7 @@ fn clean_custom_dirname() {
         )
         .run();
 
-    p.cargo("build --profile=other")
+    p.crabgo("build --profile=other")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -534,7 +534,7 @@ fn clean_custom_dirname() {
         )
         .run();
 
-    p.cargo("clean").arg("--release").run();
+    p.crabgo("clean").arg("--release").run();
 
     // Make sure that 'other' was not cleaned
     assert!(p.build_dir().is_dir());
@@ -543,16 +543,16 @@ fn clean_custom_dirname() {
     assert!(!p.build_dir().join("release").is_dir());
 
     // This should clean 'other'
-    p.cargo("clean --profile=other").with_stderr("").run();
+    p.crabgo("clean --profile=other").with_stderr("").run();
     assert!(p.build_dir().join("debug").is_dir());
     assert!(!p.build_dir().join("other").is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unknown_profile() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -562,22 +562,22 @@ fn unknown_profile() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build --profile alpha")
+    p.crabgo("build --profile alpha")
         .with_stderr("[ERROR] profile `alpha` is not defined")
         .with_status(101)
         .run();
     // Clean has a separate code path, need to check it too.
-    p.cargo("clean --profile alpha")
+    p.crabgo("clean --profile alpha")
         .with_stderr("[ERROR] profile `alpha` is not defined")
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn reserved_profile_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -590,27 +590,27 @@ fn reserved_profile_names() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build --profile=doc")
+    p.crabgo("build --profile=doc")
         .with_status(101)
         .with_stderr("error: profile `doc` is reserved and not allowed to be explicitly specified")
         .run();
     // Not an exhaustive list, just a sample.
-    for name in ["build", "cargo", "check", "rustc", "CaRgO_startswith"] {
-        p.cargo(&format!("build --profile={}", name))
+    for name in ["build", "crabgo", "check", "rustc", "CaRgO_startswith"] {
+        p.crabgo(&format!("build --profile={}", name))
             .with_status(101)
             .with_stderr(&format!(
                 "\
 error: profile name `{}` is reserved
 Please choose a different name.
-See https://doc.rust-lang.org/cargo/reference/profiles.html for more on configuring profiles.
+See https://doc.rust-lang.org/crabgo/reference/profiles.html for more on configuring profiles.
 ",
                 name
             ))
             .run();
     }
-    for name in ["build", "check", "cargo", "rustc", "CaRgO_startswith"] {
+    for name in ["build", "check", "crabgo", "rustc", "CaRgO_startswith"] {
         p.change_file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -624,16 +624,16 @@ See https://doc.rust-lang.org/cargo/reference/profiles.html for more on configur
             ),
         );
 
-        p.cargo("build")
+        p.crabgo("build")
             .with_status(101)
             .with_stderr(&format!(
                 "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   profile name `{}` is reserved
   Please choose a different name.
-  See https://doc.rust-lang.org/cargo/reference/profiles.html for more on configuring profiles.
+  See https://doc.rust-lang.org/crabgo/reference/profiles.html for more on configuring profiles.
 ",
                 name
             ))
@@ -641,7 +641,7 @@ Caused by:
     }
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
                [package]
                name = "foo"
@@ -654,27 +654,27 @@ Caused by:
             "#,
     );
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   profile name `debug` is reserved
   To configure the default development profile, use the name `dev` as in [profile.dev]
-  See https://doc.rust-lang.org/cargo/reference/profiles.html for more on configuring profiles.
+  See https://doc.rust-lang.org/crabgo/reference/profiles.html for more on configuring profiles.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn legacy_commands_support_custom() {
     // These commands have had `--profile` before custom named profiles.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "foo"
@@ -689,7 +689,7 @@ fn legacy_commands_support_custom() {
         .build();
 
     for command in ["rustc", "fix", "check"] {
-        let mut pb = p.cargo(command);
+        let mut pb = p.crabgo(command);
         if command == "fix" {
             pb.arg("--allow-no-vcs");
         }
@@ -701,13 +701,13 @@ fn legacy_commands_support_custom() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn legacy_rustc() {
-    // `cargo rustc` historically has supported dev/test/bench/check
+    // `crabgo rustc` historically has supported dev/test/bench/check
     // other profiles are covered in check::rustc_check
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -719,7 +719,7 @@ fn legacy_rustc() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("rustc --profile dev -v")
+    p.crabgo("rustc --profile dev -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.1.0 [..]

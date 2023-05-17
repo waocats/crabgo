@@ -2,13 +2,13 @@
 
 ## Internal profiler
 
-Cargo has a basic, hierarchical profiler built-in. The environment variable
-`CARGO_PROFILE` can be set to an integer which specifies how deep in the
+Crabgo has a basic, hierarchical profiler built-in. The environment variable
+`CRABGO_PROFILE` can be set to an integer which specifies how deep in the
 profile stack to print results for.
 
 ```sh
 # Output first three levels of profiling info
-CARGO_PROFILE=3 cargo generate-lockfile
+CRABGO_PROFILE=3 crabgo generate-lockfile
 ```
 
 ## Benchmarking
@@ -16,7 +16,7 @@ CARGO_PROFILE=3 cargo generate-lockfile
 ### Benchsuite
 
 Head over to the [`benches`
-directory](https://github.com/rust-lang/cargo/tree/master/benches) for more
+directory](https://github.com/rust-lang/crabgo/tree/master/benches) for more
 information about the benchmarking suite.
 
 ### Informal benchmarking
@@ -33,8 +33,8 @@ the primary parts that affect this are:
 
 One way to test this is to use [hyperfine]. This is a tool that can be used to
 measure the difference between different commands and settings. Usually this
-is done by measuring the time it takes for `cargo build` to finish in a large
+is done by measuring the time it takes for `crabgo build` to finish in a large
 project where the build is fresh (no actual compilation is performed). Just
-run `cargo build` once before using hyperfine.
+run `crabgo build` once before using hyperfine.
 
 [hyperfine]: https://github.com/sharkdp/hyperfine

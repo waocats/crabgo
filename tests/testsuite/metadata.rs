@@ -1,19 +1,19 @@
-//! Tests for the `cargo metadata` command.
+//! Tests for the `crabgo metadata` command.
 
-use cargo_test_support::install::cargo_home;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_bin_manifest, basic_lib_manifest, main_file, project, rustc_host};
+use crabgo_test_support::install::cargo_home;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_bin_manifest, basic_lib_manifest, main_file, project, rustc_host};
 use serde_json::json;
 
-#[cargo_test]
-fn cargo_metadata_simple() {
+#[crabgo_test]
+fn crabgo_metadata_simple() {
     let p = project()
         .file("src/foo.rs", "")
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -59,7 +59,7 @@ fn cargo_metadata_simple() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -85,24 +85,24 @@ fn cargo_metadata_simple() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_warns_on_implicit_version() {
+#[crabgo_test]
+fn crabgo_metadata_warns_on_implicit_version() {
     let p = project()
         .file("src/foo.rs", "")
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .build();
 
-    p.cargo("metadata").with_stderr("[WARNING] please specify `--format-version` flag explicitly to avoid compatibility problems").run();
+    p.crabgo("metadata").with_stderr("[WARNING] please specify `--format-version` flag explicitly to avoid compatibility problems").run();
 
-    p.cargo("metadata --format-version 1").with_stderr("").run();
+    p.crabgo("metadata --format-version 1").with_stderr("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn library_with_several_crate_types() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
 [package]
 name = "foo"
@@ -114,7 +114,7 @@ crate-type = ["lib", "staticlib"]
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -158,7 +158,7 @@ crate-type = ["lib", "staticlib"]
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -184,12 +184,12 @@ crate-type = ["lib", "staticlib"]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn library_with_features() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
 [package]
 name = "foo"
@@ -203,7 +203,7 @@ optional_feat = []
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -251,7 +251,7 @@ optional_feat = []
                   "default_feat": [],
                   "optional_feat": []
                 },
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -280,12 +280,12 @@ optional_feat = []
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_deps_and_version() {
+#[crabgo_test]
+fn crabgo_metadata_with_deps_and_version() {
     let p = project()
         .file("src/foo.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -308,7 +308,7 @@ fn cargo_metadata_with_deps_and_version() {
     Package::new("foobar", "0.0.1").publish();
     Package::new("bar", "0.0.1").dep("baz", "0.0.1").publish();
 
-    p.cargo("metadata -q --format-version 1")
+    p.crabgo("metadata -q --format-version 1")
         .with_json(
             r#"
     {
@@ -339,7 +339,7 @@ fn cargo_metadata_with_deps_and_version() {
                 "license": null,
                 "license_file": null,
                 "links": null,
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null,
                 "name": "bar",
@@ -380,7 +380,7 @@ fn cargo_metadata_with_deps_and_version() {
                 "license": null,
                 "license_file": null,
                 "links": null,
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null,
                 "name": "baz",
@@ -446,7 +446,7 @@ fn cargo_metadata_with_deps_and_version() {
                 "license": "MIT",
                 "license_file": null,
                 "links": null,
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null,
                 "name": "foo",
@@ -487,7 +487,7 @@ fn cargo_metadata_with_deps_and_version() {
                 "license": null,
                 "license_file": null,
                 "links": null,
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null,
                 "name": "foobar",
@@ -594,13 +594,13 @@ fn cargo_metadata_with_deps_and_version() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn example() {
     let p = project()
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
 [package]
 name = "foo"
@@ -612,7 +612,7 @@ name = "ex"
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -660,7 +660,7 @@ name = "ex"
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -688,13 +688,13 @@ name = "ex"
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn example_lib() {
     let p = project()
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
 [package]
 name = "foo"
@@ -707,7 +707,7 @@ crate-type = ["rlib", "dylib"]
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -755,7 +755,7 @@ crate-type = ["rlib", "dylib"]
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]Cargo.toml",
+                "manifest_path": "[..]Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -783,11 +783,11 @@ crate-type = ["rlib", "dylib"]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_metadata() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
@@ -801,13 +801,13 @@ fn workspace_metadata() {
 
             "#,
         )
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
-        .file("baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file("baz/src/lib.rs", "")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
     {
@@ -847,7 +847,7 @@ fn workspace_metadata() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]bar/Cargo.toml",
+                "manifest_path": "[..]bar/Crabgo.toml",
                 "metadata": null,
                 "publish": null
             },
@@ -886,7 +886,7 @@ fn workspace_metadata() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]baz/Cargo.toml",
+                "manifest_path": "[..]baz/Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -924,19 +924,19 @@ fn workspace_metadata() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_metadata_with_dependencies_no_deps() {
     let p = project()
         // NOTE that 'artifact' isn't mentioned in the workspace here, yet it shows up as member.
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -950,14 +950,14 @@ fn workspace_metadata_with_dependencies_no_deps() {
            "#,
         )
         .file("bar/src/lib.rs", "")
-        .file("baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file("baz/src/lib.rs", "")
-        .file("artifact/Cargo.toml", &basic_bin_manifest("artifact"))
+        .file("artifact/Crabgo.toml", &basic_bin_manifest("artifact"))
         .file("artifact/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("metadata --no-deps -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("metadata --no-deps -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_json(
             r#"
     {
@@ -1031,7 +1031,7 @@ fn workspace_metadata_with_dependencies_no_deps() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]bar/Cargo.toml",
+                "manifest_path": "[..]bar/Crabgo.toml",
                 "metadata": null,
                 "publish": null
             },
@@ -1052,7 +1052,7 @@ fn workspace_metadata_with_dependencies_no_deps() {
               "license": null,
               "license_file": null,
               "links": null,
-              "manifest_path": "[..]/foo/artifact/Cargo.toml",
+              "manifest_path": "[..]/foo/artifact/Crabgo.toml",
               "metadata": null,
               "name": "artifact",
               "publish": null,
@@ -1113,7 +1113,7 @@ fn workspace_metadata_with_dependencies_no_deps() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]baz/Cargo.toml",
+                "manifest_path": "[..]baz/Crabgo.toml",
                 "metadata": null,
                 "publish": null
             }
@@ -1133,19 +1133,19 @@ fn workspace_metadata_with_dependencies_no_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_metadata_with_dependencies_and_resolve() {
     let alt_target = "wasm32-unknown-unknown";
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "artifact", "non-artifact", "bin-only-artifact"]
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             &r#"
                 [package]
 
@@ -1172,7 +1172,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
         .file("bar/src/lib.rs", "")
         .file("bar/build.rs", "fn main() {}")
         .file(
-            "artifact/Cargo.toml",
+            "artifact/Crabgo.toml",
             r#"
                 [package]
                 name = "artifact"
@@ -1192,7 +1192,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
         .file("artifact/src/main.rs", "fn main() {}")
         .file("artifact/src/lib.rs", "")
         .file(
-            "bin-only-artifact/Cargo.toml",
+            "bin-only-artifact/Crabgo.toml",
             r#"
                 [package]
                 name = "bin-only-artifact"
@@ -1207,7 +1207,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
             "#,
         )
         .file("bin-only-artifact/src/main.rs", "fn main() {}")
-        .file("non-artifact/Cargo.toml",
+        .file("non-artifact/Crabgo.toml",
               r#"
                 [package]
 
@@ -1219,8 +1219,8 @@ fn workspace_metadata_with_dependencies_and_resolve() {
         .file("non-artifact/src/lib.rs", "")
         .build();
 
-    p.cargo("metadata -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("metadata -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_json(
             r#"
             {
@@ -1241,7 +1241,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/artifact/Cargo.toml",
+                  "manifest_path": "[..]/foo/artifact/Crabgo.toml",
                   "metadata": null,
                   "name": "artifact",
                   "publish": null,
@@ -1469,7 +1469,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/bar/Cargo.toml",
+                  "manifest_path": "[..]/foo/bar/Crabgo.toml",
                   "metadata": null,
                   "name": "bar",
                   "publish": null,
@@ -1524,7 +1524,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/bin-only-artifact/Cargo.toml",
+                  "manifest_path": "[..]/foo/bin-only-artifact/Crabgo.toml",
                   "metadata": null,
                   "name": "bin-only-artifact",
                   "publish": null,
@@ -1579,7 +1579,7 @@ fn workspace_metadata_with_dependencies_and_resolve() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/non-artifact/Cargo.toml",
+                  "manifest_path": "[..]/foo/non-artifact/Crabgo.toml",
                   "metadata": null,
                   "name": "non-artifact",
                   "publish": null,
@@ -1762,11 +1762,11 @@ fn workspace_metadata_with_dependencies_and_resolve() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_manifest() {
-    let p = project().file("Cargo.toml", "").build();
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_manifest() {
+    let p = project().file("Crabgo.toml", "").build();
 
-    p.cargo("metadata --format-version 1")
+    p.crabgo("metadata --format-version 1")
         .with_status(101)
         .with_stderr(
             "\
@@ -1778,12 +1778,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_authors_field() {
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_authors_field() {
     let p = project()
         .file("src/foo.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 authors = ""
@@ -1791,7 +1791,7 @@ fn cargo_metadata_with_invalid_authors_field() {
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_status(101)
         .with_stderr(
             r#"[ERROR] failed to parse manifest at `[..]`
@@ -1803,12 +1803,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_version_field() {
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_version_field() {
     let p = project()
         .file("src/foo.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 version = 1
@@ -1816,7 +1816,7 @@ fn cargo_metadata_with_invalid_version_field() {
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_status(101)
         .with_stderr(
             r#"[ERROR] failed to parse manifest at `[..]`
@@ -1828,12 +1828,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_publish_field() {
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_publish_field() {
     let p = project()
         .file("src/foo.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 publish = "foo"
@@ -1841,7 +1841,7 @@ fn cargo_metadata_with_invalid_publish_field() {
         )
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_status(101)
         .with_stderr(
             r#"[ERROR] failed to parse manifest at `[..]`
@@ -1853,11 +1853,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_artifact_deps() {
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_artifact_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1868,12 +1868,12 @@ fn cargo_metadata_with_invalid_artifact_deps() {
            "#,
         )
         .file("src/lib.rs", "")
-        .file("artifact/Cargo.toml", &basic_bin_manifest("artifact"))
+        .file("artifact/Crabgo.toml", &basic_bin_manifest("artifact"))
         .file("artifact/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("metadata -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("metadata -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr(
             "\
@@ -1883,11 +1883,11 @@ fn cargo_metadata_with_invalid_artifact_deps() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_with_invalid_duplicate_renamed_deps() {
+#[crabgo_test]
+fn crabgo_metadata_with_invalid_duplicate_renamed_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1899,11 +1899,11 @@ fn cargo_metadata_with_invalid_duplicate_renamed_deps() {
            "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_status(101)
         .with_stderr(
             "\
@@ -1943,7 +1943,7 @@ const MANIFEST_OUTPUT: &str = r#"
             "src_path":"[..]/foo/src/foo.rs"
         }],
         "features":{},
-        "manifest_path":"[..]Cargo.toml",
+        "manifest_path":"[..]Crabgo.toml",
         "metadata": null,
         "publish": null,
         "readme": null,
@@ -1960,88 +1960,88 @@ const MANIFEST_OUTPUT: &str = r#"
     "metadata": null
 }"#;
 
-#[cargo_test]
-fn cargo_metadata_no_deps_path_to_cargo_toml_relative() {
+#[crabgo_test]
+fn crabgo_metadata_no_deps_path_to_crabgo_toml_relative() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps --manifest-path foo/Cargo.toml")
+    p.crabgo("metadata --no-deps --manifest-path foo/Crabgo.toml")
         .cwd(p.root().parent().unwrap())
         .with_json(MANIFEST_OUTPUT)
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_no_deps_path_to_cargo_toml_absolute() {
+#[crabgo_test]
+fn crabgo_metadata_no_deps_path_to_crabgo_toml_absolute() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps --manifest-path")
-        .arg(p.root().join("Cargo.toml"))
+    p.crabgo("metadata --no-deps --manifest-path")
+        .arg(p.root().join("Crabgo.toml"))
         .cwd(p.root().parent().unwrap())
         .with_json(MANIFEST_OUTPUT)
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_no_deps_path_to_cargo_toml_parent_relative() {
+#[crabgo_test]
+fn crabgo_metadata_no_deps_path_to_crabgo_toml_parent_relative() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps --manifest-path foo")
+    p.crabgo("metadata --no-deps --manifest-path foo")
         .cwd(p.root().parent().unwrap())
         .with_status(101)
         .with_stderr(
             "[ERROR] the manifest-path must be \
-             a path to a Cargo.toml file",
+             a path to a Crabgo.toml file",
         )
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_no_deps_path_to_cargo_toml_parent_absolute() {
+#[crabgo_test]
+fn crabgo_metadata_no_deps_path_to_crabgo_toml_parent_absolute() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps --manifest-path")
+    p.crabgo("metadata --no-deps --manifest-path")
         .arg(p.root())
         .cwd(p.root().parent().unwrap())
         .with_status(101)
         .with_stderr(
             "[ERROR] the manifest-path must be \
-             a path to a Cargo.toml file",
+             a path to a Crabgo.toml file",
         )
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_no_deps_cwd() {
+#[crabgo_test]
+fn crabgo_metadata_no_deps_cwd() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps")
+    p.crabgo("metadata --no-deps")
         .with_json(MANIFEST_OUTPUT)
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_bad_version() {
+#[crabgo_test]
+fn crabgo_metadata_bad_version() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("metadata --no-deps --format-version 2")
+    p.crabgo("metadata --no-deps --format-version 2")
         .with_status(1)
         .with_stderr_contains(
             "\
@@ -2052,11 +2052,11 @@ error: invalid value '2' for '--format-version <VERSION>'
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2071,14 +2071,14 @@ fn multiple_features() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("metadata --features").arg("a b").run();
+    p.crabgo("metadata --features").arg("a b").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_metadata() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2087,7 +2087,7 @@ fn package_metadata() {
                 categories = ["database"]
                 keywords = ["database"]
                 readme = "README.md"
-                repository = "https://github.com/rust-lang/cargo"
+                repository = "https://github.com/rust-lang/crabgo"
                 homepage = "https://rust-lang.org"
                 documentation = "https://doc.rust-lang.org/stable/std/"
 
@@ -2099,7 +2099,7 @@ fn package_metadata() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("metadata --no-deps")
+    p.crabgo("metadata --no-deps")
         .with_json(
             r#"
     {
@@ -2110,7 +2110,7 @@ fn package_metadata() {
                 "default_run": null,
                 "name": "foo",
                 "readme": "README.md",
-                "repository": "https://github.com/rust-lang/cargo",
+                "repository": "https://github.com/rust-lang/crabgo",
                 "rust_version": null,
                 "homepage": "https://rust-lang.org",
                 "documentation": "https://doc.rust-lang.org/stable/std/",
@@ -2137,7 +2137,7 @@ fn package_metadata() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]foo/Cargo.toml",
+                "manifest_path": "[..]foo/Crabgo.toml",
                 "metadata": {
                     "bar": {
                         "baz": "quux"
@@ -2157,11 +2157,11 @@ fn package_metadata() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_publish() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2170,7 +2170,7 @@ fn package_publish() {
                 categories = ["database"]
                 keywords = ["database"]
                 readme = "README.md"
-                repository = "https://github.com/rust-lang/cargo"
+                repository = "https://github.com/rust-lang/crabgo"
                 publish = ["my-registry"]
             "#,
         )
@@ -2178,7 +2178,7 @@ fn package_publish() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("metadata --no-deps")
+    p.crabgo("metadata --no-deps")
         .with_json(
             r#"
     {
@@ -2189,7 +2189,7 @@ fn package_publish() {
                 "default_run": null,
                 "name": "foo",
                 "readme": "README.md",
-                "repository": "https://github.com/rust-lang/cargo",
+                "repository": "https://github.com/rust-lang/crabgo",
                 "rust_version": null,
                 "homepage": null,
                 "documentation": null,
@@ -2216,7 +2216,7 @@ fn package_publish() {
                     }
                 ],
                 "features": {},
-                "manifest_path": "[..]foo/Cargo.toml",
+                "manifest_path": "[..]foo/Crabgo.toml",
                 "metadata": null,
                 "publish": ["my-registry"]
             }
@@ -2232,27 +2232,27 @@ fn package_publish() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_metadata_path_to_cargo_toml_project() {
+#[crabgo_test]
+fn crabgo_metadata_path_to_crabgo_toml_project() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("package --manifest-path")
-        .arg(p.root().join("bar/Cargo.toml"))
+    p.crabgo("package --manifest-path")
+        .arg(p.root().join("bar/Crabgo.toml"))
         .cwd(p.root().parent().unwrap())
         .run();
 
-    p.cargo("metadata --manifest-path")
-        .arg(p.root().join("target/package/bar-0.5.0/Cargo.toml"))
+    p.crabgo("metadata --manifest-path")
+        .arg(p.root().join("target/package/bar-0.5.0/Crabgo.toml"))
         .with_json(
             r#"
             {
@@ -2272,7 +2272,7 @@ fn cargo_metadata_path_to_cargo_toml_project() {
                     "license": null,
                     "license_file": null,
                     "links": null,
-                    "manifest_path": "[..]Cargo.toml",
+                    "manifest_path": "[..]Crabgo.toml",
                     "metadata": null,
                     "publish": null,
                     "name": "bar",
@@ -2325,12 +2325,12 @@ fn cargo_metadata_path_to_cargo_toml_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_edition_2018() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2340,7 +2340,7 @@ fn package_edition_2018() {
             "#,
         )
         .build();
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -2360,7 +2360,7 @@ fn package_edition_2018() {
                         "license": null,
                         "license_file": null,
                         "links": null,
-                        "manifest_path": "[..]Cargo.toml",
+                        "manifest_path": "[..]Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "name": "foo",
@@ -2413,14 +2413,14 @@ fn package_edition_2018() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_default_run() {
     let p = project()
         .file("src/lib.rs", "")
         .file("src/bin/a.rs", r#"fn main() { println!("hello A"); }"#)
         .file("src/bin/b.rs", r#"fn main() { println!("hello B"); }"#)
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2431,16 +2431,16 @@ fn package_default_run() {
             "#,
         )
         .build();
-    let json = p.cargo("metadata").run_json();
+    let json = p.crabgo("metadata").run_json();
     assert_eq!(json["packages"][0]["default_run"], json!("a"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_rust_version() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2451,17 +2451,17 @@ fn package_rust_version() {
             "#,
         )
         .build();
-    let json = p.cargo("metadata").run_json();
+    let json = p.crabgo("metadata").run_json();
     assert_eq!(json["packages"][0]["rust_version"], json!("1.56"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_edition_2018() {
     let p = project()
         .file("src/lib.rs", "")
         .file("src/main.rs", "")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2474,7 +2474,7 @@ fn target_edition_2018() {
             "#,
         )
         .build();
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -2494,7 +2494,7 @@ fn target_edition_2018() {
                         "license": null,
                         "license_file": null,
                         "links": null,
-                        "manifest_path": "[..]Cargo.toml",
+                        "manifest_path": "[..]Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "name": "foo",
@@ -2561,14 +2561,14 @@ fn target_edition_2018() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_dependency() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.2.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2583,7 +2583,7 @@ fn rename_dependency() {
         .file("src/lib.rs", "extern crate bar; extern crate baz;")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
 {
@@ -2796,11 +2796,11 @@ fn rename_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metadata_links() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2812,7 +2812,7 @@ fn metadata_links() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -2830,7 +2830,7 @@ fn metadata_links() {
                   "license": null,
                   "license_file": null,
                   "links": "a",
-                  "manifest_path": "[..]/foo/Cargo.toml",
+                  "manifest_path": "[..]/foo/Crabgo.toml",
                   "metadata": null,
                   "publish": null,
                   "name": "foo",
@@ -2897,11 +2897,11 @@ fn metadata_links() {
         .run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deps_with_bin_only() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2911,11 +2911,11 @@ fn deps_with_bin_only() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bdep/Cargo.toml", &basic_bin_manifest("bdep"))
+        .file("bdep/Crabgo.toml", &basic_bin_manifest("bdep"))
         .file("bdep/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -2960,7 +2960,7 @@ fn deps_with_bin_only() {
                     }
                   ],
                   "features": {},
-                  "manifest_path": "[..]/foo/Cargo.toml",
+                  "manifest_path": "[..]/foo/Crabgo.toml",
                   "metadata": null,
                   "publish": null,
                   "authors": [],
@@ -3000,7 +3000,7 @@ fn deps_with_bin_only() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn filter_platform() {
     // Testing the --filter-platform flag.
     Package::new("normal-dep", "0.0.1").publish();
@@ -3013,7 +3013,7 @@ fn filter_platform() {
     let host_target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -3065,7 +3065,7 @@ fn filter_platform() {
         }
       ],
       "features": {},
-      "manifest_path": "[..]/alt-dep-0.0.1/Cargo.toml",
+      "manifest_path": "[..]/alt-dep-0.0.1/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "authors": [],
@@ -3109,7 +3109,7 @@ fn filter_platform() {
         }
       ],
       "features": {},
-      "manifest_path": "[..]/cfg-dep-0.0.1/Cargo.toml",
+      "manifest_path": "[..]/cfg-dep-0.0.1/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "authors": [],
@@ -3153,7 +3153,7 @@ fn filter_platform() {
         }
       ],
       "features": {},
-      "manifest_path": "[..]/host-dep-0.0.1/Cargo.toml",
+      "manifest_path": "[..]/host-dep-0.0.1/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "authors": [],
@@ -3197,7 +3197,7 @@ fn filter_platform() {
         }
       ],
       "features": {},
-      "manifest_path": "[..]/normal-dep-0.0.1/Cargo.toml",
+      "manifest_path": "[..]/normal-dep-0.0.1/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "authors": [],
@@ -3304,7 +3304,7 @@ fn filter_platform() {
         }
       ],
       "features": {},
-      "manifest_path": "[..]/foo/Cargo.toml",
+      "manifest_path": "[..]/foo/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "authors": [],
@@ -3333,7 +3333,7 @@ fn filter_platform() {
     };
 
     // Normal metadata, no filtering, returns *everything*.
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -3457,7 +3457,7 @@ fn filter_platform() {
     clear();
 
     // Filter on alternate, removes cfg and host.
-    p.cargo("metadata --filter-platform")
+    p.crabgo("metadata --filter-platform")
         .arg(alt_target)
         .with_stderr_unordered(
             "\
@@ -3539,7 +3539,7 @@ fn filter_platform() {
     clear();
 
     // Filter on host, removes alt and cfg.
-    p.cargo("metadata --filter-platform")
+    p.crabgo("metadata --filter-platform")
         .arg(&host_target)
         .with_stderr_unordered(
             "\
@@ -3620,7 +3620,7 @@ fn filter_platform() {
     clear();
 
     // Filter host with cfg, removes alt only
-    p.cargo("metadata --filter-platform")
+    p.crabgo("metadata --filter-platform")
         .arg(&host_target)
         .env("RUSTFLAGS", "--cfg=foobar")
         .with_stderr_unordered(
@@ -3721,14 +3721,14 @@ fn filter_platform() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_kinds() {
     Package::new("bar", "0.1.0").publish();
     Package::new("winapi", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -3750,7 +3750,7 @@ fn dep_kinds() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -3821,7 +3821,7 @@ fn dep_kinds() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_kinds_workspace() {
     // Check for bug with duplicate dep kinds in a workspace.
     // If different members select different features for the same package,
@@ -3832,7 +3832,7 @@ fn dep_kinds_workspace() {
     //     bar -> foo[feat1] -> dep
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3850,7 +3850,7 @@ fn dep_kinds_workspace() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -3861,11 +3861,11 @@ fn dep_kinds_workspace() {
             "#,
         )
         .file("bar/src/lib.rs", "")
-        .file("dep/Cargo.toml", &basic_lib_manifest("dep"))
+        .file("dep/Crabgo.toml", &basic_lib_manifest("dep"))
         .file("dep/src/lib.rs", "")
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .with_json(
             r#"
             {
@@ -3935,8 +3935,8 @@ fn dep_kinds_workspace() {
 // Creating non-utf8 path is an OS-specific pain, so let's run this only on
 // linux, where arbitrary bytes work.
 #[cfg(target_os = "linux")]
-#[cargo_test]
-fn cargo_metadata_non_utf8() {
+#[crabgo_test]
+fn crabgo_metadata_non_utf8() {
     use std::ffi::OsString;
     use std::os::unix::ffi::OsStringExt;
     use std::path::PathBuf;
@@ -3946,10 +3946,10 @@ fn cargo_metadata_non_utf8() {
     let p = project()
         .no_manifest()
         .file(base.join("./src/lib.rs"), "")
-        .file(base.join("./Cargo.toml"), &basic_lib_manifest("foo"))
+        .file(base.join("./Crabgo.toml"), &basic_lib_manifest("foo"))
         .build();
 
-    p.cargo("metadata")
+    p.crabgo("metadata")
         .cwd(p.root().join(base))
         .arg("--format-version")
         .arg("1")
@@ -3959,19 +3959,19 @@ fn cargo_metadata_non_utf8() {
 }
 
 // TODO: Consider using this test instead of the version without the 'artifact' suffix or merge them because they should be pretty much the same.
-#[cargo_test]
+#[crabgo_test]
 fn workspace_metadata_with_dependencies_no_deps_artifact() {
     let p = project()
         // NOTE that 'artifact' isn't mentioned in the workspace here, yet it shows up as member.
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -3986,14 +3986,14 @@ fn workspace_metadata_with_dependencies_no_deps_artifact() {
            "#,
         )
         .file("bar/src/lib.rs", "")
-        .file("baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file("baz/src/lib.rs", "")
-        .file("artifact/Cargo.toml", &basic_bin_manifest("artifact"))
+        .file("artifact/Crabgo.toml", &basic_bin_manifest("artifact"))
         .file("artifact/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("metadata --no-deps -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("metadata --no-deps -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_json(
             r#"
             {
@@ -4063,7 +4063,7 @@ fn workspace_metadata_with_dependencies_no_deps_artifact() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/bar/Cargo.toml",
+                  "manifest_path": "[..]/foo/bar/Crabgo.toml",
                   "metadata": null,
                   "name": "bar",
                   "publish": null,
@@ -4106,7 +4106,7 @@ fn workspace_metadata_with_dependencies_no_deps_artifact() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/artifact/Cargo.toml",
+                  "manifest_path": "[..]/foo/artifact/Crabgo.toml",
                   "metadata": null,
                   "name": "artifact",
                   "publish": null,
@@ -4149,7 +4149,7 @@ fn workspace_metadata_with_dependencies_no_deps_artifact() {
                   "license": null,
                   "license_file": null,
                   "links": null,
-                  "manifest_path": "[..]/foo/baz/Cargo.toml",
+                  "manifest_path": "[..]/foo/baz/Crabgo.toml",
                   "metadata": null,
                   "name": "baz",
                   "publish": null,

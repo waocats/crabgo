@@ -1,6 +1,6 @@
 ^/somefile
 
-# Added by cargo
+# Added by crabgo
 
 ^target$
-^Cargo.lock$
+^Crabgo.lock$

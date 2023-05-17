@@ -1,4 +1,4 @@
-//! Tests for the `cargo vendor` command.
+//! Tests for the `crabgo vendor` command.
 //!
 //! Note that every test here uses `--respect-source-config` so that the
 //! "fake" crates.io is used. Otherwise `vendor` would download the crates.io
@@ -6,15 +6,15 @@
 
 use std::fs;
 
-use cargo_test_support::git;
-use cargo_test_support::registry::{self, Package, RegistryBuilder};
-use cargo_test_support::{basic_lib_manifest, basic_manifest, paths, project, Project};
+use crabgo_test_support::git;
+use crabgo_test_support::registry::{self, Package, RegistryBuilder};
+use crabgo_test_support::{basic_lib_manifest, basic_manifest, paths, project, Project};
 
-#[cargo_test]
+#[crabgo_test]
 fn vendor_simple() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -29,19 +29,19 @@ fn vendor_simple() {
 
     Package::new("log", "0.3.5").publish();
 
-    p.cargo("vendor --respect-source-config").run();
-    let lock = p.read_file("vendor/log/Cargo.toml");
+    p.crabgo("vendor --respect-source-config").run();
+    let lock = p.read_file("vendor/log/Crabgo.toml");
     assert!(lock.contains("version = \"0.3.5\""));
 
     add_vendor_config(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vendor_sample_config() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -56,7 +56,7 @@ fn vendor_sample_config() {
 
     Package::new("log", "0.3.5").publish();
 
-    p.cargo("vendor --respect-source-config")
+    p.crabgo("vendor --respect-source-config")
         .with_stdout(
             r#"[source.crates-io]
 replace-with = "vendored-sources"
@@ -68,12 +68,12 @@ directory = "vendor"
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vendor_sample_config_alt_registry() {
     let registry = RegistryBuilder::new().alternative().http_index().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -88,7 +88,7 @@ fn vendor_sample_config_alt_registry() {
 
     Package::new("log", "0.3.5").alternative(true).publish();
 
-    p.cargo("vendor --respect-source-config")
+    p.crabgo("vendor --respect-source-config")
         .with_stdout(format!(
             r#"[source."{0}"]
 registry = "{0}"
@@ -102,11 +102,11 @@ directory = "vendor"
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vendor_path_specified() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -128,7 +128,7 @@ fn vendor_path_specified() {
     };
 
     let output = p
-        .cargo("vendor --respect-source-config")
+        .crabgo("vendor --respect-source-config")
         .arg(path)
         .exec_with_output()
         .unwrap();
@@ -144,13 +144,13 @@ directory = "deps/.vendor"
 "#
     );
 
-    let lock = p.read_file("deps/.vendor/log/Cargo.toml");
+    let lock = p.read_file("deps/.vendor/log/Crabgo.toml");
     assert!(lock.contains("version = \"0.3.5\""));
 }
 
 fn add_vendor_config(p: &Project) {
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [source.crates-io]
             replace-with = 'vendor'
@@ -161,11 +161,11 @@ fn add_vendor_config(p: &Project) {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_exclude() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -180,7 +180,7 @@ fn package_exclude() {
 
     Package::new("bar", "0.1.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -195,8 +195,8 @@ fn package_exclude() {
         .file(".dotdir/include", "")
         .publish();
 
-    p.cargo("vendor --respect-source-config").run();
-    let csum = p.read_file("vendor/bar/.cargo-checksum.json");
+    p.crabgo("vendor --respect-source-config").run();
+    let csum = p.read_file("vendor/bar/.crabgo-checksum.json");
     assert!(csum.contains(".include"));
     assert!(!csum.contains(".exclude"));
     assert!(!csum.contains(".dotdir/exclude"));
@@ -205,11 +205,11 @@ fn package_exclude() {
     assert!(!csum.contains(".dotdir/include"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_versions() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -222,7 +222,7 @@ fn two_versions() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -238,22 +238,22 @@ fn two_versions() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("bitflags", "0.8.0").publish();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
 
-    let lock = p.read_file("vendor/bitflags/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags/Crabgo.toml");
     assert!(lock.contains("version = \"0.8.0\""));
-    let lock = p.read_file("vendor/bitflags-0.7.0/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags-0.7.0/Crabgo.toml");
     assert!(lock.contains("version = \"0.7.0\""));
 
     add_vendor_config(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_explicit_versions() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -266,7 +266,7 @@ fn two_explicit_versions() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -282,29 +282,29 @@ fn two_explicit_versions() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("bitflags", "0.8.0").publish();
 
-    p.cargo("vendor --respect-source-config --versioned-dirs")
+    p.crabgo("vendor --respect-source-config --versioned-dirs")
         .run();
 
-    let lock = p.read_file("vendor/bitflags-0.8.0/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags-0.8.0/Crabgo.toml");
     assert!(lock.contains("version = \"0.8.0\""));
-    let lock = p.read_file("vendor/bitflags-0.7.0/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags-0.7.0/Crabgo.toml");
     assert!(lock.contains("version = \"0.7.0\""));
 
     add_vendor_config(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn help() {
     let p = project().build();
-    p.cargo("vendor -h").run();
+    p.crabgo("vendor -h").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_versions() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -320,13 +320,13 @@ fn update_versions() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("bitflags", "0.8.0").publish();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
 
-    let lock = p.read_file("vendor/bitflags/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags/Crabgo.toml");
     assert!(lock.contains("version = \"0.7.0\""));
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -336,18 +336,18 @@ fn update_versions() {
             bitflags = "0.8.0"
         "#,
     );
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
 
-    let lock = p.read_file("vendor/bitflags/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags/Crabgo.toml");
     assert!(lock.contains("version = \"0.8.0\""));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_lockfiles() {
     let p = project()
         .no_manifest()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -359,7 +359,7 @@ fn two_lockfiles() {
         )
         .file("foo/src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -375,25 +375,25 @@ fn two_lockfiles() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("bitflags", "0.8.0").publish();
 
-    p.cargo("vendor --respect-source-config -s bar/Cargo.toml --manifest-path foo/Cargo.toml")
+    p.crabgo("vendor --respect-source-config -s bar/Crabgo.toml --manifest-path foo/Crabgo.toml")
         .run();
 
-    let lock = p.read_file("vendor/bitflags/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags/Crabgo.toml");
     assert!(lock.contains("version = \"0.8.0\""));
-    let lock = p.read_file("vendor/bitflags-0.7.0/Cargo.toml");
+    let lock = p.read_file("vendor/bitflags-0.7.0/Crabgo.toml");
     assert!(lock.contains("version = \"0.7.0\""));
 
     add_vendor_config(&p);
-    p.cargo("check").cwd("foo").run();
-    p.cargo("check").cwd("bar").run();
+    p.crabgo("check").cwd("foo").run();
+    p.crabgo("check").cwd("bar").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_sync_argument() {
     let p = project()
         .no_manifest()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -405,7 +405,7 @@ fn test_sync_argument() {
         )
         .file("foo/src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -417,7 +417,7 @@ fn test_sync_argument() {
         )
         .file("bar/src/lib.rs", "")
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -433,31 +433,31 @@ fn test_sync_argument() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("bitflags", "0.8.0").publish();
 
-    p.cargo("vendor --respect-source-config --manifest-path foo/Cargo.toml -s bar/Cargo.toml baz/Cargo.toml test_vendor")
+    p.crabgo("vendor --respect-source-config --manifest-path foo/Crabgo.toml -s bar/Crabgo.toml baz/Crabgo.toml test_vendor")
         .with_stderr("\
 error: unexpected argument 'test_vendor' found
 
-Usage: cargo[EXE] vendor [OPTIONS] [path]
+Usage: crabgo[EXE] vendor [OPTIONS] [path]
 
 For more information, try '--help'.",
         )
         .with_status(1)
         .run();
 
-    p.cargo("vendor --respect-source-config --manifest-path foo/Cargo.toml -s bar/Cargo.toml -s baz/Cargo.toml test_vendor")
+    p.crabgo("vendor --respect-source-config --manifest-path foo/Crabgo.toml -s bar/Crabgo.toml -s baz/Crabgo.toml test_vendor")
         .run();
 
-    let lock = p.read_file("test_vendor/bitflags/Cargo.toml");
+    let lock = p.read_file("test_vendor/bitflags/Crabgo.toml");
     assert!(lock.contains("version = \"0.8.0\""));
-    let lock = p.read_file("test_vendor/bitflags-0.7.0/Cargo.toml");
+    let lock = p.read_file("test_vendor/bitflags-0.7.0/Crabgo.toml");
     assert!(lock.contains("version = \"0.7.0\""));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn delete_old_crates() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -473,11 +473,11 @@ fn delete_old_crates() {
     Package::new("bitflags", "0.7.0").publish();
     Package::new("log", "0.3.5").publish();
 
-    p.cargo("vendor --respect-source-config").run();
-    p.read_file("vendor/bitflags/Cargo.toml");
+    p.crabgo("vendor --respect-source-config").run();
+    p.read_file("vendor/bitflags/Crabgo.toml");
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -488,17 +488,17 @@ fn delete_old_crates() {
         "#,
     );
 
-    p.cargo("vendor --respect-source-config").run();
-    let lock = p.read_file("vendor/log/Cargo.toml");
+    p.crabgo("vendor --respect-source-config").run();
+    let lock = p.read_file("vendor/log/Crabgo.toml");
     assert!(lock.contains("version = \"0.3.5\""));
-    assert!(!p.root().join("vendor/bitflags/Cargo.toml").exists());
+    assert!(!p.root().join("vendor/bitflags/Crabgo.toml").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_files() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -519,19 +519,19 @@ fn ignore_files() {
         .file("foo.rej", "")
         .publish();
 
-    p.cargo("vendor --respect-source-config").run();
-    let csum = p.read_file("vendor/url/.cargo-checksum.json");
+    p.crabgo("vendor --respect-source-config").run();
+    let csum = p.read_file("vendor/url/.crabgo-checksum.json");
     assert!(!csum.contains("foo.orig"));
     assert!(!csum.contains(".gitignore"));
     assert!(!csum.contains(".gitattributes"));
-    assert!(!csum.contains(".cargo-ok"));
+    assert!(!csum.contains(".crabgo-ok"));
     assert!(!csum.contains("foo.rej"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn included_files_only() {
     let git = git::new("a", |p| {
-        p.file("Cargo.toml", &basic_lib_manifest("a"))
+        p.file("Crabgo.toml", &basic_lib_manifest("a"))
             .file("src/lib.rs", "")
             .file(".gitignore", "a")
             .file("a/b.md", "")
@@ -539,7 +539,7 @@ fn included_files_only() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -555,16 +555,16 @@ fn included_files_only() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config").run();
-    let csum = p.read_file("vendor/a/.cargo-checksum.json");
+    p.crabgo("vendor --respect-source-config").run();
+    let csum = p.read_file("vendor/a/.crabgo-checksum.json");
     assert!(!csum.contains("a/b.md"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dependent_crates_in_crates() {
     let git = git::new("a", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -575,12 +575,12 @@ fn dependent_crates_in_crates() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("b/Cargo.toml", &basic_lib_manifest("b"))
+        .file("b/Crabgo.toml", &basic_lib_manifest("b"))
         .file("b/src/lib.rs", "")
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -596,22 +596,22 @@ fn dependent_crates_in_crates() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config").run();
-    p.read_file("vendor/a/.cargo-checksum.json");
-    p.read_file("vendor/b/.cargo-checksum.json");
+    p.crabgo("vendor --respect-source-config").run();
+    p.read_file("vendor/a/.crabgo-checksum.json");
+    p.read_file("vendor/b/.crabgo-checksum.json");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vendoring_git_crates() {
     let git = git::new("git", |p| {
-        p.file("Cargo.toml", &basic_lib_manifest("serde_derive"))
+        p.file("Crabgo.toml", &basic_lib_manifest("serde_derive"))
             .file("src/lib.rs", "")
             .file("src/wut.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -637,23 +637,23 @@ fn vendoring_git_crates() {
         .publish();
     Package::new("serde_derive", "0.5.0").publish();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     p.read_file("vendor/serde_derive/src/wut.rs");
 
     add_vendor_config(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_simple() {
     let git = git::new("git", |p| {
-        p.file("Cargo.toml", &basic_lib_manifest("a"))
+        p.file("Crabgo.toml", &basic_lib_manifest("a"))
             .file("src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -669,15 +669,15 @@ fn git_simple() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config").run();
-    let csum = p.read_file("vendor/a/.cargo-checksum.json");
+    p.crabgo("vendor --respect-source-config").run();
+    let csum = p.read_file("vendor/a/.crabgo-checksum.json");
     assert!(csum.contains("\"package\":null"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_diff_rev() {
     let (git_project, git_repo) = git::new_repo("git", |p| {
-        p.file("Cargo.toml", &basic_manifest("a", "0.1.0"))
+        p.file("Crabgo.toml", &basic_manifest("a", "0.1.0"))
             .file("src/lib.rs", "")
     });
     let url = git_project.url();
@@ -686,14 +686,14 @@ fn git_diff_rev() {
 
     git::tag(&git_repo, ref_1);
 
-    git_project.change_file("Cargo.toml", &basic_manifest("a", "0.2.0"));
+    git_project.change_file("Crabgo.toml", &basic_manifest("a", "0.2.0"));
     git::add(&git_repo);
     git::commit(&git_repo);
     git::tag(&git_repo, ref_2);
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -709,7 +709,7 @@ fn git_diff_rev() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config")
+    p.crabgo("vendor --respect-source-config")
         .with_stdout(
             r#"[source."git+file://[..]/git?rev=v0.1.0"]
 git = [..]
@@ -728,11 +728,11 @@ directory = "vendor"
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_duplicate() {
     let git = git::new("a", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -743,13 +743,13 @@ fn git_duplicate() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("b/Cargo.toml", &basic_lib_manifest("b"))
+        .file("b/Crabgo.toml", &basic_lib_manifest("b"))
         .file("b/src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -768,7 +768,7 @@ fn git_duplicate() {
         .build();
     Package::new("b", "0.5.0").publish();
 
-    p.cargo("vendor --respect-source-config")
+    p.crabgo("vendor --respect-source-config")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -788,11 +788,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_complex() {
     let git_b = git::new("git_b", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -803,13 +803,13 @@ fn git_complex() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("dep_b/Cargo.toml", &basic_lib_manifest("dep_b"))
+        .file("dep_b/Crabgo.toml", &basic_lib_manifest("dep_b"))
         .file("dep_b/src/lib.rs", "")
     });
 
     let git_a = git::new("git_a", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -824,13 +824,13 @@ fn git_complex() {
             ),
         )
         .file("src/lib.rs", "")
-        .file("dep_a/Cargo.toml", &basic_lib_manifest("dep_a"))
+        .file("dep_a/Crabgo.toml", &basic_lib_manifest("dep_a"))
         .file("dep_a/src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -847,13 +847,13 @@ fn git_complex() {
         .build();
 
     let output = p
-        .cargo("vendor --respect-source-config")
+        .crabgo("vendor --respect-source-config")
         .exec_with_output()
         .unwrap();
     let output = String::from_utf8(output.stdout).unwrap();
-    p.change_file(".cargo/config", &output);
+    p.change_file(".crabgo/config", &output);
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains("[..]foo/vendor/a/src/lib.rs[..]")
         .with_stderr_contains("[..]foo/vendor/dep_a/src/lib.rs[..]")
         .with_stderr_contains("[..]foo/vendor/b/src/lib.rs[..]")
@@ -861,11 +861,11 @@ fn git_complex() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn depend_on_vendor_dir_not_deleted() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -880,11 +880,11 @@ fn depend_on_vendor_dir_not_deleted() {
 
     Package::new("libc", "0.2.30").publish();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     assert!(p.root().join("vendor/libc").is_dir());
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -898,17 +898,17 @@ fn depend_on_vendor_dir_not_deleted() {
         "#,
     );
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     assert!(p.root().join("vendor/libc").is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_hidden() {
     // Don't delete files starting with `.`
     Package::new("bar", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -919,14 +919,14 @@ fn ignore_hidden() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     // Add a `.git` directory.
     let repo = git::init(&p.root().join("vendor"));
     git::add(&repo);
     git::commit(&repo);
     assert!(p.root().join("vendor/.git").exists());
     // Vendor again, shouldn't change anything.
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     // .git should not be removed.
     assert!(p.root().join("vendor/.git").exists());
     // And just for good measure, make sure no files changed.
@@ -938,7 +938,7 @@ fn ignore_hidden() {
         .all(|status| status.status() == git2::Status::CURRENT));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn config_instructions_works() {
     // Check that the config instructions work for all dependency kinds.
     registry::alt_init();
@@ -946,12 +946,12 @@ fn config_instructions_works() {
     Package::new("altdep", "0.1.0").alternative(true).publish();
     let git_project = git::new("gitdep", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("gitdep"))
+            .file("Crabgo.toml", &basic_lib_manifest("gitdep"))
             .file("src/lib.rs", "")
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -969,32 +969,32 @@ fn config_instructions_works() {
         .file("src/lib.rs", "")
         .build();
     let output = p
-        .cargo("vendor --respect-source-config")
+        .crabgo("vendor --respect-source-config")
         .exec_with_output()
         .unwrap();
     let output = String::from_utf8(output.stdout).unwrap();
-    p.change_file(".cargo/config", &output);
+    p.change_file(".crabgo/config", &output);
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains("[..]foo/vendor/dep/src/lib.rs[..]")
         .with_stderr_contains("[..]foo/vendor/altdep/src/lib.rs[..]")
         .with_stderr_contains("[..]foo/vendor/gitdep/src/lib.rs[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_crlf_preservation() {
     // Check that newlines don't get changed when you vendor
     // (will only fail if your system is setup with core.autocrlf=true on windows)
     let input = "hello \nthere\nmy newline\nfriends";
     let git_project = git::new("git", |p| {
-        p.file("Cargo.toml", &basic_lib_manifest("a"))
+        p.file("Crabgo.toml", &basic_lib_manifest("a"))
             .file("src/lib.rs", input)
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1019,12 +1019,12 @@ fn git_crlf_preservation() {
     )
     .unwrap();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     let output = p.read_file("vendor/a/src/lib.rs");
     assert_eq!(input, output);
 }
 
-#[cargo_test]
+#[crabgo_test]
 #[cfg(unix)]
 fn vendor_preserves_permissions() {
     use std::os::unix::fs::MetadataExt;
@@ -1036,7 +1036,7 @@ fn vendor_preserves_permissions() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1049,7 +1049,7 @@ fn vendor_preserves_permissions() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
 
     let metadata = fs::metadata(p.root().join("vendor/bar/src/lib.rs")).unwrap();
     assert_eq!(metadata.mode() & 0o777, 0o644);
@@ -1057,11 +1057,11 @@ fn vendor_preserves_permissions() {
     assert_eq!(metadata.mode() & 0o777, 0o755);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_remote_dependency_no_vendor() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1072,7 +1072,7 @@ fn no_remote_dependency_no_vendor() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1082,17 +1082,17 @@ fn no_remote_dependency_no_vendor() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("vendor")
+    p.crabgo("vendor")
         .with_stderr("There is no dependency to vendor in this project.")
         .run();
     assert!(!p.root().join("vendor").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn vendor_crate_with_ws_inherit() {
     let git = git::new("ws", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
@@ -1101,7 +1101,7 @@ fn vendor_crate_with_ws_inherit() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1113,7 +1113,7 @@ fn vendor_crate_with_ws_inherit() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1129,9 +1129,9 @@ fn vendor_crate_with_ws_inherit() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("vendor --respect-source-config").run();
+    p.crabgo("vendor --respect-source-config").run();
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         &format!(
             r#"
                 [source."{}"]
@@ -1146,7 +1146,7 @@ fn vendor_crate_with_ws_inherit() {
         ),
     );
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains("[..]foo/vendor/bar/src/lib.rs[..]")
         .run();
 }

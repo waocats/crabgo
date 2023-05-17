@@ -1,4 +1,4 @@
-//! Tests for running multiple `cargo` processes at the same time.
+//! Tests for running multiple `crabgo` processes at the same time.
 
 use std::fs;
 use std::net::TcpListener;
@@ -7,11 +7,11 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::{env, str};
 
-use cargo_test_support::cargo_process;
-use cargo_test_support::git;
-use cargo_test_support::install::{assert_has_installed_exe, cargo_home};
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, execs, project, slow_cpu_multiplier};
+use crabgo_test_support::crabgo_process;
+use crabgo_test_support::git;
+use crabgo_test_support::install::{assert_has_installed_exe, cargo_home};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, execs, project, slow_cpu_multiplier};
 
 fn pkg(name: &str, vers: &str) {
     Package::new(name, vers)
@@ -19,18 +19,18 @@ fn pkg(name: &str, vers: &str) {
         .publish();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_installs() {
     let p = project()
         .no_manifest()
-        .file("a/Cargo.toml", &basic_manifest("foo", "0.0.0"))
+        .file("a/Crabgo.toml", &basic_manifest("foo", "0.0.0"))
         .file("a/src/main.rs", "fn main() {}")
-        .file("b/Cargo.toml", &basic_manifest("bar", "0.0.0"))
+        .file("b/Crabgo.toml", &basic_manifest("bar", "0.0.0"))
         .file("b/src/main.rs", "fn main() {}");
     let p = p.build();
 
-    let mut a = p.cargo("install").cwd("a").build_command();
-    let mut b = p.cargo("install").cwd("b").build_command();
+    let mut a = p.crabgo("install").cwd("a").build_command();
+    let mut b = p.crabgo("install").cwd("b").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -48,15 +48,15 @@ fn multiple_installs() {
     assert_has_installed_exe(cargo_home(), "bar");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn concurrent_installs() {
     const LOCKED_BUILD: &str = "waiting for file lock on build directory";
 
     pkg("foo", "0.0.1");
     pkg("bar", "0.0.1");
 
-    let mut a = cargo_process("install foo").build_command();
-    let mut b = cargo_process("install bar").build_command();
+    let mut a = crabgo_process("install foo").build_command();
+    let mut b = crabgo_process("install bar").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -77,18 +77,18 @@ fn concurrent_installs() {
     assert_has_installed_exe(cargo_home(), "bar");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn one_install_should_be_bad() {
     let p = project()
         .no_manifest()
-        .file("a/Cargo.toml", &basic_manifest("foo", "0.0.0"))
+        .file("a/Crabgo.toml", &basic_manifest("foo", "0.0.0"))
         .file("a/src/main.rs", "fn main() {}")
-        .file("b/Cargo.toml", &basic_manifest("foo", "0.0.0"))
+        .file("b/Crabgo.toml", &basic_manifest("foo", "0.0.0"))
         .file("b/src/main.rs", "fn main() {}");
     let p = p.build();
 
-    let mut a = p.cargo("install").cwd("a").build_command();
-    let mut b = p.cargo("install").cwd("b").build_command();
+    let mut a = p.crabgo("install").cwd("a").build_command();
+    let mut b = p.crabgo("install").cwd("b").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -105,7 +105,7 @@ fn one_install_should_be_bad() {
     assert_has_installed_exe(cargo_home(), "foo");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_registry_fetches() {
     let mut pkg = Package::new("bar", "1.0.2");
     for i in 0..10 {
@@ -118,7 +118,7 @@ fn multiple_registry_fetches() {
     let p = project()
         .no_manifest()
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -131,7 +131,7 @@ fn multiple_registry_fetches() {
         )
         .file("a/src/main.rs", "fn main() {}")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -145,8 +145,8 @@ fn multiple_registry_fetches() {
         .file("b/src/main.rs", "fn main() {}");
     let p = p.build();
 
-    let mut a = p.cargo("build").cwd("a").build_command();
-    let mut b = p.cargo("build").cwd("b").build_command();
+    let mut a = p.crabgo("build").cwd("a").build_command();
+    let mut b = p.crabgo("build").cwd("b").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -173,11 +173,11 @@ fn multiple_registry_fetches() {
         .is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_same_repo_different_tags() {
     let a = git::new("dep", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep", "0.5.0"))
             .file("src/lib.rs", "pub fn tag1() {}")
     });
 
@@ -192,7 +192,7 @@ fn git_same_repo_different_tags() {
     let p = project()
         .no_manifest()
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -211,7 +211,7 @@ fn git_same_repo_different_tags() {
             "extern crate dep; fn main() { dep::tag1(); }",
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -231,8 +231,8 @@ fn git_same_repo_different_tags() {
         );
     let p = p.build();
 
-    let mut a = p.cargo("build -v").cwd("a").build_command();
-    let mut b = p.cargo("build -v").cwd("b").build_command();
+    let mut a = p.crabgo("build -v").cwd("a").build_command();
+    let mut b = p.crabgo("build -v").cwd("b").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -247,18 +247,18 @@ fn git_same_repo_different_tags() {
     execs().run_output(&b);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_same_branch_different_revs() {
     let a = git::new("dep", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep", "0.5.0"))
             .file("src/lib.rs", "pub fn f1() {}")
     });
 
     let p = project()
         .no_manifest()
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -277,7 +277,7 @@ fn git_same_branch_different_revs() {
             "extern crate dep; fn main() { dep::f1(); }",
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -297,9 +297,9 @@ fn git_same_branch_different_revs() {
         );
     let p = p.build();
 
-    // Generate a Cargo.lock pointing at the current rev, then clear out the
+    // Generate a Crabgo.lock pointing at the current rev, then clear out the
     // target directory
-    p.cargo("build").cwd("a").run();
+    p.crabgo("build").cwd("a").run();
     fs::remove_dir_all(p.root().join("a/target")).unwrap();
 
     // Make a new commit on the master branch
@@ -310,8 +310,8 @@ fn git_same_branch_different_revs() {
 
     // Now run both builds in parallel. The build of `b` should pick up the
     // newest commit while the build of `a` should use the locked old commit.
-    let mut a = p.cargo("build").cwd("a").build_command();
-    let mut b = p.cargo("build").cwd("b").build_command();
+    let mut a = p.crabgo("build").cwd("a").build_command();
+    let mut b = p.crabgo("build").cwd("b").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -326,15 +326,15 @@ fn git_same_branch_different_revs() {
     execs().run_output(&b);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn same_project() {
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file("src/lib.rs", "");
     let p = p.build();
 
-    let mut a = p.cargo("build").build_command();
-    let mut b = p.cargo("build").build_command();
+    let mut a = p.crabgo("build").build_command();
+    let mut b = p.crabgo("build").build_command();
 
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -349,13 +349,13 @@ fn same_project() {
     execs().run_output(&b);
 }
 
-// Make sure that if Cargo dies while holding a lock that it's released and the
-// next Cargo to come in will take over cleanly.
-#[cargo_test]
-fn killing_cargo_releases_the_lock() {
+// Make sure that if Crabgo dies while holding a lock that it's released and the
+// next Crabgo to come in will take over cleanly.
+#[crabgo_test]
+fn killing_crabgo_releases_the_lock() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -385,8 +385,8 @@ fn killing_cargo_releases_the_lock() {
     // it's started  and that's how we know that `a` will have the lock
     // when we kill it.
     let l = TcpListener::bind("127.0.0.1:0").unwrap();
-    let mut a = p.cargo("build").build_command();
-    let mut b = p.cargo("build").build_command();
+    let mut a = p.crabgo("build").build_command();
+    let mut b = p.crabgo("build").build_command();
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
     a.env("ADDR", l.local_addr().unwrap().to_string())
@@ -412,16 +412,16 @@ fn killing_cargo_releases_the_lock() {
     execs().run_output(&b);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn debug_release_ok() {
     let p = project().file("src/main.rs", "fn main() {}");
     let p = p.build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     fs::remove_dir_all(p.root().join("target")).unwrap();
 
-    let mut a = p.cargo("build").build_command();
-    let mut b = p.cargo("build --release").build_command();
+    let mut a = p.crabgo("build").build_command();
+    let mut b = p.crabgo("build --release").build_command();
     a.stdout(Stdio::piped()).stderr(Stdio::piped());
     b.stdout(Stdio::piped()).stderr(Stdio::piped());
     let a = a.spawn().unwrap();
@@ -448,23 +448,23 @@ fn debug_release_ok() {
         .run_output(&b);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_deadlock_with_git_dependencies() {
     let dep1 = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let dep2 = git::new("dep2", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep2", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep2", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -488,7 +488,7 @@ fn no_deadlock_with_git_dependencies() {
     let (tx, rx) = channel();
     for _ in 0..n_concurrent_builds {
         let cmd = p
-            .cargo("build")
+            .crabgo("build")
             .build_command()
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

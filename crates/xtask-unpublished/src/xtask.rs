@@ -1,8 +1,8 @@
-use cargo::core::registry::PackageRegistry;
-use cargo::core::QueryKind;
-use cargo::core::Registry;
-use cargo::core::SourceId;
-use cargo::util::command_prelude::*;
+use crabgo::core::registry::PackageRegistry;
+use crabgo::core::QueryKind;
+use crabgo::core::Registry;
+use crabgo::core::SourceId;
+use crabgo::util::command_prelude::*;
 
 pub fn cli() -> clap::Command {
     clap::Command::new("xtask-unpublished")
@@ -21,13 +21,13 @@ pub fn cli() -> clap::Command {
                 .value_name("WHEN")
                 .global(true),
         )
-        .arg(flag("frozen", "Require Cargo.lock and cache are up to date").global(true))
-        .arg(flag("locked", "Require Cargo.lock is up to date").global(true))
+        .arg(flag("frozen", "Require Crabgo.lock and cache are up to date").global(true))
+        .arg(flag("locked", "Require Crabgo.lock is up to date").global(true))
         .arg(flag("offline", "Run without accessing the network").global(true))
         .arg(multi_opt("config", "KEY=VALUE", "Override a configuration value").global(true))
         .arg(
             Arg::new("unstable-features")
-                .help("Unstable (nightly-only) flags to Cargo, see 'cargo -Z help' for details")
+                .help("Unstable (nightly-only) flags to Crabgo, see 'crabgo -Z help' for details")
                 .short('Z')
                 .value_name("FLAG")
                 .action(ArgAction::Append)
@@ -35,7 +35,7 @@ pub fn cli() -> clap::Command {
         )
 }
 
-pub fn exec(args: &clap::ArgMatches, config: &mut cargo::util::Config) -> cargo::CliResult {
+pub fn exec(args: &clap::ArgMatches, config: &mut crabgo::util::Config) -> crabgo::CliResult {
     config_configure(config, args)?;
 
     unpublished(args, config)?;
@@ -74,7 +74,7 @@ fn config_configure(config: &mut Config, args: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-fn unpublished(args: &clap::ArgMatches, config: &mut cargo::util::Config) -> cargo::CliResult {
+fn unpublished(args: &clap::ArgMatches, config: &mut crabgo::util::Config) -> crabgo::CliResult {
     let ws = args.workspace(config)?;
     let mut results = Vec::new();
     {
@@ -92,7 +92,7 @@ fn unpublished(args: &clap::ArgMatches, config: &mut cargo::util::Config) -> car
             }
 
             let version_req = format!("<={current}");
-            let query = cargo::core::dependency::Dependency::parse(
+            let query = crabgo::core::dependency::Dependency::parse(
                 name,
                 Some(&version_req),
                 source_id.clone(),

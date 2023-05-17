@@ -21,14 +21,14 @@ the size of the crate and reduces compile time. Some examples are:
   features.
 
 [`winapi`]: https://crates.io/crates/winapi
-[winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Cargo.toml#L25-L431
+[winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Crabgo.toml#L25-L431
 [`regex`]: https://crates.io/crates/regex
 [`syn`]: https://crates.io/crates/syn
 [syn-features]: https://docs.rs/syn/1.0.54/syn/#optional-features
-[regex-features]: https://github.com/rust-lang/regex/blob/1.4.2/Cargo.toml#L33-L101
+[regex-features]: https://github.com/rust-lang/regex/blob/1.4.2/Crabgo.toml#L33-L101
 [regex-docs]: https://docs.rs/regex/1.4.2/regex/#crate-features
 [`web-sys`]: https://crates.io/crates/web-sys
-[web-sys-features]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/crates/web-sys/Cargo.toml#L32-L1395
+[web-sys-features]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/crates/web-sys/Crabgo.toml#L32-L1395
 
 ### Extending behavior
 
@@ -42,7 +42,7 @@ When changing behavior like this, be careful to make sure the changes are
 usually builds with the feature off.
 
 [`serde_json`]: https://crates.io/crates/serde_json
-[serde_json-preserve_order]: https://github.com/serde-rs/json/blob/v1.0.60/Cargo.toml#L53-L56
+[serde_json-preserve_order]: https://github.com/serde-rs/json/blob/v1.0.60/Crabgo.toml#L53-L56
 [SemVer compatible]: features.md#semver-compatibility
 [serde_json-code]: https://github.com/serde-rs/json/blob/v1.0.60/src/map.rs#L23-L26
 [`indexmap`]: https://crates.io/crates/indexmap
@@ -65,8 +65,8 @@ to conditionally enable extra functionality that requires `std`.
 [`no_std`]: ../../reference/names/preludes.html#the-no_std-attribute
 [`wasm-bindgen`]: https://crates.io/crates/wasm-bindgen
 [`std` prelude]: ../../std/prelude/index.html
-[wasm-bindgen-std]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Cargo.toml#L25
-[wasm-bindgen-default]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Cargo.toml#L23
+[wasm-bindgen-std]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Crabgo.toml#L25
+[wasm-bindgen-default]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Crabgo.toml#L23
 [wasm-bindgen-no_std]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L8
 [wasm-bindgen-cfg1]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L270-L273
 [wasm-bindgen-cfg2]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L67-L75
@@ -80,8 +80,8 @@ features][regex-re-export] from the [`regex_syntax`][regex_syntax-features]
 package. Users of `regex` don't need to know about the `regex_syntax` package,
 but they can still access the features it contains.
 
-[regex-re-export]: https://github.com/rust-lang/regex/blob/1.4.2/Cargo.toml#L65-L89
-[regex_syntax-features]: https://github.com/rust-lang/regex/blob/1.4.2/regex-syntax/Cargo.toml#L17-L32
+[regex-re-export]: https://github.com/rust-lang/regex/blob/1.4.2/Crabgo.toml#L65-L89
+[regex_syntax-features]: https://github.com/rust-lang/regex/blob/1.4.2/regex-syntax/Crabgo.toml#L17-L32
 
 ### Vendoring of C libraries
 
@@ -103,12 +103,12 @@ static-curl setting.
 [`openssl`]: https://crates.io/crates/openssl
 [`openssl-sys`]: https://crates.io/crates/openssl-sys
 [sys]: build-scripts.md#-sys-packages
-[openssl-vendored]: https://github.com/sfackler/rust-openssl/blob/openssl-v0.10.31/openssl/Cargo.toml#L19
+[openssl-vendored]: https://github.com/sfackler/rust-openssl/blob/openssl-v0.10.31/openssl/Crabgo.toml#L19
 [build script]: build-scripts.md
 [openssl-sys-cfg]: https://github.com/sfackler/rust-openssl/blob/openssl-v0.10.31/openssl-sys/build/main.rs#L47-L54
 [`curl-sys`]: https://crates.io/crates/curl-sys
-[curl-sys-static]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/Cargo.toml#L49
-[curl-sys-macos]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/Cargo.toml#L52
+[curl-sys-static]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/Crabgo.toml#L49
+[curl-sys-macos]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/Crabgo.toml#L52
 [curl-sys-macos-code]: https://github.com/alexcrichton/curl-rust/blob/0.4.34/curl-sys/build.rs#L15-L20
 
 ### Feature precedence
@@ -121,7 +121,7 @@ precedence][log-cfg-if]. If multiple features are enabled, the higher "max"
 levels will be preferred over the lower levels.
 
 [`log`]: https://crates.io/crates/log
-[log-features]: https://github.com/rust-lang/log/blob/0.4.11/Cargo.toml#L29-L42
+[log-features]: https://github.com/rust-lang/log/blob/0.4.11/Crabgo.toml#L29-L42
 [log-docs]: https://docs.rs/log/0.4.11/log/#compile-time-filters
 [log-cfg-if]: https://github.com/rust-lang/log/blob/0.4.11/src/lib.rs#L1422-L1448
 [`cfg-if`]: https://crates.io/crates/cfg-if
@@ -142,8 +142,8 @@ requirement][serde-equals] to ensure they stay in sync.
 
 [`serde`]: https://crates.io/crates/serde
 [`serde_derive`]: https://crates.io/crates/serde_derive
-[serde-derive]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Cargo.toml#L34-L35
-[serde-equals]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Cargo.toml#L17
+[serde-derive]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Crabgo.toml#L34-L35
+[serde-equals]: https://github.com/serde-rs/serde/blob/v1.0.118/serde/Crabgo.toml#L17
 
 ### Nightly-only features
 
@@ -156,7 +156,7 @@ is only available on the nightly channel at the time of this writing.
 
 Note that at the root of the crate it uses [`cfg_attr` to enable the nightly
 feature][wasm-bindgen-cfg_attr]. Keep in mind that the [`feature` attribute]
-is unrelated to Cargo features, and is used to opt-in to experimental language
+is unrelated to Crabgo features, and is used to opt-in to experimental language
 features.
 
 The [`simd_support` feature][rand-simd_support] of the [`rand`] package is another example,
@@ -164,13 +164,13 @@ which relies on a dependency that only builds on the nightly channel.
 
 [`wasm-bindgen`]: https://crates.io/crates/wasm-bindgen
 [nightly channel]: ../../book/appendix-07-nightly-rust.html
-[wasm-bindgen-nightly]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Cargo.toml#L27
+[wasm-bindgen-nightly]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/Crabgo.toml#L27
 [wasm-bindgen-unsize]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/closure.rs#L257-L269
 [`Unsize`]: ../../std/marker/trait.Unsize.html
 [wasm-bindgen-cfg_attr]: https://github.com/rustwasm/wasm-bindgen/blob/0.2.69/src/lib.rs#L11
 [`feature` attribute]: ../../unstable-book/index.html
 [`rand`]: https://crates.io/crates/rand
-[rand-simd_support]: https://github.com/rust-random/rand/blob/0.7.3/Cargo.toml#L40
+[rand-simd_support]: https://github.com/rust-random/rand/blob/0.7.3/Crabgo.toml#L40
 
 ### Experimental features
 
@@ -183,5 +183,5 @@ new APIs][async-std-gate] that people can opt-in to using, but may not be
 completely ready to be relied upon.
 
 [`async-std`]: https://crates.io/crates/async-std
-[async-std-unstable]: https://github.com/async-rs/async-std/blob/v1.8.0/Cargo.toml#L38-L42
+[async-std-unstable]: https://github.com/async-rs/async-std/blob/v1.8.0/Crabgo.toml#L38-L42
 [async-std-gate]: https://github.com/async-rs/async-std/blob/v1.8.0/src/macros.rs#L46

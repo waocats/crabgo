@@ -1,4 +1,4 @@
-use cargo::Config;
+use crabgo::Config;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -7,23 +7,23 @@ use url::Url;
 #[macro_export]
 macro_rules! fixtures {
     () => {
-        $crate::Fixtures::new(env!("CARGO_TARGET_TMPDIR"))
+        $crate::Fixtures::new(env!("CRABGO_TARGET_TMPDIR"))
     };
 }
 
 // This is an arbitrary commit that existed when I started. This helps
 // ensure consistent results. It can be updated if needed, but that can
-// make it harder to compare results with older versions of cargo.
+// make it harder to compare results with older versions of crabgo.
 const CRATES_IO_COMMIT: &str = "85f7bfd61ea4fee08ec68c468762e886b2aebec6";
 
 pub struct Fixtures {
-    cargo_target_tmpdir: PathBuf,
+    crabgo_target_tmpdir: PathBuf,
 }
 
 impl Fixtures {
-    pub fn new(cargo_target_tmpdir: &str) -> Self {
+    pub fn new(crabgo_target_tmpdir: &str) -> Self {
         let bench = Self {
-            cargo_target_tmpdir: PathBuf::from(cargo_target_tmpdir),
+            crabgo_target_tmpdir: PathBuf::from(crabgo_target_tmpdir),
         };
         bench.create_home();
         bench.create_target_dir();
@@ -33,7 +33,7 @@ impl Fixtures {
     }
 
     fn root(&self) -> PathBuf {
-        self.cargo_target_tmpdir.join("bench")
+        self.crabgo_target_tmpdir.join("bench")
     }
 
     fn target_dir(&self) -> PathBuf {
@@ -128,7 +128,7 @@ impl Fixtures {
 
     /// This unpacks the compressed workspace skeletons into tmp/workspaces.
     fn unpack_workspaces(&self) {
-        let ws_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        let ws_dir = Path::new(env!("CRABGO_MANIFEST_DIR"))
             .parent()
             .unwrap()
             .join("workspaces");
@@ -151,9 +151,9 @@ impl Fixtures {
 
     /// Vec of `(ws_name, ws_root)`.
     pub fn workspaces(&self) -> Vec<(String, PathBuf)> {
-        // CARGO_BENCH_WORKSPACES can be used to override, otherwise it just uses
+        // CRABGO_BENCH_WORKSPACES can be used to override, otherwise it just uses
         // the workspaces in the workspaces directory.
-        let mut ps: Vec<_> = match std::env::var_os("CARGO_BENCH_WORKSPACES") {
+        let mut ps: Vec<_> = match std::env::var_os("CRABGO_BENCH_WORKSPACES") {
             Some(s) => std::env::split_paths(&s).collect(),
             None => fs::read_dir(self.workspaces_path())
                 .unwrap()
@@ -175,7 +175,7 @@ impl Fixtures {
 
     /// Creates a new Config.
     pub fn make_config(&self, ws_root: &Path) -> Config {
-        let shell = cargo::core::Shell::new();
+        let shell = crabgo::core::Shell::new();
         let mut config = Config::new(shell, ws_root.to_path_buf(), self.cargo_home());
         // Configure is needed to set the target_dir which is needed to write
         // the .rustc_info.json file which is very expensive.

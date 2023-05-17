@@ -1,4 +1,4 @@
 # General Commands
-* [cargo](cargo.md)
-* [cargo help](cargo-help.md)
-* [cargo version](cargo-version.md)
+* [crabgo](crabgo.md)
+* [crabgo help](crabgo-help.md)
+* [crabgo version](crabgo-version.md)

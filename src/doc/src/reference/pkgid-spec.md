@@ -2,9 +2,9 @@
 
 ### Package ID specifications
 
-Subcommands of Cargo frequently need to refer to a particular package within a
+Subcommands of Crabgo frequently need to refer to a particular package within a
 dependency graph for various operations like updating, cleaning, building, etc.
-To solve this problem, Cargo supports *Package ID Specifications*. A specification
+To solve this problem, Crabgo supports *Package ID Specifications*. A specification
 is a string which is used to uniquely refer to one package within a graph of
 packages.
 
@@ -48,8 +48,8 @@ The following are some examples of specs for several different git dependencies:
 
 | Spec                                                      | Name             | Version  |
 |:----------------------------------------------------------|:----------------:|:--------:|
-| `https://github.com/rust-lang/cargo#0.52.0`               | `cargo`          | `0.52.0` |
-| `https://github.com/rust-lang/cargo#cargo-platform@0.1.2` | <nobr>`cargo-platform`</nobr> | `0.1.2`  |
+| `https://github.com/rust-lang/crabgo#0.52.0`               | `crabgo`          | `0.52.0` |
+| `https://github.com/rust-lang/crabgo#crabgo-platform@0.1.2` | <nobr>`crabgo-platform`</nobr> | `0.1.2`  |
 | `ssh://git@github.com/rust-lang/regex.git#regex@1.4.3`    | `regex`          | `1.4.3`  |
 
 Local packages on the filesystem can use `file://` URLs to reference them:

@@ -2,17 +2,17 @@
 //!
 //! Note: Some tests are located in the resolver-tests package.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     Package::new("dep", "1.0.0").publish();
     Package::new("dep", "1.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -26,8 +26,8 @@ fn simple() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile -Zdirect-minimal-versions")
-        .masquerade_as_nightly_cargo(&["direct-minimal-versions"])
+    p.crabgo("generate-lockfile -Zdirect-minimal-versions")
+        .masquerade_as_nightly_crabgo(&["direct-minimal-versions"])
         .run();
 
     let lock = p.read_lockfile();
@@ -42,7 +42,7 @@ fn simple() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn mixed_dependencies() {
     Package::new("dep", "1.0.0").publish();
     Package::new("dep", "1.1.0").publish();
@@ -50,7 +50,7 @@ fn mixed_dependencies() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -67,8 +67,8 @@ fn mixed_dependencies() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile -Zdirect-minimal-versions")
-        .masquerade_as_nightly_cargo(&["direct-minimal-versions"])
+    p.crabgo("generate-lockfile -Zdirect-minimal-versions")
+        .masquerade_as_nightly_crabgo(&["direct-minimal-versions"])
         .with_status(101)
         .with_stderr(
             r#"[UPDATING] [..]
@@ -87,7 +87,7 @@ failed to select a version for `dep` which could resolve this conflict
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yanked() {
     Package::new("dep", "1.0.0").yanked(true).publish();
     Package::new("dep", "1.1.0").publish();
@@ -95,7 +95,7 @@ fn yanked() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -109,8 +109,8 @@ fn yanked() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile -Zdirect-minimal-versions")
-        .masquerade_as_nightly_cargo(&["direct-minimal-versions"])
+    p.crabgo("generate-lockfile -Zdirect-minimal-versions")
+        .masquerade_as_nightly_crabgo(&["direct-minimal-versions"])
         .run();
 
     let lock = p.read_lockfile();
@@ -129,7 +129,7 @@ fn yanked() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn indirect() {
     Package::new("indirect", "2.0.0").publish();
     Package::new("indirect", "2.1.0").publish();
@@ -143,7 +143,7 @@ fn indirect() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -157,8 +157,8 @@ fn indirect() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile -Zdirect-minimal-versions")
-        .masquerade_as_nightly_cargo(&["direct-minimal-versions"])
+    p.crabgo("generate-lockfile -Zdirect-minimal-versions")
+        .masquerade_as_nightly_crabgo(&["direct-minimal-versions"])
         .run();
 
     let lock = p.read_lockfile();
@@ -185,7 +185,7 @@ fn indirect() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn indirect_conflict() {
     Package::new("indirect", "2.0.0").publish();
     Package::new("indirect", "2.1.0").publish();
@@ -199,7 +199,7 @@ fn indirect_conflict() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -214,8 +214,8 @@ fn indirect_conflict() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile -Zdirect-minimal-versions")
-        .masquerade_as_nightly_cargo(&["direct-minimal-versions"])
+    p.crabgo("generate-lockfile -Zdirect-minimal-versions")
+        .masquerade_as_nightly_crabgo(&["direct-minimal-versions"])
         .with_status(101)
         .with_stderr(
             r#"[UPDATING] [..]

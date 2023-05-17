@@ -1,14 +1,14 @@
-//! Tests for the `cargo fix` command.
+//! Tests for the `crabgo fix` command.
 
-use cargo::core::Edition;
-use cargo_test_support::compare::assert_match_exact;
-use cargo_test_support::git::{self, init};
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::{Dependency, Package};
-use cargo_test_support::{basic_manifest, is_nightly, project, Project};
-use cargo_test_support::{tools, wrapped_clippy_driver};
+use crabgo::core::Edition;
+use crabgo_test_support::compare::assert_match_exact;
+use crabgo_test_support::git::{self, init};
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::{basic_manifest, is_nightly, project, Project};
+use crabgo_test_support::{tools, wrapped_clippy_driver};
 
-#[cargo_test]
+#[crabgo_test]
 fn do_not_fix_broken_builds() {
     let p = project()
         .file(
@@ -26,15 +26,15 @@ fn do_not_fix_broken_builds() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_status(101)
         .with_stderr_contains("[ERROR] could not compile `foo` (lib) due to previous error")
         .run();
     assert!(p.read_file("src/lib.rs").contains("let mut x = 3;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_broken_if_requested() {
     let p = project()
         .file(
@@ -48,12 +48,12 @@ fn fix_broken_if_requested() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs --broken-code")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs --broken-code")
+        .env("__CRABGO_FIX_YOLO", "1")
         .run();
 }
 
-fn rustc_shim_for_cargo_fix() -> Project {
+fn rustc_shim_for_crabgo_fix() -> Project {
     // This works as follows:
     // - Create a `rustc` shim (the "foo" project) which will pretend that the
     //   verification step fails.
@@ -64,12 +64,12 @@ fn rustc_shim_for_cargo_fix() -> Project {
     // - The second "check" to verify the changes, `foo` swaps out the content
     //   with something that fails to compile. It creates a second file so it
     //   won't do anything in the third check.
-    // - cargo fix discovers that the fix failed, and it backs out the changes.
+    // - crabgo fix discovers that the fix failed, and it backs out the changes.
     // - The third "check" is done to display the original diagnostics of the
     //   original code.
     let p = project()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = 'foo'
@@ -117,7 +117,7 @@ fn rustc_shim_for_cargo_fix() -> Project {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = 'bar'
@@ -138,18 +138,18 @@ fn rustc_shim_for_cargo_fix() -> Project {
         .build();
 
     // Build our rustc shim
-    p.cargo("build").cwd("foo").run();
+    p.crabgo("build").cwd("foo").run();
 
     p
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn broken_fixes_backed_out() {
-    let p = rustc_shim_for_cargo_fix();
+    let p = rustc_shim_for_crabgo_fix();
     // Attempt to fix code, but our shim will always fail the second compile.
-    p.cargo("fix --allow-no-vcs --lib")
+    p.crabgo("fix --allow-no-vcs --lib")
         .cwd("bar")
-        .env("__CARGO_FIX_YOLO", "1")
+        .env("__CRABGO_FIX_YOLO", "1")
         .env("RUSTC", p.root().join("foo/target/debug/foo"))
         .with_stderr_contains(
             "warning: failed to automatically apply fixes suggested by rustc \
@@ -160,9 +160,9 @@ fn broken_fixes_backed_out() {
              \n  \
              * src/lib.rs\n\
              \n\
-             This likely indicates a bug in either rustc or cargo itself,\n\
+             This likely indicates a bug in either rustc or crabgo itself,\n\
              and we would appreciate a bug report! You're likely to see \n\
-             a number of compiler warnings after this message which cargo\n\
+             a number of compiler warnings after this message which crabgo\n\
              attempted to fix but failed. If you could open an issue at\n\
              https://github.com/rust-lang/rust/issues\n\
              quoting the full output of this command we'd be very appreciative!\n\
@@ -182,15 +182,15 @@ fn broken_fixes_backed_out() {
     assert!(p.read_file("bar/src/lib.rs").contains("let mut x = 3;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn broken_clippy_fixes_backed_out() {
-    let p = rustc_shim_for_cargo_fix();
+    let p = rustc_shim_for_crabgo_fix();
     // Attempt to fix code, but our shim will always fail the second compile.
     // Also, we use `clippy` as a workspace wrapper to make sure that we properly
     // generate the report bug text.
-    p.cargo("fix --allow-no-vcs --lib")
+    p.crabgo("fix --allow-no-vcs --lib")
         .cwd("bar")
-        .env("__CARGO_FIX_YOLO", "1")
+        .env("__CRABGO_FIX_YOLO", "1")
         .env("RUSTC", p.root().join("foo/target/debug/foo"))
         //  We can't use `clippy` so we use a `rustc` workspace wrapper instead
         .env("RUSTC_WORKSPACE_WRAPPER", wrapped_clippy_driver())
@@ -203,9 +203,9 @@ fn broken_clippy_fixes_backed_out() {
              \n  \
              * src/lib.rs\n\
              \n\
-             This likely indicates a bug in either rustc or cargo itself,\n\
+             This likely indicates a bug in either rustc or crabgo itself,\n\
              and we would appreciate a bug report! You're likely to see \n\
-             a number of compiler warnings after this message which cargo\n\
+             a number of compiler warnings after this message which crabgo\n\
              attempted to fix but failed. If you could open an issue at\n\
              https://github.com/rust-lang/rust-clippy/issues\n\
              quoting the full output of this command we'd be very appreciative!\n\
@@ -225,11 +225,11 @@ fn broken_clippy_fixes_backed_out() {
     assert!(p.read_file("bar/src/lib.rs").contains("let mut x = 3;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_path_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -252,7 +252,7 @@ fn fix_path_deps() {
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file(
             "bar/src/lib.rs",
             r#"
@@ -264,8 +264,8 @@ fn fix_path_deps() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs -p foo -p bar")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs -p foo -p bar")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stdout("")
         .with_stderr_unordered(
             "\
@@ -279,12 +279,12 @@ fn fix_path_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn do_not_fix_non_relevant_deps() {
     let p = project()
         .no_manifest()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -297,7 +297,7 @@ fn do_not_fix_non_relevant_deps() {
             "#,
         )
         .file("foo/src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file(
             "bar/src/lib.rs",
             r#"
@@ -309,15 +309,15 @@ fn do_not_fix_non_relevant_deps() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .cwd("foo")
         .run();
 
     assert!(p.read_file("bar/src/lib.rs").contains("mut"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prepare_for_2018() {
     let p = project()
         .file(
@@ -346,7 +346,7 @@ fn prepare_for_2018() {
 [FIXED] src/lib.rs (2 fixes)
 [FINISHED] [..]
 ";
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
@@ -358,7 +358,7 @@ fn prepare_for_2018() {
         .contains("let x = crate::foo::FOO;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn local_paths() {
     let p = project()
         .file(
@@ -377,7 +377,7 @@ fn local_paths() {
         )
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([..])
@@ -393,11 +393,11 @@ fn local_paths() {
     assert!(p.read_file("src/lib.rs").contains("use crate::test::foo;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn upgrade_extern_crate() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -424,7 +424,7 @@ fn upgrade_extern_crate() {
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
@@ -434,8 +434,8 @@ fn upgrade_extern_crate() {
 [FIXED] src/lib.rs (1 fix)
 [FINISHED] [..]
 ";
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
@@ -443,7 +443,7 @@ fn upgrade_extern_crate() {
     assert!(!p.read_file("src/lib.rs").contains("extern crate"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn specify_rustflags() {
     let p = project()
         .file(
@@ -462,7 +462,7 @@ fn specify_rustflags() {
         )
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .env("RUSTFLAGS", "-C linker=cc")
         .with_stderr(
             "\
@@ -476,7 +476,7 @@ fn specify_rustflags() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_changes_necessary() {
     let p = project().file("src/lib.rs", "").build();
 
@@ -484,13 +484,13 @@ fn no_changes_necessary() {
 [CHECKING] foo v0.0.1 ([..])
 [FINISHED] [..]
 ";
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fixes_extra_mut() {
     let p = project()
         .file(
@@ -509,14 +509,14 @@ fn fixes_extra_mut() {
 [FIXED] src/lib.rs (1 fix)
 [FINISHED] [..]
 ";
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fixes_two_missing_ampersands() {
     let p = project()
         .file(
@@ -536,14 +536,14 @@ fn fixes_two_missing_ampersands() {
 [FIXED] src/lib.rs (2 fixes)
 [FINISHED] [..]
 ";
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn tricky() {
     let p = project()
         .file(
@@ -562,14 +562,14 @@ fn tricky() {
 [FIXED] src/lib.rs (2 fixes)
 [FINISHED] [..]
 ";
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stderr(stderr)
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn preserve_line_endings() {
     let p = project()
         .file(
@@ -580,13 +580,13 @@ fn preserve_line_endings() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .run();
     assert!(p.read_file("src/lib.rs").contains("\r\n"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_deny_warnings() {
     let p = project()
         .file(
@@ -597,12 +597,12 @@ fn fix_deny_warnings() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_deny_warnings_but_not_others() {
     let p = project()
         .file(
@@ -623,14 +623,14 @@ fn fix_deny_warnings_but_not_others() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .run();
     assert!(!p.read_file("src/lib.rs").contains("let mut x = 3;"));
     assert!(p.read_file("src/lib.rs").contains("let mut _y = 4;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_two_files() {
     let p = project()
         .file(
@@ -656,8 +656,8 @@ fn fix_two_files() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stderr_contains("[FIXED] src/bar.rs (1 fix)")
         .with_stderr_contains("[FIXED] src/lib.rs (1 fix)")
         .run();
@@ -665,7 +665,7 @@ fn fix_two_files() {
     assert!(!p.read_file("src/bar.rs").contains("let mut x = 3;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fixes_missing_ampersand() {
     let p = project()
         .file("src/main.rs", "fn main() { let mut x = 3; drop(x); }")
@@ -689,8 +689,8 @@ fn fixes_missing_ampersand() {
         .file("build.rs", "fn main() { let mut x = 3; drop(x); }")
         .build();
 
-    p.cargo("fix --all-targets --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --all-targets --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stdout("")
         .with_stderr_contains("[COMPILING] foo v0.0.1 ([..])")
         .with_stderr_contains("[FIXED] build.rs (1 fix)")
@@ -705,15 +705,15 @@ fn fixes_missing_ampersand() {
         .with_stderr_contains("[FIXED] tests/a.rs (1 fix)")
         .with_stderr_contains("[FINISHED] [..]")
         .run();
-    p.cargo("check").run();
-    p.cargo("test").run();
+    p.crabgo("check").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -734,13 +734,13 @@ fn fix_features() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs").run();
-    p.cargo("check").run();
-    p.cargo("fix --features bar --allow-no-vcs").run();
-    p.cargo("check --features bar").run();
+    p.crabgo("fix --allow-no-vcs").run();
+    p.crabgo("check").run();
+    p.crabgo("fix --features bar --allow-no-vcs").run();
+    p.crabgo("check --features bar").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shows_warnings() {
     let p = project()
         .file(
@@ -749,38 +749,38 @@ fn shows_warnings() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_contains("[..]warning: use of deprecated[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warns_if_no_vcs_detected() {
     let p = project().file("src/lib.rs", "pub fn foo() {}").build();
 
-    p.cargo("fix")
+    p.crabgo("fix")
         .with_status(101)
         .with_stderr(
-            "error: no VCS found for this package and `cargo fix` can potentially perform \
+            "error: no VCS found for this package and `crabgo fix` can potentially perform \
              destructive changes; if you'd like to suppress this error pass `--allow-no-vcs`\
              ",
         )
         .run();
-    p.cargo("fix --allow-no-vcs").run();
+    p.crabgo("fix --allow-no-vcs").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warns_about_dirty_working_directory() {
     let p = git::new("foo", |p| p.file("src/lib.rs", "pub fn foo() {}"));
 
     p.change_file("src/lib.rs", "");
 
-    p.cargo("fix")
+    p.crabgo("fix")
         .with_status(101)
         .with_stderr(
             "\
 error: the working directory of this package has uncommitted changes, \
-and `cargo fix` can potentially perform destructive changes; if you'd \
+and `crabgo fix` can potentially perform destructive changes; if you'd \
 like to suppress this error pass `--allow-dirty`, `--allow-staged`, or \
 commit the changes to these files:
 
@@ -790,22 +790,22 @@ commit the changes to these files:
 ",
         )
         .run();
-    p.cargo("fix --allow-dirty").run();
+    p.crabgo("fix --allow-dirty").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warns_about_staged_working_directory() {
     let (p, repo) = git::new_repo("foo", |p| p.file("src/lib.rs", "pub fn foo() {}"));
 
     p.change_file("src/lib.rs", "pub fn bar() {}");
     git::add(&repo);
 
-    p.cargo("fix")
+    p.crabgo("fix")
         .with_status(101)
         .with_stderr(
             "\
 error: the working directory of this package has uncommitted changes, \
-and `cargo fix` can potentially perform destructive changes; if you'd \
+and `crabgo fix` can potentially perform destructive changes; if you'd \
 like to suppress this error pass `--allow-dirty`, `--allow-staged`, or \
 commit the changes to these files:
 
@@ -815,42 +815,42 @@ commit the changes to these files:
 ",
         )
         .run();
-    p.cargo("fix --allow-staged").run();
+    p.crabgo("fix --allow-staged").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn errors_about_untracked_files() {
     let mut git_project = project().at("foo");
     git_project = git_project.file("src/lib.rs", "pub fn foo() {}");
     let p = git_project.build();
     let _ = init(&p.root());
 
-    p.cargo("fix")
+    p.crabgo("fix")
         .with_status(101)
         .with_stderr(
             "\
 error: the working directory of this package has uncommitted changes, \
-and `cargo fix` can potentially perform destructive changes; if you'd \
+and `crabgo fix` can potentially perform destructive changes; if you'd \
 like to suppress this error pass `--allow-dirty`, `--allow-staged`, or \
 commit the changes to these files:
 
-  * Cargo.toml (dirty)
+  * Crabgo.toml (dirty)
   * src/ (dirty)
 
 
 ",
         )
         .run();
-    p.cargo("fix --allow-dirty").run();
+    p.crabgo("fix --allow-dirty").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn does_not_warn_about_clean_working_directory() {
     let p = git::new("foo", |p| p.file("src/lib.rs", "pub fn foo() {}"));
-    p.cargo("fix").run();
+    p.crabgo("fix").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn does_not_warn_about_dirty_ignored_files() {
     let p = git::new("foo", |p| {
         p.file("src/lib.rs", "pub fn foo() {}")
@@ -859,23 +859,23 @@ fn does_not_warn_about_dirty_ignored_files() {
 
     p.change_file("bar", "");
 
-    p.cargo("fix").run();
+    p.crabgo("fix").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_all_targets_by_default() {
     let p = project()
         .file("src/lib.rs", "pub fn foo() { let mut x = 3; drop(x); }")
         .file("tests/foo.rs", "pub fn foo() { let mut x = 3; drop(x); }")
         .build();
-    p.cargo("fix --allow-no-vcs")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs")
+        .env("__CRABGO_FIX_YOLO", "1")
         .run();
     assert!(!p.read_file("src/lib.rs").contains("let mut x"));
     assert!(!p.read_file("tests/foo.rs").contains("let mut x"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prepare_for_unstable() {
     // During the period where a new edition is coming up, but not yet stable,
     // this test will verify that it cannot be migrated to on stable. If there
@@ -891,7 +891,7 @@ fn prepare_for_unstable() {
     let prev = latest_stable.previous().unwrap();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -907,7 +907,7 @@ fn prepare_for_unstable() {
 
     // -j1 to make the error more deterministic (otherwise there can be
     // multiple errors since they run in parallel).
-    p.cargo("fix --edition --allow-no-vcs -j1")
+    p.crabgo("fix --edition --allow-no-vcs -j1")
         .with_stderr(&format_args!("\
 [CHECKING] foo [..]
 [WARNING] `src/lib.rs` is on the latest edition, but trying to migrate to edition {next}.
@@ -916,10 +916,10 @@ Edition {next} is unstable and not allowed in this release, consider trying the 
 If you are trying to migrate from the previous edition ({prev}), the
 process requires following these steps:
 
-1. Start with `edition = \"{prev}\"` in `Cargo.toml`
-2. Run `cargo fix --edition`
-3. Modify `Cargo.toml` to set `edition = \"{latest_stable}\"`
-4. Run `cargo build` or `cargo test` to verify the fixes worked
+1. Start with `edition = \"{prev}\"` in `Crabgo.toml`
+2. Run `crabgo fix --edition`
+3. Modify `Crabgo.toml` to set `edition = \"{latest_stable}\"`
+4. Run `crabgo build` or `crabgo test` to verify the fixes worked
 
 More details may be found at
 https://doc.rust-lang.org/edition-guide/editions/transitioning-an-existing-project-to-a-new-edition.html
@@ -933,8 +933,8 @@ https://doc.rust-lang.org/edition-guide/editions/transitioning-an-existing-proje
         return;
     }
 
-    p.cargo("fix --edition --allow-no-vcs")
-        .masquerade_as_nightly_cargo(&["always_nightly"])
+    p.crabgo("fix --edition --allow-no-vcs")
+        .masquerade_as_nightly_crabgo(&["always_nightly"])
         .with_stderr(&format!(
             "\
 [CHECKING] foo [..]
@@ -947,14 +947,14 @@ https://doc.rust-lang.org/edition-guide/editions/transitioning-an-existing-proje
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prepare_for_latest_stable() {
     // This is the stable counterpart of prepare_for_unstable.
     let latest_stable = Edition::LATEST_STABLE;
     let previous = latest_stable.previous().unwrap();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -968,7 +968,7 @@ fn prepare_for_latest_stable() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr(&format!(
             "\
 [CHECKING] foo [..]
@@ -980,7 +980,7 @@ fn prepare_for_latest_stable() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "fundamentally always nightly")]
+#[crabgo_test(nightly, reason = "fundamentally always nightly")]
 fn prepare_for_already_on_latest_unstable() {
     // During the period where a new edition is coming up, but not yet stable,
     // this test will check what happens if you are already on the latest. If
@@ -994,10 +994,10 @@ fn prepare_for_already_on_latest_unstable() {
     };
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
-                cargo-features = ["edition{}"]
+                crabgo-features = ["edition{}"]
 
                 [package]
                 name = 'foo'
@@ -1010,8 +1010,8 @@ fn prepare_for_already_on_latest_unstable() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
-        .masquerade_as_nightly_cargo(&["always_nightly"])
+    p.crabgo("fix --edition --allow-no-vcs")
+        .masquerade_as_nightly_crabgo(&["always_nightly"])
         .with_stderr_contains("[CHECKING] foo [..]")
         .with_stderr_contains(&format!(
             "\
@@ -1022,7 +1022,7 @@ fn prepare_for_already_on_latest_unstable() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prepare_for_already_on_latest_stable() {
     // Stable counterpart of prepare_for_already_on_latest_unstable.
     if Edition::LATEST_UNSTABLE.is_some() {
@@ -1032,7 +1032,7 @@ fn prepare_for_already_on_latest_stable() {
     let latest_stable = Edition::LATEST_STABLE;
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1046,7 +1046,7 @@ fn prepare_for_already_on_latest_stable() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr_contains("[CHECKING] foo [..]")
         .with_stderr_contains(&format!(
             "\
@@ -1057,7 +1057,7 @@ fn prepare_for_already_on_latest_stable() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_overlapping() {
     let p = project()
         .file(
@@ -1075,7 +1075,7 @@ fn fix_overlapping() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs --edition --lib")
+    p.crabgo("fix --allow-no-vcs --edition --lib")
         .with_stderr(
             "\
 [CHECKING] foo [..]
@@ -1091,11 +1091,11 @@ fn fix_overlapping() {
     assert!(contents.contains("crate::foo::<crate::A>()"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_idioms() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = 'foo'
@@ -1119,21 +1119,21 @@ fn fix_idioms() {
 [FIXED] src/lib.rs (1 fix)
 [FINISHED] [..]
 ";
-    p.cargo("fix --edition-idioms --allow-no-vcs")
+    p.crabgo("fix --edition-idioms --allow-no-vcs")
         .with_stderr(stderr)
         .run();
 
     assert!(p.read_file("src/lib.rs").contains("Box<dyn Any>"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn idioms_2015_ok() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("fix --edition-idioms --allow-no-vcs").run();
+    p.crabgo("fix --edition-idioms --allow-no-vcs").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shows_warnings_on_second_run_without_changes() {
     let p = project()
         .file(
@@ -1149,16 +1149,16 @@ fn shows_warnings_on_second_run_without_changes() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_contains("[..]warning: use of deprecated[..]")
         .run();
 
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_contains("[..]warning: use of deprecated[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shows_warnings_on_second_run_without_changes_on_multiple_targets() {
     let p = project()
         .file(
@@ -1220,7 +1220,7 @@ fn shows_warnings_on_second_run_without_changes_on_multiple_targets() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs --all-targets")
+    p.crabgo("fix --allow-no-vcs --all-targets")
         .with_stderr_contains(" --> examples/fooxample.rs:6:29")
         .with_stderr_contains(" --> src/lib.rs:6:29")
         .with_stderr_contains(" --> src/main.rs:6:29")
@@ -1228,7 +1228,7 @@ fn shows_warnings_on_second_run_without_changes_on_multiple_targets() {
         .with_stderr_contains(" --> tests/foo.rs:7:29")
         .run();
 
-    p.cargo("fix --allow-no-vcs --all-targets")
+    p.crabgo("fix --allow-no-vcs --all-targets")
         .with_stderr_contains(" --> examples/fooxample.rs:6:29")
         .with_stderr_contains(" --> src/lib.rs:6:29")
         .with_stderr_contains(" --> src/main.rs:6:29")
@@ -1237,11 +1237,11 @@ fn shows_warnings_on_second_run_without_changes_on_multiple_targets() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doesnt_rebuild_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1254,12 +1254,12 @@ fn doesnt_rebuild_dependencies() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar;")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("fix --allow-no-vcs -p foo")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs -p foo")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stdout("")
         .with_stderr(
             "\
@@ -1270,8 +1270,8 @@ fn doesnt_rebuild_dependencies() {
         )
         .run();
 
-    p.cargo("fix --allow-no-vcs -p foo")
-        .env("__CARGO_FIX_YOLO", "1")
+    p.crabgo("fix --allow-no-vcs -p foo")
+        .env("__CRABGO_FIX_YOLO", "1")
         .with_stdout("")
         .with_stderr(
             "\
@@ -1282,11 +1282,11 @@ fn doesnt_rebuild_dependencies() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn does_not_crash_with_rustc_wrapper() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1296,20 +1296,20 @@ fn does_not_crash_with_rustc_wrapper() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .env("RUSTC_WRAPPER", tools::echo_wrapper())
         .run();
     p.build_dir().rm_rf();
-    p.cargo("fix --allow-no-vcs --verbose")
+    p.crabgo("fix --allow-no-vcs --verbose")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn uses_workspace_wrapper_and_primary_wrapper_override() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1319,17 +1319,17 @@ fn uses_workspace_wrapper_and_primary_wrapper_override() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --allow-no-vcs --verbose")
+    p.crabgo("fix --allow-no-vcs --verbose")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc src/lib.rs --crate-name foo [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn only_warn_for_relevant_crates() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1341,7 +1341,7 @@ fn only_warn_for_relevant_crates() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1360,7 +1360,7 @@ fn only_warn_for_relevant_crates() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs --edition")
+    p.crabgo("fix --allow-no-vcs --edition")
         .with_stderr(
             "\
 [CHECKING] a v0.1.0 ([..])
@@ -1372,11 +1372,11 @@ fn only_warn_for_relevant_crates() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_to_broken_code() {
     let p = project()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = 'foo'
@@ -1423,7 +1423,7 @@ fn fix_to_broken_code() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = 'bar'
@@ -1436,10 +1436,10 @@ fn fix_to_broken_code() {
         .build();
 
     // Build our rustc shim
-    p.cargo("build").cwd("foo").run();
+    p.crabgo("build").cwd("foo").run();
 
     // Attempt to fix code, but our shim will always fail the second compile
-    p.cargo("fix --allow-no-vcs --broken-code")
+    p.crabgo("fix --allow-no-vcs --broken-code")
         .cwd("bar")
         .env("RUSTC", p.root().join("foo/target/debug/foo"))
         .with_status(101)
@@ -1452,7 +1452,7 @@ fn fix_to_broken_code() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_with_common() {
     let p = project()
         .file("src/lib.rs", "")
@@ -1467,53 +1467,53 @@ fn fix_with_common() {
         .file("tests/common/mod.rs", "pub fn try() {}")
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs").run();
+    p.crabgo("fix --edition --allow-no-vcs").run();
 
     assert_eq!(p.read_file("tests/common/mod.rs"), "pub fn r#try() {}");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_in_existing_repo_weird_ignore() {
     // Check that ignore doesn't ignore the repo itself.
     let p = git::new("foo", |project| {
         project
             .file("src/lib.rs", "")
-            .file(".gitignore", "foo\ninner\nCargo.lock\ntarget\n")
+            .file(".gitignore", "foo\ninner\nCrabgo.lock\ntarget\n")
             .file("inner/file", "")
     });
 
-    p.cargo("fix").run();
+    p.crabgo("fix").run();
     // This is questionable about whether it is the right behavior. It should
     // probably be checking if any source file for the current project is
     // ignored.
-    p.cargo("fix")
+    p.crabgo("fix")
         .cwd("inner")
         .with_stderr_contains("[ERROR] no VCS found[..]")
         .with_status(101)
         .run();
-    p.cargo("fix").cwd("src").run();
+    p.crabgo("fix").cwd("src").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_color_message() {
     // Check that color appears in diagnostics.
     let p = project()
         .file("src/lib.rs", "std::compile_error!{\"color test\"}")
         .build();
 
-    p.cargo("fix --allow-no-vcs --color=always")
+    p.crabgo("fix --allow-no-vcs --color=always")
         .with_stderr_contains("[..]\x1b[[..]")
         .with_status(101)
         .run();
 
-    p.cargo("fix --allow-no-vcs --color=never")
+    p.crabgo("fix --allow-no-vcs --color=never")
         .with_stderr_contains("error: color test")
         .with_stderr_does_not_contain("[..]\x1b[[..]")
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn edition_v2_resolver_report() {
     // Show a report if the V2 resolver shows differences.
     Package::new("common", "1.0.0")
@@ -1533,7 +1533,7 @@ fn edition_v2_resolver_report() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1554,16 +1554,16 @@ fn edition_v2_resolver_report() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr_unordered("\
 [UPDATING] [..]
 [DOWNLOADING] crates ...
 [DOWNLOADED] common v1.0.0 [..]
 [DOWNLOADED] bar v1.0.0 [..]
 [DOWNLOADED] opt_dep v1.0.0 [..]
-note: Switching to Edition 2021 will enable the use of the version 2 feature resolver in Cargo.
+note: Switching to Edition 2021 will enable the use of the version 2 feature resolver in Crabgo.
 This may cause some dependencies to be built with fewer features enabled than previously.
-More information about the resolver changes may be found at https://doc.rust-lang.org/nightly/edition-guide/rust-2021/default-cargo-resolver.html
+More information about the resolver changes may be found at https://doc.rust-lang.org/nightly/edition-guide/rust-2021/default-crabgo-resolver.html
 When building the following dependencies, the given features will no longer be used:
 
   common v1.0.0 removed features: dev-feat, f1, opt_dep
@@ -1583,12 +1583,12 @@ The following differences only apply when building with dev-dependencies:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustfix_handles_multi_spans() {
     // Checks that rustfix handles a single diagnostic with multiple
     // suggestion spans (non_fmt_panic in this case).
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file(
             "src/lib.rs",
             r#"
@@ -1599,16 +1599,16 @@ fn rustfix_handles_multi_spans() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs").run();
+    p.crabgo("fix --allow-no-vcs").run();
     assert!(p.read_file("src/lib.rs").contains(r#"panic!("hey");"#));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_edition_2021() {
     // Can migrate 2021, even when lints are allowed.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1631,7 +1631,7 @@ fn fix_edition_2021() {
             "#,
         )
         .build();
-    p.cargo("fix --edition --allow-no-vcs")
+    p.crabgo("fix --edition --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.1.0 [..]
@@ -1644,23 +1644,23 @@ fn fix_edition_2021() {
     assert!(p.read_file("src/lib.rs").contains(r#"0..=100 => true,"#));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_shared_cross_workspace() {
     // Fixing a file that is shared between multiple packages in the same workspace.
     // Make sure two processes don't try to fix the same file at the same time.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "pub mod shared;")
         // This will fix both unused and bare trait.
         .file("foo/src/shared.rs", "pub fn fixme(x: Box<&Fn() -> ()>) {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file(
             "bar/src/lib.rs",
             r#"
@@ -1673,7 +1673,7 @@ fn fix_shared_cross_workspace() {
     // The output here can be either of these two, depending on who runs first:
     //     [FIXED] bar/src/../../foo/src/shared.rs (2 fixes)
     //     [FIXED] foo/src/shared.rs (2 fixes)
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_unordered(
             "\
 [CHECKING] foo v0.1.0 [..]
@@ -1690,7 +1690,7 @@ fn fix_shared_cross_workspace() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn abnormal_exit() {
     // rustc fails unexpectedly after applying fixes, should show some error information.
     //
@@ -1701,7 +1701,7 @@ fn abnormal_exit() {
     // - Third run (collecting messages to display): file not found, exits normally.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1721,7 +1721,7 @@ fn abnormal_exit() {
             "#,
         )
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -1754,7 +1754,7 @@ fn abnormal_exit() {
         )
         .build();
 
-    p.cargo("fix --lib --allow-no-vcs")
+    p.crabgo("fix --lib --allow-no-vcs")
         .env(
             "ONCE_PATH",
             paths::root().join("proc-macro-run-once").to_str().unwrap(),
@@ -1769,11 +1769,11 @@ fn abnormal_exit() {
         .run();
 }
 
-#[cargo_test]
-fn fix_with_run_cargo_in_proc_macros() {
+#[crabgo_test]
+fn fix_with_run_crabgo_in_proc_macros() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1791,7 +1791,7 @@ fn fix_with_run_cargo_in_proc_macros() {
 
                 #[proc_macro]
                 pub fn foo(_input: TokenStream) -> TokenStream {
-                    let output = std::process::Command::new(env!("CARGO"))
+                    let output = std::process::Command::new(env!("CRABGO"))
                         .args(&["metadata", "--format-version=1"])
                         .output()
                         .unwrap();
@@ -1812,16 +1812,16 @@ fn fix_with_run_cargo_in_proc_macros() {
             "#,
         )
         .build();
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_does_not_contain("error: could not find .rs file in rustc args")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_edition_lint_migration() {
     // Migrating to a new edition where a non-edition lint causes problems.
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file(
             "src/lib.rs",
             r#"
@@ -1845,11 +1845,11 @@ fn non_edition_lint_migration() {
         )
         .build();
     // Check that it complains about an unused import.
-    p.cargo("check --lib")
+    p.crabgo("check --lib")
         .with_stderr_contains("[..]unused_imports[..]")
         .with_stderr_contains("[..]std::str::from_utf8[..]")
         .run();
-    p.cargo("fix --edition --allow-no-vcs").run();
+    p.crabgo("fix --edition --allow-no-vcs").run();
     let contents = p.read_file("src/lib.rs");
     // Check it does not remove the "unused" import.
     assert!(contents.contains("use std::str::from_utf8;"));
@@ -1857,8 +1857,8 @@ fn non_edition_lint_migration() {
     assert!(contents.contains("from_utf8(crate::foo::FOO)"));
 }
 
-// For rust-lang/cargo#9857
-#[cargo_test]
+// For rust-lang/crabgo#9857
+#[crabgo_test]
 fn fix_in_dependency() {
     Package::new("bar", "1.0.0")
         .file(
@@ -1876,7 +1876,7 @@ fn fix_in_dependency() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1896,7 +1896,7 @@ fn fix_in_dependency() {
         )
         .build();
 
-    p.cargo("fix --allow-no-vcs")
+    p.crabgo("fix --allow-no-vcs")
         .with_stderr_does_not_contain("[FIXED] [..]")
         .run();
 }

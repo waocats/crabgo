@@ -1,32 +1,32 @@
-//! Tests for the `cargo fetch` command.
+//! Tests for the `crabgo fetch` command.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::rustc_host;
-use cargo_test_support::{basic_manifest, cross_compile, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::rustc_host;
+use crabgo_test_support::{basic_manifest, cross_compile, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn no_deps() {
     let p = project()
         .file("src/main.rs", "mod a; fn main() {}")
         .file("src/a.rs", "")
         .build();
 
-    p.cargo("fetch").with_stdout("").run();
+    p.crabgo("fetch").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_all_platform_dependencies_when_no_target_is_given() {
     if cross_compile::disabled() {
         return;
     }
 
     Package::new("d1", "1.2.3")
-        .file("Cargo.toml", &basic_manifest("d1", "1.2.3"))
+        .file("Crabgo.toml", &basic_manifest("d1", "1.2.3"))
         .file("src/lib.rs", "")
         .publish();
 
     Package::new("d2", "0.1.2")
-        .file("Cargo.toml", &basic_manifest("d2", "0.1.2"))
+        .file("Crabgo.toml", &basic_manifest("d2", "0.1.2"))
         .file("src/lib.rs", "")
         .publish();
 
@@ -34,7 +34,7 @@ fn fetch_all_platform_dependencies_when_no_target_is_given() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -55,25 +55,25 @@ fn fetch_all_platform_dependencies_when_no_target_is_given() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr_contains("[DOWNLOADED] d1 v1.2.3 [..]")
         .with_stderr_contains("[DOWNLOADED] d2 v0.1.2 [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_platform_specific_dependencies() {
     if cross_compile::disabled() {
         return;
     }
 
     Package::new("d1", "1.2.3")
-        .file("Cargo.toml", &basic_manifest("d1", "1.2.3"))
+        .file("Crabgo.toml", &basic_manifest("d1", "1.2.3"))
         .file("src/lib.rs", "")
         .publish();
 
     Package::new("d2", "0.1.2")
-        .file("Cargo.toml", &basic_manifest("d2", "0.1.2"))
+        .file("Crabgo.toml", &basic_manifest("d2", "0.1.2"))
         .file("src/lib.rs", "")
         .publish();
 
@@ -81,7 +81,7 @@ fn fetch_platform_specific_dependencies() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -102,24 +102,24 @@ fn fetch_platform_specific_dependencies() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fetch --target")
+    p.crabgo("fetch --target")
         .arg(&host)
         .with_stderr_contains("[DOWNLOADED] d1 v1.2.3 [..]")
         .with_stderr_does_not_contain("[DOWNLOADED] d2 v0.1.2 [..]")
         .run();
 
-    p.cargo("fetch --target")
+    p.crabgo("fetch --target")
         .arg(&target)
         .with_stderr_contains("[DOWNLOADED] d2 v0.1.2[..]")
         .with_stderr_does_not_contain("[DOWNLOADED] d1 v1.2.3 [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_warning() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -129,7 +129,7 @@ fn fetch_warning() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr("[WARNING] unused manifest key: package.misspelled")
         .run();
 }

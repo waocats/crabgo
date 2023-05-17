@@ -1,12 +1,12 @@
-//! Tests for the `cargo rustdoc` command.
+//! Tests for the `crabgo rustdoc` command.
 
-use cargo_test_support::{basic_manifest, cross_compile, project};
+use crabgo_test_support::{basic_manifest, cross_compile, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_simple() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("rustdoc -v")
+    p.crabgo("rustdoc -v")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -20,11 +20,11 @@ fn rustdoc_simple() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_args() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("rustdoc -v -- --cfg=foo")
+    p.crabgo("rustdoc -v -- --cfg=foo")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -40,22 +40,22 @@ fn rustdoc_args() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_binary_args_passed() {
     let p = project().file("src/main.rs", "").build();
 
-    p.cargo("rustdoc -v")
+    p.crabgo("rustdoc -v")
         .arg("--")
         .arg("--markdown-no-toc")
         .with_stderr_contains("[RUNNING] `rustdoc [..] --markdown-no-toc[..]`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_foo_with_bar_dependency() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -70,11 +70,11 @@ fn rustdoc_foo_with_bar_dependency() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("rustdoc -v -- --cfg=foo")
+    foo.crabgo("rustdoc -v -- --cfg=foo")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1 ([..])
@@ -93,11 +93,11 @@ fn rustdoc_foo_with_bar_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_only_bar_dependency() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -112,11 +112,11 @@ fn rustdoc_only_bar_dependency() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("rustdoc -v -p bar -- --cfg=foo")
+    foo.crabgo("rustdoc -v -p bar -- --cfg=foo")
         .with_stderr(
             "\
 [DOCUMENTING] bar v0.0.1 ([..])
@@ -132,14 +132,14 @@ fn rustdoc_only_bar_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_same_name_documents_lib() {
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file("src/lib.rs", r#" "#)
         .build();
 
-    p.cargo("rustdoc -v -- --cfg=foo")
+    p.crabgo("rustdoc -v -- --cfg=foo")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([..])
@@ -155,11 +155,11 @@ fn rustdoc_same_name_documents_lib() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -173,16 +173,16 @@ fn features() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("rustdoc --verbose --features quux")
+    p.crabgo("rustdoc --verbose --features quux")
         .with_stderr_contains("[..]feature=[..]quux[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_crate_type() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -197,7 +197,7 @@ fn proc_macro_crate_type() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("rustdoc --verbose")
+    p.crabgo("rustdoc --verbose")
         .with_stderr_contains(
             "\
 [RUNNING] `rustdoc --crate-type proc-macro [..]`
@@ -206,7 +206,7 @@ fn proc_macro_crate_type() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_target() {
     if cross_compile::disabled() {
         return;
@@ -214,7 +214,7 @@ fn rustdoc_target() {
 
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("rustdoc --verbose --target")
+    p.crabgo("rustdoc --verbose --target")
         .arg(cross_compile::alternate())
         .with_stderr(format!(
             "\
@@ -231,21 +231,21 @@ fn rustdoc_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fail_with_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {  break_the_build(); }")
         .build();
 
-    p.cargo("rustdoc -p '*z'")
+    p.crabgo("rustdoc -p '*z'")
         .with_status(101)
         .with_stderr("[ERROR] Glob patterns on package selection are not supported.")
         .run();

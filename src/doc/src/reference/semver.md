@@ -2,13 +2,13 @@
 
 This chapter provides details on what is conventionally considered a
 compatible or breaking SemVer change for new releases of a package. See the
-[SemVer compatibility] section for details on what SemVer is, and how Cargo
+[SemVer compatibility] section for details on what SemVer is, and how Crabgo
 uses it to ensure compatibility of libraries.
 
 These are only *guidelines*, and not necessarily hard-and-fast rules that all
 projects will obey. The [Change categories] section details how this guide
 classifies the level and severity of a change. Most of this guide focuses on
-changes that will cause `cargo` and `rustc` to fail to build something that
+changes that will cause `crabgo` and `rustc` to fail to build something that
 previously worked. Almost every change carries some risk that it will
 negatively affect the runtime behavior, and for those cases it is usually a
 judgment call by the project maintainers whether or not it is a
@@ -51,7 +51,7 @@ Rust, or is specifically discouraged from use.
 This guide uses the terms "major" and "minor" assuming this relates to a
 "1.0.0" release or later. Initial development releases starting with "0.y.z"
 can treat changes in "y" as a major release, and "z" as a minor release.
-"0.0.z" releases are always major changes. This is because Cargo uses the
+"0.0.z" releases are always major changes. This is because Crabgo uses the
 convention that only changes in the left-most non-zero component are
 considered incompatible.
 
@@ -95,13 +95,13 @@ considered incompatible.
     * [Possibly-breaking: changing the minimum version of Rust required](#env-new-rust)
     * [Possibly-breaking: changing the platform and environment requirements](#env-change-requirements)
     * [Minor: introducing new lints](#new-lints)
-    * Cargo
-        * [Minor: adding a new Cargo feature](#cargo-feature-add)
-        * [Major: removing a Cargo feature](#cargo-feature-remove)
-        * [Major: removing a feature from a feature list if that changes functionality or public items](#cargo-feature-remove-another)
-        * [Possibly-breaking: removing an optional dependency](#cargo-remove-opt-dep)
-        * [Minor: changing dependency features](#cargo-change-dep-feature)
-        * [Minor: adding dependencies](#cargo-dep-add)
+    * Crabgo
+        * [Minor: adding a new Crabgo feature](#crabgo-feature-add)
+        * [Major: removing a Crabgo feature](#crabgo-feature-remove)
+        * [Major: removing a feature from a feature list if that changes functionality or public items](#crabgo-feature-remove-another)
+        * [Possibly-breaking: removing an optional dependency](#crabgo-remove-opt-dep)
+        * [Minor: changing dependency features](#crabgo-change-dep-feature)
+        * [Minor: adding dependencies](#crabgo-dep-add)
 * [Application compatibility](#application-compatibility)
 
 ## API compatibility
@@ -1112,7 +1112,7 @@ fn example() {
 ```
 
 Mitigation strategies:
-* A common idiom to avoid this is to include a `std` [Cargo feature] that
+* A common idiom to avoid this is to include a `std` [Crabgo feature] that
   optionally enables `std` support, and when the feature is off, the library
   can be used in a `no_std` environment.
 
@@ -1206,7 +1206,7 @@ Mitigation strategies:
 
 Introducing the use of new features in a new release of Rust can break
 projects that are using older versions of Rust. This also includes using new
-features in a new release of Cargo, and requiring the use of a nightly-only
+features in a new release of Crabgo, and requiring the use of a nightly-only
 feature in a crate that previously worked on stable.
 
 Some projects choose to allow this in a minor release for various reasons. It
@@ -1217,7 +1217,7 @@ previous releases). Just keep in mind that some large projects may not be able
 to update their Rust toolchain rapidly.
 
 Mitigation strategies:
-* Use [Cargo features] to make the new features opt-in.
+* Use [Crabgo features] to make the new features opt-in.
 * Provide a large window of support for older releases.
 * Copy the source of new standard library items if possible so that you
   can continue to use an older version but take advantage of the new feature.
@@ -1287,12 +1287,12 @@ The following lints are examples of those that may be introduced when updating a
 
 Additionally, updating `rustc` to a new version may introduce new lints.
 
-Transitive dependencies which introduce new lints should not usually cause a failure because Cargo uses [`--cap-lints`](../../rustc/lints/levels.html#capping-lints) to suppress all lints in dependencies.
+Transitive dependencies which introduce new lints should not usually cause a failure because Crabgo uses [`--cap-lints`](../../rustc/lints/levels.html#capping-lints) to suppress all lints in dependencies.
 
 Mitigating strategies:
 * If you build with warnings denied, understand you may need to deal with resolving new warnings whenever you update your dependencies.
   If using RUSTFLAGS to pass `-Dwarnings`, also add the `-A` flag to allow lints that are likely to cause issues, such as `-Adeprecated`.
-* Introduce deprecations behind a [feature][Cargo features].
+* Introduce deprecations behind a [feature][Crabgo features].
   For example `#[cfg_attr(feature = "deprecated", deprecated="use bar instead")]`.
   Then, when you plan to remove an item in a future SemVer breaking change, you can communicate with your users that they should enable the `deprecated` feature *before* updating to remove the use of the deprecated items.
   This allows users to choose when to respond to deprecations without needing to immediately respond to them.
@@ -1303,12 +1303,12 @@ Mitigating strategies:
 [must-use-attr]: ../../reference/attributes/diagnostics.html#the-must_use-attribute
 [`unused_unsafe`]: ../../rustc/lints/listing/warn-by-default.html#unused-unsafe
 
-### Cargo
+### Crabgo
 
-<a id="cargo-feature-add"></a>
-#### Minor: adding a new Cargo feature
+<a id="crabgo-feature-add"></a>
+#### Minor: adding a new Crabgo feature
 
-It is usually safe to add new [Cargo features]. If the feature introduces new
+It is usually safe to add new [Crabgo features]. If the feature introduces new
 changes that cause a breaking change, this can cause difficulties for projects
 that have stricter backwards-compatibility needs. In that scenario, avoid
 adding the feature to the "default" list, and possibly document the
@@ -1328,10 +1328,10 @@ consequences of enabling the feature.
 std = []
 ```
 
-<a id="cargo-feature-remove"></a>
-#### Major: removing a Cargo feature
+<a id="crabgo-feature-remove"></a>
+#### Major: removing a Crabgo feature
 
-It is usually a breaking change to remove [Cargo features]. This will cause
+It is usually a breaking change to remove [Crabgo features]. This will cause
 an error for any project that enabled the feature.
 
 ```toml
@@ -1351,11 +1351,11 @@ logging = []
 Mitigation strategies:
 * Clearly document your features. If there is an internal or experimental
   feature, mark it as such, so that users know the status of the feature.
-* Leave the old feature in `Cargo.toml`, but otherwise remove its
+* Leave the old feature in `Crabgo.toml`, but otherwise remove its
   functionality. Document that the feature is deprecated, and remove it in a
   future major SemVer release.
 
-<a id="cargo-feature-remove-another"></a>
+<a id="crabgo-feature-remove-another"></a>
 #### Major: removing a feature from a feature list if that changes functionality or public items
 
 If removing a feature from another feature, this can break existing users if
@@ -1377,11 +1377,11 @@ default = []  # This may cause packages to fail if they are expecting std to be 
 std = []
 ```
 
-<a id="cargo-remove-opt-dep"></a>
+<a id="crabgo-remove-opt-dep"></a>
 #### Possibly-breaking: removing an optional dependency
 
 Removing an optional dependency can break a project using your library because
-another project may be enabling that dependency via [Cargo features].
+another project may be enabling that dependency via [Crabgo features].
 
 ```toml
 # Breaking change example
@@ -1402,7 +1402,7 @@ Mitigation strategies:
   in the documented list of features, then you may decide to consider it safe
   to change undocumented entries.
 * Leave the optional dependency, and just don't use it within your library.
-* Replace the optional dependency with a [Cargo feature] that does nothing,
+* Replace the optional dependency with a [Crabgo feature] that does nothing,
   and document that it is deprecated.
 * Use high-level features which enable optional dependencies, and document
   those as the preferred way to enable the extended functionality. For
@@ -1411,7 +1411,7 @@ Mitigation strategies:
   optional dependencies necessary to implement "networking". Then document the
   "networking" feature.
 
-<a id="cargo-change-dep-feature"></a>
+<a id="crabgo-change-dep-feature"></a>
 #### Minor: changing dependency features
 
 It is usually safe to change the features on a dependency, as long as the
@@ -1432,7 +1432,7 @@ rand = { version = "0.7.3", features = ["small_rng"] }
 rand = "0.7.3"
 ```
 
-<a id="cargo-dep-add"></a>
+<a id="crabgo-dep-add"></a>
 #### Minor: adding dependencies
 
 It is usually safe to add new dependencies, as long as the new dependency
@@ -1456,9 +1456,9 @@ log = "0.4.11"
 
 ## Application compatibility
 
-Cargo projects may also include executable binaries which have their own
+Crabgo projects may also include executable binaries which have their own
 interfaces (such as a CLI interface, OS-level interaction, etc.). Since these
-are part of the Cargo package, they often use and share the same version as
+are part of the Crabgo package, they often use and share the same version as
 the package. You will need to decide if and how you want to employ a SemVer
 contract with your users in the changes you make to your application. The
 potential breaking and compatible changes to an application are too numerous
@@ -1469,8 +1469,8 @@ document what your commitments are.
 [`cfg` attribute]: ../../reference/conditional-compilation.md#the-cfg-attribute
 [`no_std`]: ../../reference/names/preludes.html#the-no_std-attribute
 [`pub use`]: ../../reference/items/use-declarations.html
-[Cargo feature]: features.md
-[Cargo features]: features.md
+[Crabgo feature]: features.md
+[Crabgo features]: features.md
 [cfg-accessible]: https://github.com/rust-lang/rust/issues/64797
 [cfg-version]: https://github.com/rust-lang/rust/issues/64796
 [conditional compilation]: ../../reference/conditional-compilation.md

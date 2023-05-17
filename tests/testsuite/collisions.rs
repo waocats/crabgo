@@ -1,25 +1,25 @@
 //! Tests for when multiple artifacts have the same output filename.
-//! See https://github.com/rust-lang/cargo/issues/6313 for more details.
+//! See https://github.com/rust-lang/crabgo/issues/6313 for more details.
 //! Ideally these should never happen, but I don't think we'll ever be able to
 //! prevent all collisions.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, cross_compile, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, cross_compile, project};
 use std::env;
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_dylib() {
     // Path dependencies don't include metadata hash in filename for dylibs.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -31,7 +31,7 @@ fn collision_dylib() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -47,51 +47,51 @@ fn collision_dylib() {
 
     // `j=1` is required because on Windows you'll get an error due to
     // two processes writing to the file at the same time.
-    p.cargo("build -j=1")
+    p.crabgo("build -j=1")
         .with_stderr_contains(&format!("\
 [WARNING] output filename collision.
 The lib target `a` in package `b v1.0.0 ([..]/foo/b)` has the same output filename as the lib target `a` in package `a v1.0.0 ([..]/foo/a)`.
 Colliding filename is: [..]/foo/target/debug/deps/{}a{}
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
-This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+This may become a hard error in the future; see <https://github.com/rust-lang/crabgo/issues/6313>.
 ", env::consts::DLL_PREFIX, env::consts::DLL_SUFFIX))
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_example() {
     // Examples in a workspace can easily collide.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "1.0.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "1.0.0"))
         .file("a/examples/ex1.rs", "fn main() {}")
-        .file("b/Cargo.toml", &basic_manifest("b", "1.0.0"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "1.0.0"))
         .file("b/examples/ex1.rs", "fn main() {}")
         .build();
 
     // `j=1` is required because on Windows you'll get an error due to
     // two processes writing to the file at the same time.
-    p.cargo("build --examples -j=1")
+    p.crabgo("build --examples -j=1")
         .with_stderr_contains("\
 [WARNING] output filename collision.
 The example target `ex1` in package `b v1.0.0 ([..]/foo/b)` has the same output filename as the example target `ex1` in package `a v1.0.0 ([..]/foo/a)`.
 Colliding filename is: [..]/foo/target/debug/examples/ex1[EXE]
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
-This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+This may become a hard error in the future; see <https://github.com/rust-lang/crabgo/issues/6313>.
 ")
         .run();
 }
 
-#[cargo_test]
-// See https://github.com/rust-lang/cargo/issues/7493
+#[crabgo_test]
+// See https://github.com/rust-lang/crabgo/issues/7493
 #[cfg_attr(
     any(target_env = "msvc", target_vendor = "apple"),
     ignore = "--out-dir and examples are currently broken on MSVC and apple"
@@ -99,31 +99,31 @@ This may become a hard error in the future; see <https://github.com/rust-lang/ca
 fn collision_export() {
     // `--out-dir` combines some things which can cause conflicts.
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "1.0.0"))
         .file("examples/foo.rs", "fn main() {}")
         .file("src/main.rs", "fn main() {}")
         .build();
 
     // -j1 to avoid issues with two processes writing to the same file at the
     // same time.
-    p.cargo("build -j1 --out-dir=out -Z unstable-options --bins --examples")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -j1 --out-dir=out -Z unstable-options --bins --examples")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .with_stderr_contains("\
 [WARNING] `--out-dir` filename collision.
 The example target `foo` in package `foo v1.0.0 ([..]/foo)` has the same output filename as the bin target `foo` in package `foo v1.0.0 ([..]/foo)`.
 Colliding filename is: [..]/foo/out/foo[EXE]
 The exported filenames should be unique.
 Consider changing their names to be unique or compiling them separately.
-This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+This may become a hard error in the future; see <https://github.com/rust-lang/crabgo/issues/6313>.
 ")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -135,7 +135,7 @@ fn collision_doc() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo2/Cargo.toml",
+            "foo2/Crabgo.toml",
             r#"
             [package]
             name = "foo2"
@@ -148,7 +148,7 @@ fn collision_doc() {
         .file("foo2/src/lib.rs", "")
         .build();
 
-    p.cargo("doc -j=1")
+    p.crabgo("doc -j=1")
         .with_stderr_contains(
             "\
 [WARNING] output filename collision.
@@ -157,13 +157,13 @@ filename as the lib target `foo` in package `foo v0.1.0 ([..]/foo)`.
 Colliding filename is: [..]/foo/target/doc/foo/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc_multiple_versions() {
     // Multiple versions of the same package.
     Package::new("old-dep", "1.0.0").publish();
@@ -173,7 +173,7 @@ fn collision_doc_multiple_versions() {
     Package::new("bar", "2.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -188,7 +188,7 @@ fn collision_doc_multiple_versions() {
         .build();
 
     // Should only document bar 2.0, should not document old-dep.
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -207,7 +207,7 @@ fn collision_doc_multiple_versions() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc_host_target_feature_split() {
     // Same dependency built twice due to different features.
     //
@@ -248,7 +248,7 @@ fn collision_doc_host_target_feature_split() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -272,7 +272,7 @@ fn collision_doc_host_target_feature_split() {
         )
         .file("build.rs", "fn main() {}")
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -301,8 +301,8 @@ fn collision_doc_host_target_feature_split() {
         .build();
 
     // No warnings, no duplicates, common and common-dep only documented once.
-    p.cargo("doc")
-        // Cannot check full output due to https://github.com/rust-lang/cargo/issues/9076
+    p.crabgo("doc")
+        // Cannot check full output due to https://github.com/rust-lang/crabgo/issues/9076
         .with_stderr_does_not_contain("[WARNING][..]")
         .run();
 
@@ -316,13 +316,13 @@ fn collision_doc_host_target_feature_split() {
     assert!(p.build_dir().join("doc/foo/fn.f.html").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc_profile_split() {
     // Same dependency built twice due to different profile settings.
     Package::new("common", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -338,7 +338,7 @@ fn collision_doc_profile_split() {
         )
         .file("src/lib.rs", "")
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -357,7 +357,7 @@ fn collision_doc_profile_split() {
     // Just to verify that common is normally built twice.
     // This is unordered because in rare cases `pm` may start
     // building in-between the two `common`.
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -376,7 +376,7 @@ fn collision_doc_profile_split() {
         .run();
 
     // Should only document common once, no warnings.
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_unordered(
             "\
 [CHECKING] common v1.0.0
@@ -389,13 +389,13 @@ fn collision_doc_profile_split() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc_sources() {
     // Different sources with the same package.
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -407,11 +407,11 @@ fn collision_doc_sources() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "1.0.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("doc -j=1")
+    p.crabgo("doc -j=1")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -423,7 +423,7 @@ the lib target `bar` in package `bar v1.0.0 ([..]/foo/bar)`.
 Colliding filename is: [..]/foo/target/doc/bar/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [CHECKING] bar v1.0.0 [..]
 [DOCUMENTING] bar v1.0.0 [..]
 [DOCUMENTING] bar v1.0.0
@@ -435,7 +435,7 @@ the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_doc_target() {
     // collision in doc with --target, doesn't fail due to orphans
     if cross_compile::disabled() {
@@ -449,7 +449,7 @@ fn collision_doc_target() {
     Package::new("bar", "2.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -463,7 +463,7 @@ fn collision_doc_target() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc --target")
+    p.crabgo("doc --target")
         .arg(cross_compile::alternate())
         .with_stderr_unordered(
             "\
@@ -483,7 +483,7 @@ fn collision_doc_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn collision_with_root() {
     // Check for a doc collision between a root package and a dependency.
     // In this case, `foo-macro` comes from both the workspace and crates.io.
@@ -493,14 +493,14 @@ fn collision_with_root() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["abc", "foo-macro"]
             "#,
         )
         .file(
-            "abc/Cargo.toml",
+            "abc/Crabgo.toml",
             r#"
                 [package]
                 name = "abc"
@@ -512,7 +512,7 @@ fn collision_with_root() {
         )
         .file("abc/src/lib.rs", "")
         .file(
-            "foo-macro/Cargo.toml",
+            "foo-macro/Crabgo.toml",
             r#"
                 [package]
                 name = "foo-macro"
@@ -528,7 +528,7 @@ fn collision_with_root() {
         .file("foo-macro/src/lib.rs", "")
         .build();
 
-    p.cargo("doc -j=1")
+    p.crabgo("doc -j=1")
         .with_stderr_unordered("\
 [UPDATING] [..]
 [DOWNLOADING] crates ...
@@ -538,7 +538,7 @@ The lib target `foo-macro` in package `foo-macro v1.0.0` has the same output fil
 Colliding filename is: [CWD]/target/doc/foo_macro/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [CHECKING] foo-macro v1.0.0
 [DOCUMENTING] foo-macro v1.0.0
 [CHECKING] abc v1.0.0 [..]

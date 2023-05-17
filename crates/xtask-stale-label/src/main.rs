@@ -16,7 +16,7 @@ use std::process;
 use toml_edit::Document;
 
 fn main() {
-    let pkg_root = std::env!("CARGO_MANIFEST_DIR");
+    let pkg_root = std::env!("CRABGO_MANIFEST_DIR");
     let ws_root = PathBuf::from(format!("{pkg_root}/../.."));
     let path = {
         let path = ws_root.join("triagebot.toml");

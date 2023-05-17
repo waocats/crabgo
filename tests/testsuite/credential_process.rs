@@ -1,14 +1,14 @@
 //! Tests for credential-process.
 
-use cargo_test_support::registry::TestRegistry;
-use cargo_test_support::{basic_manifest, cargo_process, paths, project, registry, Project};
+use crabgo_test_support::registry::TestRegistry;
+use crabgo_test_support::{basic_manifest, crabgo_process, paths, project, registry, Project};
 use std::fs::{self, read_to_string};
 
 fn toml_bin(proj: &Project, name: &str) -> String {
     proj.bin(name).display().to_string().replace('\\', "\\\\")
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gated() {
     let _alternative = registry::RegistryBuilder::new()
         .alternative()
@@ -21,51 +21,51 @@ fn gated() {
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [registry]
                 credential-process = "false"
             "#,
         )
-        .file("Cargo.toml", &basic_manifest("foo", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "1.0.0"))
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(cratesio.index_url())
-        .masquerade_as_nightly_cargo(&["credential-process"])
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\
 [UPDATING] [..]
-[ERROR] no token found, please run `cargo login`
-or use environment variable CARGO_REGISTRY_TOKEN
+[ERROR] no token found, please run `crabgo login`
+or use environment variable CRABGO_REGISTRY_TOKEN
 ",
         )
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [registry.alternative]
             credential-process = "false"
         "#,
     );
 
-    p.cargo("publish --no-verify --registry alternative")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("publish --no-verify --registry alternative")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\
 [UPDATING] [..]
-[ERROR] no token found for `alternative`, please run `cargo login --registry alternative`
-or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN
+[ERROR] no token found for `alternative`, please run `crabgo login --registry alternative`
+or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_both_token_and_process() {
     // Specifying both credential-process and a token in config should issue a warning.
     let _server = registry::RegistryBuilder::new()
@@ -76,7 +76,7 @@ fn warn_both_token_and_process() {
         .build();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [registries.alternative]
                 token = "alternative-sekrit"
@@ -84,7 +84,7 @@ fn warn_both_token_and_process() {
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -98,8 +98,8 @@ fn warn_both_token_and_process() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("publish --no-verify --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\
@@ -113,7 +113,7 @@ Only one of these values may be set, remove one or the other to proceed.
     // Try with global credential-process, and registry-specific `token`.
     // This should silently use the config token, and not run the "false" exe.
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [registry]
             credential-process = "false"
@@ -122,8 +122,8 @@ Only one of these values may be set, remove one or the other to proceed.
             token = "alternative-sekrit"
         "#,
     );
-    p.cargo("publish --no-verify --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("publish --no-verify --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -153,7 +153,7 @@ fn get_token_test() -> (Project, TestRegistry) {
     // API server that checks that the token is included correctly.
     let server = registry::RegistryBuilder::new()
         .no_configure_token()
-        .token(cargo_test_support::registry::Token::Plaintext(
+        .token(crabgo_test_support::registry::Token::Plaintext(
             "sekrit".to_string(),
         ))
         .alternative()
@@ -162,7 +162,7 @@ fn get_token_test() -> (Project, TestRegistry) {
     // The credential process to use.
     let cred_proj = project()
         .at("cred_proj")
-        .file("Cargo.toml", &basic_manifest("test-cred", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("test-cred", "1.0.0"))
         .file(
             "src/main.rs",
             r#"
@@ -180,11 +180,11 @@ fn get_token_test() -> (Project, TestRegistry) {
                 } "#,
         )
         .build();
-    cred_proj.cargo("build").run();
+    cred_proj.crabgo("build").run();
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [registries.alternative]
@@ -196,7 +196,7 @@ fn get_token_test() -> (Project, TestRegistry) {
             ),
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -212,13 +212,13 @@ fn get_token_test() -> (Project, TestRegistry) {
     (p, server)
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish() {
-    // Checks that credential-process is used for `cargo publish`.
+    // Checks that credential-process is used for `crabgo publish`.
     let (p, _t) = get_token_test();
 
-    p.cargo("publish --no-verify --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("publish --no-verify --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -237,14 +237,14 @@ You may press ctrl-c [..]
     assert_eq!(calls, 1);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn basic_unsupported() {
     // Non-action commands don't support login/logout.
     let registry = registry::RegistryBuilder::new()
         .no_configure_token()
         .build();
-    cargo_util::paths::append(
-        &paths::home().join(".cargo/config"),
+    crabgo_util::paths::append(
+        &paths::home().join(".crabgo/config"),
         br#"
             [registry]
             credential-process = "false"
@@ -252,9 +252,9 @@ fn basic_unsupported() {
     )
     .unwrap();
 
-    cargo_process("login -Z credential-process abcdefg")
+    crabgo_process("login -Z credential-process abcdefg")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["credential-process"])
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\
@@ -266,9 +266,9 @@ the credential-process configuration value must pass the \
         )
         .run();
 
-    cargo_process("logout -Z credential-process")
+    crabgo_process("logout -Z credential-process")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["credential-process"])
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\
@@ -280,7 +280,7 @@ the credential-process configuration value must pass the \
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login() {
     let server = registry::RegistryBuilder::new()
         .no_configure_token()
@@ -288,15 +288,15 @@ fn login() {
     // The credential process to use.
     let cred_proj = project()
         .at("cred_proj")
-        .file("Cargo.toml", &basic_manifest("test-cred", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("test-cred", "1.0.0"))
         .file(
             "src/main.rs",
                 r#"
                 use std::io::Read;
 
                 fn main() {{
-                    assert_eq!(std::env::var("CARGO_REGISTRY_NAME_OPT").unwrap(), "crates-io");
-                    assert_eq!(std::env::var("CARGO_REGISTRY_INDEX_URL").unwrap(), "https://github.com/rust-lang/crates.io-index");
+                    assert_eq!(std::env::var("CRABGO_REGISTRY_NAME_OPT").unwrap(), "crates-io");
+                    assert_eq!(std::env::var("CRABGO_REGISTRY_INDEX_URL").unwrap(), "https://github.com/rust-lang/crates.io-index");
                     assert_eq!(std::env::args().skip(1).next().unwrap(), "store");
                     let mut buffer = String::new();
                     std::io::stdin().read_to_string(&mut buffer).unwrap();
@@ -306,10 +306,10 @@ fn login() {
             "#,
         )
         .build();
-    cred_proj.cargo("build").run();
+    cred_proj.crabgo("build").run();
 
-    cargo_util::paths::append(
-        &paths::home().join(".cargo/config"),
+    crabgo_util::paths::append(
+        &paths::home().join(".crabgo/config"),
         format!(
             r#"
                 [registry]
@@ -321,8 +321,8 @@ fn login() {
     )
     .unwrap();
 
-    cargo_process("login -Z credential-process abcdefg")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    crabgo_process("login -Z credential-process abcdefg")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .replace_crates_io(server.index_url())
         .with_stderr(
             "\
@@ -337,7 +337,7 @@ fn login() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn logout() {
     let server = registry::RegistryBuilder::new()
         .no_configure_token()
@@ -345,15 +345,15 @@ fn logout() {
     // The credential process to use.
     let cred_proj = project()
         .at("cred_proj")
-        .file("Cargo.toml", &basic_manifest("test-cred", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("test-cred", "1.0.0"))
         .file(
             "src/main.rs",
                 r#"
                 use std::io::Read;
 
                 fn main() {{
-                    assert_eq!(std::env::var("CARGO_REGISTRY_NAME_OPT").unwrap(), "crates-io");
-                    assert_eq!(std::env::var("CARGO_REGISTRY_INDEX_URL").unwrap(), "https://github.com/rust-lang/crates.io-index");
+                    assert_eq!(std::env::var("CRABGO_REGISTRY_NAME_OPT").unwrap(), "crates-io");
+                    assert_eq!(std::env::var("CRABGO_REGISTRY_INDEX_URL").unwrap(), "https://github.com/rust-lang/crates.io-index");
                     assert_eq!(std::env::args().skip(1).next().unwrap(), "erase");
                     std::fs::write("token-store", "").unwrap();
                     eprintln!("token for `crates-io` has been erased!")
@@ -361,10 +361,10 @@ fn logout() {
             "#,
         )
         .build();
-    cred_proj.cargo("build").run();
+    cred_proj.crabgo("build").run();
 
-    cargo_util::paths::append(
-        &paths::home().join(".cargo/config"),
+    crabgo_util::paths::append(
+        &paths::home().join(".crabgo/config"),
         format!(
             r#"
                 [registry]
@@ -376,8 +376,8 @@ fn logout() {
     )
     .unwrap();
 
-    cargo_process("logout -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    crabgo_process("logout -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .replace_crates_io(server.index_url())
         .with_stderr(
             "\
@@ -395,12 +395,12 @@ token for `crates-io` has been erased!
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn yank() {
     let (p, _t) = get_token_test();
 
-    p.cargo("yank --version 0.1.0 --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("yank --version 0.1.0 --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -410,12 +410,12 @@ fn yank() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn owner() {
     let (p, _t) = get_token_test();
 
-    p.cargo("owner --add username --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("owner --add username --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -425,23 +425,23 @@ fn owner() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn libexec_path() {
-    // cargo: prefixed names use the sysroot
+    // crabgo: prefixed names use the sysroot
     let server = registry::RegistryBuilder::new()
         .no_configure_token()
         .build();
-    cargo_util::paths::append(
-        &paths::home().join(".cargo/config"),
+    crabgo_util::paths::append(
+        &paths::home().join(".crabgo/config"),
         br#"
             [registry]
-            credential-process = "cargo:doesnotexist"
+            credential-process = "crabgo:doesnotexist"
         "#,
     )
     .unwrap();
 
-    cargo_process("login -Z credential-process abcdefg")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    crabgo_process("login -Z credential-process abcdefg")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .replace_crates_io(server.index_url())
         .with_status(101)
         .with_stderr(
@@ -450,7 +450,7 @@ fn libexec_path() {
             // error messages.
             &format!("\
 [UPDATING] [..]
-[ERROR] failed to execute `[..]libexec/cargo-credential-doesnotexist[EXE]` to store authentication token for registry `crates-io`
+[ERROR] failed to execute `[..]libexec/crabgo-credential-doesnotexist[EXE]` to store authentication token for registry `crates-io`
 
 Caused by:
   [..]
@@ -459,7 +459,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_token_output() {
     // Error when credential process does not output the expected format for a token.
     let _server = registry::RegistryBuilder::new()
@@ -468,13 +468,13 @@ fn invalid_token_output() {
         .build();
     let cred_proj = project()
         .at("cred_proj")
-        .file("Cargo.toml", &basic_manifest("test-cred", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("test-cred", "1.0.0"))
         .file("src/main.rs", r#"fn main() { print!("a\nb\n"); } "#)
         .build();
-    cred_proj.cargo("build").run();
+    cred_proj.crabgo("build").run();
 
-    cargo_util::paths::append(
-        &paths::home().join(".cargo/config"),
+    crabgo_util::paths::append(
+        &paths::home().join(".crabgo/config"),
         format!(
             r#"
                 [registry]
@@ -487,12 +487,12 @@ fn invalid_token_output() {
     .unwrap();
 
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "1.0.0"))
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative -Z credential-process")
-        .masquerade_as_nightly_cargo(&["credential-process"])
+    p.crabgo("publish --no-verify --registry alternative -Z credential-process")
+        .masquerade_as_nightly_crabgo(&["credential-process"])
         .with_status(101)
         .with_stderr(
             "\

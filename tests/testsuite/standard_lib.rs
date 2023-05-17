@@ -4,9 +4,9 @@
 //! rebuild the real one. There is a separate integration test `build-std`
 //! which builds the real thing, but that should be avoided if possible.
 
-use cargo_test_support::registry::{Dependency, Package};
-use cargo_test_support::ProjectBuilder;
-use cargo_test_support::{paths, project, rustc_host, Execs};
+use crabgo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::ProjectBuilder;
+use crabgo_test_support::{paths, project, rustc_host, Execs};
 use std::path::{Path, PathBuf};
 
 struct Setup {
@@ -108,7 +108,7 @@ fn setup() -> Setup {
             "#,
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     Setup {
         rustc_wrapper: p.bin("foo"),
@@ -117,12 +117,12 @@ fn setup() -> Setup {
 }
 
 fn enable_build_std(e: &mut Execs, setup: &Setup) {
-    // First up, force Cargo to use our "mock sysroot" which mimics what
+    // First up, force Crabgo to use our "mock sysroot" which mimics what
     // libstd looks like upstream.
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/testsuite/mock-std");
-    e.env("__CARGO_TESTS_ONLY_SRC_ROOT", &root);
+    let root = Path::new(env!("CRABGO_MANIFEST_DIR")).join("tests/testsuite/mock-std");
+    e.env("__CRABGO_TESTS_ONLY_SRC_ROOT", &root);
 
-    e.masquerade_as_nightly_cargo(&["build-std"]);
+    e.masquerade_as_nightly_crabgo(&["build-std"]);
 
     // We do various shenanigans to ensure our "mock sysroot" actually links
     // with the real sysroot, so we don't have to actually recompile std for
@@ -172,7 +172,7 @@ impl BuildStd for Execs {
     }
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn basic() {
     let setup = setup();
 
@@ -227,40 +227,40 @@ fn basic() {
         )
         .build();
 
-    p.cargo("check -v").build_std(&setup).target_host().run();
-    p.cargo("build").build_std(&setup).target_host().run();
-    p.cargo("run").build_std(&setup).target_host().run();
-    p.cargo("test").build_std(&setup).target_host().run();
+    p.crabgo("check -v").build_std(&setup).target_host().run();
+    p.crabgo("build").build_std(&setup).target_host().run();
+    p.crabgo("run").build_std(&setup).target_host().run();
+    p.crabgo("test").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn simple_lib_std() {
     let setup = setup();
 
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[RUNNING] `[..]--crate-name std [..]`")
         .run();
     // Check freshness.
     p.change_file("src/lib.rs", " ");
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[FRESH] std[..]")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn simple_bin_std() {
     let setup = setup();
 
     let p = project().file("src/main.rs", "fn main() {}").build();
-    p.cargo("run -v").build_std(&setup).target_host().run();
+    p.crabgo("run -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn lib_nostd() {
     let setup = setup();
 
@@ -275,14 +275,14 @@ fn lib_nostd() {
             "#,
         )
         .build();
-    p.cargo("build -v --lib")
+    p.crabgo("build -v --lib")
         .build_std_arg(&setup, "core")
         .target_host()
         .with_stderr_does_not_contain("[..]libstd[..]")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn check_core() {
     let setup = setup();
 
@@ -290,14 +290,14 @@ fn check_core() {
         .file("src/lib.rs", "#![no_std] fn unused_fn() {}")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .build_std_arg(&setup, "core")
         .target_host()
         .with_stderr_contains("[WARNING] [..]unused_fn[..]")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn depend_same_as_std() {
     let setup = setup();
 
@@ -313,7 +313,7 @@ fn depend_same_as_std() {
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -328,10 +328,10 @@ fn depend_same_as_std() {
         )
         .build();
 
-    p.cargo("build -v").build_std(&setup).target_host().run();
+    p.crabgo("build -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn test() {
     let setup = setup();
 
@@ -350,14 +350,14 @@ fn test() {
         )
         .build();
 
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .build_std(&setup)
         .target_host()
         .with_stdout_contains("test tests::it_works ... ok")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn target_proc_macro() {
     let setup = setup();
 
@@ -373,10 +373,10 @@ fn target_proc_macro() {
         )
         .build();
 
-    p.cargo("build -v").build_std(&setup).target_host().run();
+    p.crabgo("build -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn bench() {
     let setup = setup();
 
@@ -395,10 +395,10 @@ fn bench() {
         )
         .build();
 
-    p.cargo("bench -v").build_std(&setup).target_host().run();
+    p.crabgo("bench -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn doc() {
     let setup = setup();
 
@@ -412,10 +412,10 @@ fn doc() {
         )
         .build();
 
-    p.cargo("doc -v").build_std(&setup).target_host().run();
+    p.crabgo("doc -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn check_std() {
     let setup = setup();
 
@@ -441,17 +441,17 @@ fn check_std() {
         )
         .build();
 
-    p.cargo("check -v --all-targets")
+    p.crabgo("check -v --all-targets")
         .build_std(&setup)
         .target_host()
         .run();
-    p.cargo("check -v --all-targets --profile=test")
+    p.crabgo("check -v --all-targets --profile=test")
         .build_std(&setup)
         .target_host()
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn doctest() {
     let setup = setup();
 
@@ -468,14 +468,14 @@ fn doctest() {
         )
         .build();
 
-    p.cargo("test --doc -v -Zdoctest-xcompile")
+    p.crabgo("test --doc -v -Zdoctest-xcompile")
         .build_std(&setup)
         .with_stdout_contains("test src/lib.rs - f [..] ... ok")
         .target_host()
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn no_implicit_alloc() {
     // Demonstrate that alloc is not implicitly in scope.
     let setup = setup();
@@ -491,7 +491,7 @@ fn no_implicit_alloc() {
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[..]use of undeclared [..]`alloc`")
@@ -499,12 +499,12 @@ fn no_implicit_alloc() {
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn macro_expanded_shadow() {
     // This tests a bug caused by the previous use of `--extern` to directly
     // load sysroot crates. This necessitated the switch to `--sysroot` to
     // retain existing behavior. See
-    // https://github.com/rust-lang/wg-cargo-std-aware/issues/40 for more
+    // https://github.com/rust-lang/wg-crabgo-std-aware/issues/40 for more
     // detail.
     let setup = setup();
 
@@ -520,10 +520,10 @@ fn macro_expanded_shadow() {
         )
         .build();
 
-    p.cargo("build -v").build_std(&setup).target_host().run();
+    p.crabgo("build -v").build_std(&setup).target_host().run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn ignores_incremental() {
     // Incremental is not really needed for std, make sure it is disabled.
     // Incremental also tends to have bugs that affect std libraries more than
@@ -531,8 +531,8 @@ fn ignores_incremental() {
     let setup = setup();
 
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("build")
-        .env("CARGO_INCREMENTAL", "1")
+    p.crabgo("build")
+        .env("CRABGO_INCREMENTAL", "1")
         .build_std(&setup)
         .target_host()
         .run();
@@ -549,8 +549,8 @@ fn ignores_incremental() {
         .starts_with("foo-"));
 }
 
-#[cargo_test(build_std_mock)]
-fn cargo_config_injects_compiler_builtins() {
+#[crabgo_test(build_std_mock)]
+fn crabgo_config_injects_compiler_builtins() {
     let setup = setup();
 
     let p = project()
@@ -564,14 +564,14 @@ fn cargo_config_injects_compiler_builtins() {
             "#,
         )
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [unstable]
                 build-std = ['core']
             "#,
         )
         .build();
-    let mut build = p.cargo("build -v --lib");
+    let mut build = p.crabgo("build -v --lib");
     enable_build_std(&mut build, &setup);
     build
         .target_host()
@@ -579,7 +579,7 @@ fn cargo_config_injects_compiler_builtins() {
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn different_features() {
     let setup = setup();
 
@@ -593,34 +593,34 @@ fn different_features() {
             ",
         )
         .build();
-    p.cargo("build")
+    p.crabgo("build")
         .build_std(&setup)
         .arg("-Zbuild-std-features=feature1")
         .target_host()
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn no_roots() {
     // Checks for a bug where it would panic if there are no roots.
     let setup = setup();
 
     let p = project().file("tests/t1.rs", "").build();
-    p.cargo("build")
+    p.crabgo("build")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[FINISHED] [..]")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn proc_macro_only() {
     // Checks for a bug where it would panic if building a proc-macro only
     let setup = setup();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -632,24 +632,24 @@ fn proc_macro_only() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("build")
+    p.crabgo("build")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[FINISHED] [..]")
         .run();
 }
 
-#[cargo_test(build_std_mock)]
+#[crabgo_test(build_std_mock)]
 fn fetch() {
     let setup = setup();
 
     let p = project().file("src/main.rs", "fn main() {}").build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .build_std(&setup)
         .target_host()
         .with_stderr_contains("[DOWNLOADED] [..]")
         .run();
-    p.cargo("build")
+    p.crabgo("build")
         .build_std(&setup)
         .target_host()
         .with_stderr_does_not_contain("[DOWNLOADED] [..]")

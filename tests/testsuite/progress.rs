@@ -1,13 +1,13 @@
 //! Tests for progress bar.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_progress_config_unknown_when() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [term]
             progress = { when = 'unknown' }
@@ -16,11 +16,11 @@ fn bad_progress_config_unknown_when() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] error in [..].cargo/config: \
+[ERROR] error in [..].crabgo/config: \
 could not load config key `term.progress.when`
 
 Caused by:
@@ -30,11 +30,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_progress_config_missing_width() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [term]
             progress = { when = 'always' }
@@ -43,7 +43,7 @@ fn bad_progress_config_missing_width() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -53,11 +53,11 @@ fn bad_progress_config_missing_width() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_progress_config_missing_when() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [term]
             progress = { width = 1000 }
@@ -66,7 +66,7 @@ fn bad_progress_config_missing_when() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -76,7 +76,7 @@ error: missing field `when`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn always_shows_progress() {
     const N: usize = 3;
     let mut deps = String::new();
@@ -87,14 +87,14 @@ fn always_shows_progress() {
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [term]
             progress = { when = 'always', width = 100 }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -110,14 +110,14 @@ fn always_shows_progress() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains("[DOWNLOADING] [..] crates [..]")
         .with_stderr_contains("[..][DOWNLOADED] 3 crates ([..]) in [..]")
         .with_stderr_contains("[BUILDING] [..] [..]/4: [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn never_progress() {
     const N: usize = 3;
     let mut deps = String::new();
@@ -128,14 +128,14 @@ fn never_progress() {
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [term]
             progress = { when = 'never' }
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -151,7 +151,7 @@ fn never_progress() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_does_not_contain("[DOWNLOADING] [..] crates [..]")
         .with_stderr_does_not_contain("[..][DOWNLOADED] 3 crates ([..]) in [..]")
         .with_stderr_does_not_contain("[BUILDING] [..] [..]/4: [..]")

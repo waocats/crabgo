@@ -1,13 +1,13 @@
-use cargo_test_support::paths;
-use cargo_test_support::prelude::*;
+use crabgo_test_support::paths;
+use crabgo_test_support::prelude::*;
 
-use cargo_test_support::curr_dir;
+use crabgo_test_support::curr_dir;
 
-#[cargo_test]
+#[crabgo_test]
 fn case() {
     let cwd = paths::root();
 
-    snapbox::cmd::Command::cargo_ui()
+    snapbox::cmd::Command::crabgo_ui()
         .arg_line("init --lib --bin")
         .current_dir(&cwd)
         .assert()
@@ -15,5 +15,5 @@ fn case() {
         .stdout_matches_path(curr_dir!().join("stdout.log"))
         .stderr_matches_path(curr_dir!().join("stderr.log"));
 
-    assert!(!cwd.join("Cargo.toml").is_file());
+    assert!(!cwd.join("Crabgo.toml").is_file());
 }

@@ -8,9 +8,9 @@ use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
-use cargo_test_support::git::cargo_uses_gitoxide;
-use cargo_test_support::paths;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::git::crabgo_uses_gitoxide;
+use crabgo_test_support::paths;
+use crabgo_test_support::{basic_manifest, project};
 
 fn setup_failed_auth_test() -> (SocketAddr, JoinHandle<()>, Arc<AtomicUsize>) {
     let server = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -75,7 +75,7 @@ fn setup_failed_auth_test() -> (SocketAddr, JoinHandle<()>, Arc<AtomicUsize>) {
 
     let script = project()
         .at("script")
-        .file("Cargo.toml", &basic_manifest("script", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("script", "0.1.0"))
         .file(
             "src/main.rs",
             r#"
@@ -87,7 +87,7 @@ fn setup_failed_auth_test() -> (SocketAddr, JoinHandle<()>, Arc<AtomicUsize>) {
         )
         .build();
 
-    script.cargo("build -v").run();
+    script.crabgo("build -v").run();
     let script = script.bin("script");
 
     let config = paths::home().join(".gitconfig");
@@ -103,17 +103,17 @@ fn setup_failed_auth_test() -> (SocketAddr, JoinHandle<()>, Arc<AtomicUsize>) {
 }
 
 // Tests that HTTP auth is offered from `credential.helper`.
-#[cargo_test]
+#[crabgo_test]
 fn http_auth_offered() {
     // TODO(Seb): remove this once possible.
-    if cargo_uses_gitoxide() {
+    if crabgo_uses_gitoxide() {
         // Without the fixes in https://github.com/Byron/gitoxide/releases/tag/gix-v0.41.0 this test is flaky.
         return;
     }
     let (addr, t, connections) = setup_failed_auth_test();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -129,7 +129,7 @@ fn http_auth_offered() {
         )
         .file("src/main.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "[net]
              retry = 0
             ",
@@ -138,7 +138,7 @@ fn http_auth_offered() {
 
     // This is a "contains" check because the last error differs by platform,
     // may span multiple lines, and isn't relevant to this test.
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(&format!(
             "\
@@ -172,7 +172,7 @@ Caused by:
 }
 
 // Boy, sure would be nice to have a TLS implementation in rust!
-#[cargo_test]
+#[crabgo_test]
 fn https_something_happens() {
     let server = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = server.local_addr().unwrap();
@@ -185,7 +185,7 @@ fn https_something_happens() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -201,14 +201,14 @@ fn https_something_happens() {
         )
         .file("src/main.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "[net]
              retry = 0
             ",
         )
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr_contains(&format!(
             "[UPDATING] git repository `https://{addr}/foo/bar`"
@@ -218,7 +218,7 @@ fn https_something_happens() {
 Caused by:
   {errmsg}
 ",
-            errmsg = if cargo_uses_gitoxide() {
+            errmsg = if crabgo_uses_gitoxide() {
                 "[..]SSL connect error [..]"
             } else if cfg!(windows) {
                 "[..]failed to send request: [..]"
@@ -237,7 +237,7 @@ Caused by:
 }
 
 // It would sure be nice to have an SSH implementation in Rust!
-#[cargo_test]
+#[crabgo_test]
 fn ssh_something_happens() {
     let server = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = server.local_addr().unwrap();
@@ -247,7 +247,7 @@ fn ssh_something_happens() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -264,7 +264,7 @@ fn ssh_something_happens() {
         .file("src/main.rs", "")
         .build();
 
-    let (expected_ssh_message, expected_update) = if cargo_uses_gitoxide() {
+    let (expected_ssh_message, expected_update) = if crabgo_uses_gitoxide() {
         // Due to the usage of `ssh` and `ssh.exe` respectively, the messages change.
         // This will be adjusted to use `ssh2` to get rid of this dependency and have uniform messaging.
         let message = if cfg!(windows) {
@@ -294,7 +294,7 @@ Caused by:
             format!("[UPDATING] git repository `ssh://{addr}/foo/bar`"),
         )
     };
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr_contains(&expected_update)
         .with_stderr_contains(expected_ssh_message)
@@ -302,11 +302,11 @@ Caused by:
     t.join().ok().unwrap();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn net_err_suggests_fetch_with_cli() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -320,7 +320,7 @@ fn net_err_suggests_fetch_with_cli() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(format!(
             "\
@@ -347,7 +347,7 @@ Caused by:
 Caused by:
   {trailer}
 ",
-            trailer = if cargo_uses_gitoxide() {
+            trailer = if crabgo_uses_gitoxide() {
                 "An IO error occurred when talking to the server\n\nCaused by:\n  ssh: Could not resolve hostname needs-proxy.invalid[..]"
             } else {
                 "failed to resolve address for needs-proxy.invalid[..]"
@@ -356,24 +356,24 @@ Caused by:
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         "
             [net]
             git-fetch-with-cli = true
             ",
     );
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr_contains("[..]Unable to update[..]")
         .with_stderr_does_not_contain("[..]try enabling `git-fetch-with-cli`[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn instead_of_url_printed() {
     // TODO(Seb): remove this once possible.
-    if cargo_uses_gitoxide() {
+    if crabgo_uses_gitoxide() {
         // Without the fixes in https://github.com/Byron/gitoxide/releases/tag/gix-v0.41.0 this test is flaky.
         return;
     }
@@ -388,7 +388,7 @@ fn instead_of_url_printed() {
         .unwrap();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -402,7 +402,7 @@ fn instead_of_url_printed() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(&format!(
             "\
@@ -429,7 +429,7 @@ Caused by:
 Caused by:
   [..]
 {trailer}",
-            trailer = if cargo_uses_gitoxide() { "\nCaused by:\n  [..]" } else { "" }
+            trailer = if crabgo_uses_gitoxide() { "\nCaused by:\n  [..]" } else { "" }
         ))
         .run();
 

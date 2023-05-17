@@ -3,7 +3,7 @@ targets.
 
 Note that `--bin`, `--example`, `--test` and `--bench` flags also 
 support common Unix glob patterns like `*`, `?` and `[]`. However, to avoid your 
-shell accidentally expanding glob patterns before Cargo handles them, you must 
+shell accidentally expanding glob patterns before Crabgo handles them, you must 
 use single quotes or double quotes around each glob pattern.
 
 {{#options}}

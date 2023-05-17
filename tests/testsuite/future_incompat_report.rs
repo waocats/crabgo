@@ -8,8 +8,8 @@
 //! over time.
 
 use super::config::write_config_toml;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, project, Project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, project, Project};
 
 // An arbitrary lint (unused_variables) that triggers a lint.
 // We use a special flag to force it to generate a report.
@@ -19,52 +19,52 @@ const FUTURE_OUTPUT: &'static str = "[..]unused_variables[..]";
 
 fn simple_project() -> Project {
     project()
-        .file("Cargo.toml", &basic_manifest("foo", "0.0.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.0.0"))
         .file("src/main.rs", FUTURE_EXAMPLE)
         .build()
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
 fn output_on_stable() {
     let p = simple_project();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
         .with_stderr_contains(FUTURE_OUTPUT)
-        .with_stderr_contains("[..]cargo report[..]")
+        .with_stderr_contains("[..]crabgo report[..]")
         .run();
 }
 
 // This feature is stable, and should not be gated
-#[cargo_test]
+#[crabgo_test]
 fn no_gate_future_incompat_report() {
     let p = simple_project();
 
-    p.cargo("check --future-incompat-report")
+    p.crabgo("check --future-incompat-report")
         .with_status(0)
         .run();
 
-    p.cargo("report future-incompatibilities --id foo")
+    p.crabgo("report future-incompatibilities --id foo")
         .with_stderr_contains("error: no reports are currently available")
         .with_status(101)
         .run();
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
 fn test_zero_future_incompat() {
     let p = project()
-        .file("Cargo.toml", &basic_manifest("foo", "0.0.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.0.0"))
         .file("src/main.rs", "fn main() {}")
         .build();
 
     // No note if --future-incompat-report is not specified.
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
         .with_stderr(
             "\
@@ -74,7 +74,7 @@ fn test_zero_future_incompat() {
         )
         .run();
 
-    p.cargo("check --future-incompat-report")
+    p.crabgo("check --future-incompat-report")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
         .with_stderr(
             "\
@@ -85,7 +85,7 @@ note: 0 dependencies had future-incompatible warnings
         .run();
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
@@ -94,7 +94,7 @@ fn test_single_crate() {
 
     for command in &["build", "check", "rustc", "test"] {
         let check_has_future_compat = || {
-            p.cargo(command)
+            p.crabgo(command)
                 .env("RUSTFLAGS", "-Zfuture-incompat-test")
                 .with_stderr_contains(FUTURE_OUTPUT)
                 .with_stderr_contains("warning: the following packages contain code that will be rejected by a future version of Rust: foo v0.0.0 [..]")
@@ -122,7 +122,7 @@ frequency = 'always'
 frequency = 'never'
 ",
         );
-        p.cargo(command)
+        p.crabgo(command)
             .env("RUSTFLAGS", "-Zfuture-incompat-test")
             .with_stderr_contains(FUTURE_OUTPUT)
             .with_stderr_does_not_contain("[..]rejected[..]")
@@ -130,7 +130,7 @@ frequency = 'never'
             .run();
 
         // Check that passing `--future-incompat-report` overrides `frequency = 'never'`
-        p.cargo(command).arg("--future-incompat-report")
+        p.crabgo(command).arg("--future-incompat-report")
             .env("RUSTFLAGS", "-Zfuture-incompat-test")
             .with_stderr_contains(FUTURE_OUTPUT)
             .with_stderr_contains("warning: the following packages contain code that will be rejected by a future version of Rust: foo v0.0.0 [..]")
@@ -139,7 +139,7 @@ frequency = 'never'
     }
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
@@ -153,7 +153,7 @@ fn test_multi_crate() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -168,7 +168,7 @@ fn test_multi_crate() {
         .build();
 
     for command in &["build", "check", "rustc", "test"] {
-        p.cargo(command)
+        p.crabgo(command)
             .env("RUSTFLAGS", "-Zfuture-incompat-test")
             .with_stderr_does_not_contain(FUTURE_OUTPUT)
             .with_stderr_contains("warning: the following packages contain code that will be rejected by a future version of Rust: first-dep v0.0.1, second-dep v0.0.2")
@@ -179,20 +179,20 @@ fn test_multi_crate() {
             .with_stderr_does_not_contain("[..]-p[..]")
             .run();
 
-        p.cargo(command).arg("--future-incompat-report")
+        p.crabgo(command).arg("--future-incompat-report")
             .env("RUSTFLAGS", "-Zfuture-incompat-test")
             .with_stderr_contains("warning: the following packages contain code that will be rejected by a future version of Rust: first-dep v0.0.1, second-dep v0.0.2")
             .with_stderr_contains("  - first-dep@0.0.1")
             .with_stderr_contains("  - second-dep@0.0.2")
             .run();
 
-        p.cargo("report future-incompatibilities").arg("--package").arg("first-dep@0.0.1")
+        p.crabgo("report future-incompatibilities").arg("--package").arg("first-dep@0.0.1")
             .with_stdout_contains("The package `first-dep v0.0.1` currently triggers the following future incompatibility lints:")
             .with_stdout_contains(FUTURE_OUTPUT)
             .with_stdout_does_not_contain("[..]second-dep-0.0.2/src[..]")
             .run();
 
-        p.cargo("report future-incompatibilities").arg("--package").arg("second-dep@0.0.2")
+        p.crabgo("report future-incompatibilities").arg("--package").arg("second-dep@0.0.2")
             .with_stdout_contains("The package `second-dep v0.0.2` currently triggers the following future incompatibility lints:")
             .with_stdout_contains(FUTURE_OUTPUT)
             .with_stdout_does_not_contain("[..]first-dep-0.0.1/src[..]")
@@ -201,14 +201,14 @@ fn test_multi_crate() {
 
     // Test that passing the correct id via '--id' doesn't generate a warning message
     let output = p
-        .cargo("check")
+        .crabgo("check")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
         .exec_with_output()
         .unwrap();
 
     // Extract the 'id' from the stdout. We are looking
-    // for the id in a line of the form "run `cargo report future-incompatibilities --id yZ7S`"
-    // which is generated by Cargo to tell the user what command to run
+    // for the id in a line of the form "run `crabgo report future-incompatibilities --id yZ7S`"
+    // which is generated by Crabgo to tell the user what command to run
     // This is just to test that passing the id suppresses the warning mesasge. Any users needing
     // access to the report from a shell script should use the `--future-incompat-report` flag
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
@@ -222,14 +222,14 @@ fn test_multi_crate() {
     // Strip off the trailing '`' included in the output
     let id: String = id.chars().take_while(|c| *c != '`').collect();
 
-    p.cargo(&format!("report future-incompatibilities --id {}", id))
+    p.crabgo(&format!("report future-incompatibilities --id {}", id))
         .with_stdout_contains("The package `first-dep v0.0.1` currently triggers the following future incompatibility lints:")
         .with_stdout_contains("The package `second-dep v0.0.2` currently triggers the following future incompatibility lints:")
         .run();
 
     // Test without --id, and also the full output of the report.
     let output = p
-        .cargo("report future-incompat")
+        .crabgo("report future-incompat")
         .exec_with_output()
         .unwrap();
     let output = std::str::from_utf8(&output.stdout).unwrap();
@@ -260,51 +260,51 @@ fn test_multi_crate() {
     assert_eq!(lines.next(), None);
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
 fn color() {
     let p = simple_project();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
-        .masquerade_as_nightly_cargo(&["future-incompat-test"])
+        .masquerade_as_nightly_crabgo(&["future-incompat-test"])
         .run();
 
-    p.cargo("report future-incompatibilities")
+    p.crabgo("report future-incompatibilities")
         .with_stdout_does_not_contain("[..]\x1b[[..]")
         .run();
 
-    p.cargo("report future-incompatibilities")
-        .env("CARGO_TERM_COLOR", "always")
+    p.crabgo("report future-incompatibilities")
+        .env("CRABGO_TERM_COLOR", "always")
         .with_stdout_contains("[..]\x1b[[..]")
         .run();
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
 fn bad_ids() {
     let p = simple_project();
 
-    p.cargo("report future-incompatibilities --id 1")
+    p.crabgo("report future-incompatibilities --id 1")
         .with_status(101)
         .with_stderr("error: no reports are currently available")
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
-        .masquerade_as_nightly_cargo(&["future-incompat-test"])
+        .masquerade_as_nightly_crabgo(&["future-incompat-test"])
         .run();
 
-    p.cargo("report future-incompatibilities --id foo")
+    p.crabgo("report future-incompatibilities --id foo")
         .with_status(1)
         .with_stderr("error: Invalid value: could not parse `foo` as a number")
         .run();
 
-    p.cargo("report future-incompatibilities --id 7")
+    p.crabgo("report future-incompatibilities --id 7")
         .with_status(101)
         .with_stderr(
             "\
@@ -315,7 +315,7 @@ Available IDs are: 1
         .run();
 }
 
-#[cargo_test(
+#[crabgo_test(
     nightly,
     reason = "-Zfuture-incompat-test requires nightly (permanently)"
 )]
@@ -332,7 +332,7 @@ fn suggestions_for_updates() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -347,7 +347,7 @@ fn suggestions_for_updates() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
 
     Package::new("with_updates", "1.0.1")
         .file("src/lib.rs", "")
@@ -362,14 +362,14 @@ fn suggestions_for_updates() {
         .file("src/lib.rs", "")
         .publish();
 
-    // This is a hack to force cargo to update the index. Cargo can't do this
+    // This is a hack to force crabgo to update the index. Crabgo can't do this
     // automatically because doing a network update on every build would be a
     // bad idea. Under normal circumstances, we'll hope the user has done
     // something else along the way to trigger an update (building some other
     // project or something). This could use some more consideration of how to
     // handle this better (maybe only trigger an update if it hasn't updated
     // in a long while?).
-    p.cargo("update -p without_updates").run();
+    p.crabgo("update -p without_updates").run();
 
     let update_message = "\
 - Some affected dependencies have newer versions available.
@@ -379,13 +379,13 @@ big_update v1.0.0 has the following newer versions available: 2.0.0
 with_updates v1.0.0 has the following newer versions available: 1.0.1, 1.0.2, 3.0.1
 ";
 
-    p.cargo("check --future-incompat-report")
-        .masquerade_as_nightly_cargo(&["future-incompat-test"])
+    p.crabgo("check --future-incompat-report")
+        .masquerade_as_nightly_crabgo(&["future-incompat-test"])
         .env("RUSTFLAGS", "-Zfuture-incompat-test")
         .with_stderr_contains(update_message)
         .run();
 
-    p.cargo("report future-incompatibilities")
+    p.crabgo("report future-incompatibilities")
         .with_stdout_contains(update_message)
         .run()
 }

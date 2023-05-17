@@ -1,11 +1,11 @@
 //! Tests for cross compiling with --target.
 //!
-//! See `cargo_test_support::cross_compile` for more detail.
+//! See `crabgo_test_support::cross_compile` for more detail.
 
-use cargo_test_support::rustc_host;
-use cargo_test_support::{basic_bin_manifest, basic_manifest, cross_compile, project};
+use crabgo_test_support::rustc_host;
+use crabgo_test_support::{basic_bin_manifest, basic_manifest, cross_compile, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_cross() {
     if cross_compile::disabled() {
         return;
@@ -13,7 +13,7 @@ fn simple_cross() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -48,7 +48,7 @@ fn simple_cross() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("build -v --target").arg(&target).run();
+    p.crabgo("build -v --target").arg(&target).run();
     assert!(p.target_bin(target, "foo").is_file());
 
     if cross_compile::can_run_on_host() {
@@ -56,7 +56,7 @@ fn simple_cross() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_cross_config() {
     if cross_compile::disabled() {
         return;
@@ -64,7 +64,7 @@ fn simple_cross_config() {
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [build]
@@ -74,7 +74,7 @@ fn simple_cross_config() {
             ),
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -109,7 +109,7 @@ fn simple_cross_config() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
     assert!(p.target_bin(target, "foo").is_file());
 
     if cross_compile::can_run_on_host() {
@@ -117,7 +117,7 @@ fn simple_cross_config() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_deps() {
     if cross_compile::disabled() {
         return;
@@ -125,7 +125,7 @@ fn simple_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -140,12 +140,12 @@ fn simple_deps() {
         .build();
     let _p2 = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("build --target").arg(&target).run();
+    p.crabgo("build --target").arg(&target).run();
     assert!(p.target_bin(target, "foo").is_file());
 
     if cross_compile::can_run_on_host() {
@@ -166,10 +166,10 @@ fn per_crate_target_test(
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
-                    cargo-features = ["per-package-target"]
+                    crabgo-features = ["per-package-target"]
 
                     [package]
                     name = "foo"
@@ -212,11 +212,11 @@ fn per_crate_target_test(
         )
         .build();
 
-    let mut cmd = p.cargo("build -v");
+    let mut cmd = p.crabgo("build -v");
     if let Some(t) = arg_target {
         cmd.arg("--target").arg(&t);
     }
-    cmd.masquerade_as_nightly_cargo(&["per-package-target"])
+    cmd.masquerade_as_nightly_crabgo(&["per-package-target"])
         .run();
     assert!(p.target_bin(cross_compile::alternate(), "foo").is_file());
 
@@ -226,12 +226,12 @@ fn per_crate_target_test(
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn per_crate_default_target_is_default() {
     per_crate_target_test(Some(cross_compile::alternate()), None, None);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn per_crate_default_target_gets_overridden() {
     per_crate_target_test(
         Some(cross_compile::unused()),
@@ -240,12 +240,12 @@ fn per_crate_default_target_gets_overridden() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn per_crate_forced_target_is_default() {
     per_crate_target_test(None, Some(cross_compile::alternate()), None);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn per_crate_forced_target_does_not_get_overridden() {
     per_crate_target_test(
         None,
@@ -254,7 +254,7 @@ fn per_crate_forced_target_does_not_get_overridden() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_with_multiple_targets() {
     if cross_compile::disabled() {
         return;
@@ -262,16 +262,16 @@ fn workspace_with_multiple_targets() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["native", "cross"]
             "#,
         )
         .file(
-            "native/Cargo.toml",
+            "native/Crabgo.toml",
             r#"
-                cargo-features = ["per-package-target"]
+                crabgo-features = ["per-package-target"]
 
                 [package]
                 name = "native"
@@ -304,10 +304,10 @@ fn workspace_with_multiple_targets() {
             ),
         )
         .file(
-            "cross/Cargo.toml",
+            "cross/Crabgo.toml",
             &format!(
                 r#"
-                    cargo-features = ["per-package-target"]
+                    crabgo-features = ["per-package-target"]
 
                     [package]
                     name = "cross"
@@ -344,8 +344,8 @@ fn workspace_with_multiple_targets() {
         )
         .build();
 
-    let mut cmd = p.cargo("build -v");
-    cmd.masquerade_as_nightly_cargo(&["per-package-target"])
+    let mut cmd = p.crabgo("build -v");
+    cmd.masquerade_as_nightly_crabgo(&["per-package-target"])
         .run();
 
     assert!(p.bin("native").is_file());
@@ -358,7 +358,7 @@ fn workspace_with_multiple_targets() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn linker() {
     if cross_compile::disabled() {
         return;
@@ -367,7 +367,7 @@ fn linker() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -376,7 +376,7 @@ fn linker() {
                 target
             ),
         )
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/foo.rs",
             &format!(
@@ -391,7 +391,7 @@ fn linker() {
         )
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_status(101)
         .with_stderr_contains(&format!(
@@ -411,7 +411,7 @@ fn linker() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "plugins are unstable")]
+#[crabgo_test(nightly, reason = "plugins are unstable")]
 fn plugin_with_extra_dylib_dep() {
     if cross_compile::disabled() {
         return;
@@ -419,7 +419,7 @@ fn plugin_with_extra_dylib_dep() {
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -443,7 +443,7 @@ fn plugin_with_extra_dylib_dep() {
     let _bar = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -478,7 +478,7 @@ fn plugin_with_extra_dylib_dep() {
     let _baz = project()
         .at("baz")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -494,10 +494,10 @@ fn plugin_with_extra_dylib_dep() {
         .build();
 
     let target = cross_compile::alternate();
-    foo.cargo("build --target").arg(&target).run();
+    foo.crabgo("build --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cross_tests() {
     if !cross_compile::can_run_on_host() {
         return;
@@ -505,7 +505,7 @@ fn cross_tests() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -545,7 +545,7 @@ fn cross_tests() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("test --target")
+    p.crabgo("test --target")
         .arg(&target)
         .with_stderr(&format!(
             "\
@@ -560,7 +560,7 @@ fn cross_tests() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_cross_doctests() {
     if cross_compile::disabled() {
         return;
@@ -586,11 +586,11 @@ fn no_cross_doctests() {
 ";
 
     println!("a");
-    p.cargo("test").with_stderr(&host_output).run();
+    p.crabgo("test").with_stderr(&host_output).run();
 
     println!("b");
     let target = rustc_host();
-    p.cargo("test -v --target")
+    p.crabgo("test -v --target")
         .arg(&target)
         // Unordered since the two `rustc` invocations happen concurrently.
         .with_stderr_unordered(&format!(
@@ -625,7 +625,7 @@ test result: ok. 1 passed[..]
 
     // This will build the library, but does not build or run doc tests.
     // This should probably be a warning or error.
-    p.cargo("test -v --doc --target")
+    p.crabgo("test -v --doc --target")
         .arg(&target)
         .with_stderr(
             "\
@@ -634,7 +634,7 @@ test result: ok. 1 passed[..]
 [FINISHED] test [unoptimized + debuginfo] target(s) in [..]
 [NOTE] skipping doctests for foo v0.0.1 ([ROOT]/foo) (lib), \
 cross-compilation doctests are not yet supported
-See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#doctest-xcompile \
+See https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#doctest-xcompile \
 for more information.
 ",
         )
@@ -645,7 +645,7 @@ for more information.
     }
 
     // This tests the library, but does not run the doc tests.
-    p.cargo("test -v --target")
+    p.crabgo("test -v --target")
         .arg(&target)
         .with_stderr(&format!(
             "\
@@ -655,7 +655,7 @@ for more information.
 [RUNNING] `[CWD]/target/{triple}/debug/deps/foo-[..][EXE]`
 [NOTE] skipping doctests for foo v0.0.1 ([ROOT]/foo) (lib), \
 cross-compilation doctests are not yet supported
-See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#doctest-xcompile \
+See https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#doctest-xcompile \
 for more information.
 ",
             triple = target
@@ -663,8 +663,8 @@ for more information.
         .run();
 }
 
-#[cargo_test]
-fn simple_cargo_run() {
+#[crabgo_test]
+fn simple_crabgo_run() {
     if !cross_compile::can_run_on_host() {
         return;
     }
@@ -685,10 +685,10 @@ fn simple_cargo_run() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("run --target").arg(&target).run();
+    p.crabgo("run --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cross_with_a_build_script() {
     if cross_compile::disabled() {
         return;
@@ -697,7 +697,7 @@ fn cross_with_a_build_script() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -735,7 +735,7 @@ fn cross_with_a_build_script() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_stderr(&format!(
             "\
@@ -750,7 +750,7 @@ fn cross_with_a_build_script() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_needed_for_host_and_target() {
     if cross_compile::disabled() {
         return;
@@ -760,7 +760,7 @@ fn build_script_needed_for_host_and_target() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -791,7 +791,7 @@ fn build_script_needed_for_host_and_target() {
         ",
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -807,12 +807,12 @@ fn build_script_needed_for_host_and_target() {
                 use std::env;
                 fn main() {
                     let target = env::var("TARGET").unwrap();
-                    println!("cargo:rustc-flags=-L /path/to/{}", target);
+                    println!("crabgo:rustc-flags=-L /path/to/{}", target);
                 }
             "#,
         )
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -833,7 +833,7 @@ fn build_script_needed_for_host_and_target() {
         )
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_stderr_contains(&"[COMPILING] d1 v0.0.0 ([CWD]/d1)")
         .with_stderr_contains(
@@ -860,7 +860,7 @@ fn build_script_needed_for_host_and_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_deps_for_the_right_arch() {
     if cross_compile::disabled() {
         return;
@@ -868,7 +868,7 @@ fn build_deps_for_the_right_arch() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -880,10 +880,10 @@ fn build_deps_for_the_right_arch() {
             "#,
         )
         .file("src/main.rs", "extern crate d2; fn main() {}")
-        .file("d1/Cargo.toml", &basic_manifest("d1", "0.0.0"))
+        .file("d1/Crabgo.toml", &basic_manifest("d1", "0.0.0"))
         .file("d1/src/lib.rs", "pub fn d1() {}")
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -900,10 +900,10 @@ fn build_deps_for_the_right_arch() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("build -v --target").arg(&target).run();
+    p.crabgo("build -v --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_only_host() {
     if cross_compile::disabled() {
         return;
@@ -911,7 +911,7 @@ fn build_script_only_host() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -926,7 +926,7 @@ fn build_script_only_host() {
         .file("src/main.rs", "fn main() {}")
         .file("build.rs", "extern crate d1; fn main() {}")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -951,17 +951,17 @@ fn build_script_only_host() {
         .build();
 
     let target = cross_compile::alternate();
-    p.cargo("build -v --target").arg(&target).run();
+    p.crabgo("build -v --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn plugin_build_script_right_arch() {
     if cross_compile::disabled() {
         return;
     }
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -978,7 +978,7 @@ fn plugin_build_script_right_arch() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(cross_compile::alternate())
         .with_stderr(
             "\
@@ -992,7 +992,7 @@ fn plugin_build_script_right_arch() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_platform_specific_dependencies() {
     if cross_compile::disabled() {
         return;
@@ -1002,7 +1002,7 @@ fn build_script_with_platform_specific_dependencies() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1024,7 +1024,7 @@ fn build_script_with_platform_specific_dependencies() {
         )
         .file("src/lib.rs", "")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1042,11 +1042,11 @@ fn build_script_with_platform_specific_dependencies() {
             "d1/src/lib.rs",
             "#[allow(unused_extern_crates)] extern crate d2;",
         )
-        .file("d2/Cargo.toml", &basic_manifest("d2", "0.0.0"))
+        .file("d2/Crabgo.toml", &basic_manifest("d2", "0.0.0"))
         .file("d2/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_stderr(&format!(
             "\
@@ -1065,7 +1065,7 @@ fn build_script_with_platform_specific_dependencies() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn platform_specific_dependencies_do_not_leak() {
     if cross_compile::disabled() {
         return;
@@ -1075,7 +1075,7 @@ fn platform_specific_dependencies_do_not_leak() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1093,7 +1093,7 @@ fn platform_specific_dependencies_do_not_leak() {
         .file("build.rs", "extern crate d1; fn main() {}")
         .file("src/lib.rs", "")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1108,18 +1108,18 @@ fn platform_specific_dependencies_do_not_leak() {
             ),
         )
         .file("d1/src/lib.rs", "extern crate d2;")
-        .file("d1/Cargo.toml", &basic_manifest("d1", "0.0.0"))
+        .file("d1/Crabgo.toml", &basic_manifest("d1", "0.0.0"))
         .file("d2/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(&target)
         .with_status(101)
         .with_stderr_contains("[..] can't find crate for `d2`[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn platform_specific_variables_reflected_in_build_scripts() {
     if cross_compile::disabled() {
         return;
@@ -1129,7 +1129,7 @@ fn platform_specific_variables_reflected_in_build_scripts() {
     let host = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1174,7 +1174,7 @@ fn platform_specific_variables_reflected_in_build_scripts() {
         )
         .file("src/lib.rs", "")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -1184,10 +1184,10 @@ fn platform_specific_variables_reflected_in_build_scripts() {
                 build = "build.rs"
             "#,
         )
-        .file("d1/build.rs", r#"fn main() { println!("cargo:val=1") }"#)
+        .file("d1/build.rs", r#"fn main() { println!("crabgo:val=1") }"#)
         .file("d1/src/lib.rs", "")
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -1197,15 +1197,15 @@ fn platform_specific_variables_reflected_in_build_scripts() {
                 build = "build.rs"
             "#,
         )
-        .file("d2/build.rs", r#"fn main() { println!("cargo:val=1") }"#)
+        .file("d2/build.rs", r#"fn main() { println!("crabgo:val=1") }"#)
         .file("d2/src/lib.rs", "")
         .build();
 
-    p.cargo("build -v").run();
-    p.cargo("build -v --target").arg(&target).run();
+    p.crabgo("build -v").run();
+    p.crabgo("build -v --target").arg(&target).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 #[cfg_attr(
     target_os = "macos",
     ignore = "don't have a dylib cross target on macos"
@@ -1219,7 +1219,7 @@ fn cross_test_dylib() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1255,7 +1255,7 @@ fn cross_test_dylib() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1281,7 +1281,7 @@ fn cross_test_dylib() {
         )
         .build();
 
-    p.cargo("test --target")
+    p.crabgo("test --target")
         .arg(&target)
         .with_stderr(&format!(
             "\
@@ -1296,7 +1296,7 @@ fn cross_test_dylib() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "-Zdoctest-xcompile is unstable")]
+#[crabgo_test(nightly, reason = "-Zdoctest-xcompile is unstable")]
 fn doctest_xcompile_linker() {
     if cross_compile::disabled() {
         return;
@@ -1305,7 +1305,7 @@ fn doctest_xcompile_linker() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -1314,7 +1314,7 @@ fn doctest_xcompile_linker() {
                 target
             ),
         )
-        .file("Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file(
             "src/lib.rs",
             r#"
@@ -1327,10 +1327,10 @@ fn doctest_xcompile_linker() {
         .build();
 
     // Fails because `my-linker-tool` doesn't actually exist.
-    p.cargo("test --doc -v -Zdoctest-xcompile --target")
+    p.crabgo("test --doc -v -Zdoctest-xcompile --target")
         .arg(&target)
         .with_status(101)
-        .masquerade_as_nightly_cargo(&["doctest-xcompile"])
+        .masquerade_as_nightly_crabgo(&["doctest-xcompile"])
         .with_stderr_contains(&format!(
             "\
 [RUNNING] `rustdoc --crate-type lib --crate-name foo --test [..]\

@@ -1,17 +1,17 @@
 //! Tests for the metabuild feature (declarative build scripts).
 
-use cargo_test_support::{
+use crabgo_test_support::{
     basic_lib_manifest, basic_manifest, is_coarse_mtime, project, registry::Package, rustc_host,
     Project,
 };
 
 use std::str;
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_gated() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -22,8 +22,8 @@ fn metabuild_gated() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_status(101)
         .with_stderr(
             "\
@@ -32,11 +32,11 @@ error: failed to parse manifest at `[..]`
 Caused by:
   feature `metabuild` is required
 
-  The package requires the Cargo feature called `metabuild`, \
-  but that feature is not stabilized in this version of Cargo (1.[..]).
-  Consider adding `cargo-features = [\"metabuild\"]` to the top of Cargo.toml \
-  (above the [package] table) to tell Cargo you are opting in to use this unstable feature.
-  See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#metabuild \
+  The package requires the Crabgo feature called `metabuild`, \
+  but that feature is not stabilized in this version of Crabgo (1.[..]).
+  Consider adding `crabgo-features = [\"metabuild\"]` to the top of Crabgo.toml \
+  (above the [package] table) to tell Crabgo you are opting in to use this unstable feature.
+  See https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#metabuild \
   for more information about the status of this feature.
 ",
         )
@@ -46,9 +46,9 @@ Caused by:
 fn basic_project() -> Project {
     project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -60,13 +60,13 @@ fn basic_project() -> Project {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"pub fn metabuild() { println!("Hello mb"); }"#,
         )
         .file(
-            "mb-other/Cargo.toml",
+            "mb-other/Crabgo.toml",
             r#"
                 [package]
                 name = "mb-other"
@@ -80,23 +80,23 @@ fn basic_project() -> Project {
         .build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_basic() {
     let p = basic_project();
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[foo 0.0.1] Hello mb")
         .with_stdout_contains("[foo 0.0.1] Hello mb-other")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_error_both() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -108,15 +108,15 @@ fn metabuild_error_both() {
         )
         .file("src/lib.rs", "")
         .file("build.rs", r#"fn main() {}"#)
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"pub fn metabuild() { println!("Hello mb"); }"#,
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -129,13 +129,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_missing_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -145,8 +145,8 @@ fn metabuild_missing_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -158,13 +158,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_optional_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -175,32 +175,32 @@ fn metabuild_optional_dep() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"pub fn metabuild() { println!("Hello mb"); }"#,
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_does_not_contain("[foo 0.0.1] Hello mb")
         .run();
 
-    p.cargo("check -vv --features mb")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv --features mb")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[foo 0.0.1] Hello mb")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_lib_name() {
     // Test when setting `name` on [lib].
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -212,7 +212,7 @@ fn metabuild_lib_name() {
         )
         .file("src/lib.rs", "")
         .file(
-            "mb/Cargo.toml",
+            "mb/Crabgo.toml",
             r#"
                 [package]
                 name = "mb"
@@ -227,13 +227,13 @@ fn metabuild_lib_name() {
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[foo 0.0.1] Hello mb")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_fresh() {
     if is_coarse_mtime() {
         // This test doesn't work on coarse mtimes very well. Because the
@@ -246,9 +246,9 @@ fn metabuild_fresh() {
     // Check that rebuild is fresh.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -259,20 +259,20 @@ fn metabuild_fresh() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"pub fn metabuild() { println!("Hello mb"); }"#,
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[foo 0.0.1] Hello mb")
         .run();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_does_not_contain("[foo 0.0.1] Hello mb")
         .with_stderr(
             "\
@@ -284,13 +284,13 @@ fn metabuild_fresh() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_links() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -302,12 +302,12 @@ fn metabuild_links() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"
                 pub fn metabuild() {
-                    assert_eq!(std::env::var("CARGO_MANIFEST_LINKS"),
+                    assert_eq!(std::env::var("CRABGO_MANIFEST_LINKS"),
                         Ok("cat".to_string()));
                     println!("Hello mb");
                 }
@@ -315,19 +315,19 @@ fn metabuild_links() {
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[foo 0.0.1] Hello mb")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_override() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "foo"
                 version = "0.0.1"
@@ -339,13 +339,13 @@ fn metabuild_override() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("mb/Cargo.toml", &basic_lib_manifest("mb"))
+        .file("mb/Crabgo.toml", &basic_lib_manifest("mb"))
         .file(
             "mb/src/lib.rs",
             r#"pub fn metabuild() { panic!("should not run"); }"#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}.cat]
@@ -356,25 +356,25 @@ fn metabuild_override() {
         )
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["member1", "member2"]
             "#,
         )
         .file(
-            "member1/Cargo.toml",
+            "member1/Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "member1"
                 version = "0.0.1"
@@ -387,9 +387,9 @@ fn metabuild_workspace() {
         )
         .file("member1/src/lib.rs", "")
         .file(
-            "member2/Cargo.toml",
+            "member2/Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "member2"
                 version = "0.0.1"
@@ -404,24 +404,24 @@ fn metabuild_workspace() {
 
     project()
         .at("mb1")
-        .file("Cargo.toml", &basic_lib_manifest("mb1"))
+        .file("Crabgo.toml", &basic_lib_manifest("mb1"))
         .file(
             "src/lib.rs",
-            r#"pub fn metabuild() { println!("Hello mb1 {}", std::env::var("CARGO_MANIFEST_DIR").unwrap()); }"#,
+            r#"pub fn metabuild() { println!("Hello mb1 {}", std::env::var("CRABGO_MANIFEST_DIR").unwrap()); }"#,
         )
         .build();
 
     project()
         .at("mb2")
-        .file("Cargo.toml", &basic_lib_manifest("mb2"))
+        .file("Crabgo.toml", &basic_lib_manifest("mb2"))
         .file(
             "src/lib.rs",
-            r#"pub fn metabuild() { println!("Hello mb2 {}", std::env::var("CARGO_MANIFEST_DIR").unwrap()); }"#,
+            r#"pub fn metabuild() { println!("Hello mb2 {}", std::env::var("CRABGO_MANIFEST_DIR").unwrap()); }"#,
         )
         .build();
 
-    p.cargo("check -vv --workspace")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv --workspace")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[member1 0.0.1] Hello mb1 [..]member1")
         .with_stdout_contains("[member1 0.0.1] Hello mb2 [..]member1")
         .with_stdout_contains("[member2 0.0.1] Hello mb1 [..]member2")
@@ -429,14 +429,14 @@ fn metabuild_workspace() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_metadata() {
     // The metabuild Target is filtered out of the `metadata` results.
     let p = basic_project();
 
     let meta = p
-        .cargo("metadata --format-version=1")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+        .crabgo("metadata --format-version=1")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .run_json();
     let mb_info: Vec<&str> = meta["packages"]
         .as_array()
@@ -452,12 +452,12 @@ fn metabuild_metadata() {
     assert_eq!(mb_info, ["mb", "mb-other"]);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_build_plan() {
     let p = basic_project();
 
-    p.cargo("build --build-plan -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["metabuild", "build-plan"])
+    p.crabgo("build --build-plan -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["metabuild", "build-plan"])
         .with_json(
             r#"
             {
@@ -543,9 +543,9 @@ fn metabuild_build_plan() {
                     }
                 ],
                 "inputs": [
-                    "[..]/foo/Cargo.toml",
-                    "[..]/foo/mb/Cargo.toml",
-                    "[..]/foo/mb-other/Cargo.toml"
+                    "[..]/foo/Crabgo.toml",
+                    "[..]/foo/mb/Crabgo.toml",
+                    "[..]/foo/mb-other/Crabgo.toml"
                 ]
             }
             "#,
@@ -555,22 +555,22 @@ fn metabuild_build_plan() {
     assert_eq!(p.glob("target/.metabuild/metabuild-foo-*.rs").count(), 1);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_two_versions() {
     // Two versions of a metabuild dep with the same name.
     let p = project()
         .at("ws")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["member1", "member2"]
             "#,
         )
         .file(
-            "member1/Cargo.toml",
+            "member1/Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "member1"
                 version = "0.0.1"
@@ -582,9 +582,9 @@ fn metabuild_two_versions() {
         )
         .file("member1/src/lib.rs", "")
         .file(
-            "member2/Cargo.toml",
+            "member2/Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "member2"
                 version = "0.0.1"
@@ -598,31 +598,31 @@ fn metabuild_two_versions() {
         .build();
 
     project().at("mb1")
-        .file("Cargo.toml", r#"
+        .file("Crabgo.toml", r#"
             [package]
             name = "mb"
             version = "0.0.1"
         "#)
         .file(
             "src/lib.rs",
-            r#"pub fn metabuild() { println!("Hello mb1 {}", std::env::var("CARGO_MANIFEST_DIR").unwrap()); }"#,
+            r#"pub fn metabuild() { println!("Hello mb1 {}", std::env::var("CRABGO_MANIFEST_DIR").unwrap()); }"#,
         )
         .build();
 
     project().at("mb2")
-        .file("Cargo.toml", r#"
+        .file("Crabgo.toml", r#"
             [package]
             name = "mb"
             version = "0.0.2"
         "#)
         .file(
             "src/lib.rs",
-            r#"pub fn metabuild() { println!("Hello mb2 {}", std::env::var("CARGO_MANIFEST_DIR").unwrap()); }"#,
+            r#"pub fn metabuild() { println!("Hello mb2 {}", std::env::var("CRABGO_MANIFEST_DIR").unwrap()); }"#,
         )
         .build();
 
-    p.cargo("check -vv --workspace")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv --workspace")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[member1 0.0.1] Hello mb1 [..]member1")
         .with_stdout_contains("[member2 0.0.1] Hello mb2 [..]member2")
         .run();
@@ -633,10 +633,10 @@ fn metabuild_two_versions() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_external_dependency() {
     Package::new("mb", "1.0.0")
-        .file("Cargo.toml", &basic_manifest("mb", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("mb", "1.0.0"))
         .file(
             "src/lib.rs",
             r#"pub fn metabuild() { println!("Hello mb"); }"#,
@@ -644,9 +644,9 @@ fn metabuild_external_dependency() {
         .publish();
     Package::new("dep", "1.0.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["metabuild"]
+                crabgo-features = ["metabuild"]
                 [package]
                 name = "dep"
                 version = "1.0.0"
@@ -662,7 +662,7 @@ fn metabuild_external_dependency() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -674,19 +674,19 @@ fn metabuild_external_dependency() {
         .file("src/lib.rs", "extern crate dep;")
         .build();
 
-    p.cargo("check -vv")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check -vv")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_stdout_contains("[dep 1.0.0] Hello mb")
         .run();
 
     assert_eq!(p.glob("target/.metabuild/metabuild-dep-*.rs").count(), 1);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_json_artifact() {
     let p = basic_project();
-    p.cargo("check --message-format=json")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check --message-format=json")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_json_contains_unordered(
             r#"
             {
@@ -728,13 +728,13 @@ fn metabuild_json_artifact() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metabuild_failed_build_json() {
     let p = basic_project();
     // Modify the metabuild dep so that it fails to compile.
     p.change_file("mb/src/lib.rs", "");
-    p.cargo("check --message-format=json")
-        .masquerade_as_nightly_cargo(&["metabuild"])
+    p.crabgo("check --message-format=json")
+        .masquerade_as_nightly_crabgo(&["metabuild"])
         .with_status(101)
         .with_json_contains_unordered(
             r#"

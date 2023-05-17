@@ -1,4 +1,4 @@
-# Cargo Commands
+# Crabgo Commands
 * [General Commands](general-commands.md)
 * [Build Commands](build-commands.md)
 * [Manifest Commands](manifest-commands.md)

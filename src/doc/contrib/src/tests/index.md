@@ -1,6 +1,6 @@
 # Tests
 
-Cargo has an extensive test suite. Most of it is implemented as integration
+Crabgo has an extensive test suite. Most of it is implemented as integration
 tests in the [`testsuite`] directory. There are several other tests:
 
 * Unit tests are scattered throughout.
@@ -12,9 +12,9 @@ tests in the [`testsuite`] directory. There are several other tests:
 * Documentation has a variety of tests, such as link validation, and the
   [SemVer chapter validity checks].
 
-[`testsuite`]: https://github.com/rust-lang/cargo/tree/master/tests/testsuite/
-[`resolver-tests`]: https://github.com/rust-lang/cargo/tree/master/crates/resolver-tests
-[`crates`]: https://github.com/rust-lang/cargo/tree/master/crates
-[`build-std`]: https://github.com/rust-lang/cargo/blob/master/tests/build-std/main.rs
-[build-std feature]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#build-std
-[SemVer chapter validity checks]: https://github.com/rust-lang/cargo/tree/master/src/doc/semver-check
+[`testsuite`]: https://github.com/rust-lang/crabgo/tree/master/tests/testsuite/
+[`resolver-tests`]: https://github.com/rust-lang/crabgo/tree/master/crates/resolver-tests
+[`crates`]: https://github.com/rust-lang/crabgo/tree/master/crates
+[`build-std`]: https://github.com/rust-lang/crabgo/blob/master/tests/build-std/main.rs
+[build-std feature]: https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#build-std
+[SemVer chapter validity checks]: https://github.com/rust-lang/crabgo/tree/master/src/doc/semver-check

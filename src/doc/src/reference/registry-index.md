@@ -1,14 +1,14 @@
 ## Index Format
 
 The following defines the format of the index. New features are occasionally
-added, which are only understood starting with the version of Cargo that
-introduced them. Older versions of Cargo may not be able to use packages that
+added, which are only understood starting with the version of Crabgo that
+introduced them. Older versions of Crabgo may not be able to use packages that
 make use of new features. However, the format for older packages should not
-change, so older versions of Cargo should be able to use them.
+change, so older versions of Crabgo should be able to use them.
 
 ### Index Configuration
 The root of the index contains a file named `config.json` which contains JSON
-information used by Cargo for accessing the registry. This is an example of
+information used by Crabgo for accessing the registry. This is an example of
 what the [crates.io] config file looks like:
 
 ```javascript
@@ -26,22 +26,22 @@ The keys are:
   - `{crate}`: The name of crate.
   - `{version}`: The crate version.
   - `{prefix}`: A directory prefix computed from the crate name. For example,
-    a crate named `cargo` has a prefix of `ca/rg`. See below for details.
+    a crate named `crabgo` has a prefix of `ca/rg`. See below for details.
   - `{lowerprefix}`: Lowercase variant of `{prefix}`.
   - `{sha256-checksum}`: The crate's sha256 checksum.
 
   If none of the markers are present, then the value
   `/{crate}/{version}/download` is appended to the end.
 - `api`: This is the base URL for the web API. This key is optional, but if it
-  is not specified, commands such as [`cargo publish`] will not work. The web
+  is not specified, commands such as [`crabgo publish`] will not work. The web
   API is described below.
 
 
 ### Download Endpoint
 The download endpoint should send the `.crate` file for the requested package.
-Cargo supports https, http, and file URLs, HTTP redirects, HTTP1 and HTTP2.
-The exact specifics of TLS support depend on the platform that Cargo is
-running on, the version of Cargo, and how it was compiled.
+Crabgo supports https, http, and file URLs, HTTP redirects, HTTP1 and HTTP2.
+The exact specifics of TLS support depend on the platform that Crabgo is
+running on, the version of Crabgo, and how it was compiled.
 
 
 ### Index files
@@ -58,11 +58,11 @@ directories:
 - All other packages are stored in directories named
   `{first-two}/{second-two}` where the top directory is the first two
   characters of the package name, and the next subdirectory is the third and
-  fourth characters of the package name. For example, `cargo` would be stored
-  in a file named `ca/rg/cargo`.
+  fourth characters of the package name. For example, `crabgo` would be stored
+  in a file named `ca/rg/crabgo`.
 
 > Note: Although the index filenames are in lowercase, the fields that contain
-> package names in `Cargo.toml` and the index JSON data are case-sensitive and
+> package names in `Crabgo.toml` and the index JSON data are case-sensitive and
 > may contain upper and lower case characters.
 
 The directory name above is calculated based on the package name converted to
@@ -76,12 +76,12 @@ in (harmless-but-inelegant) directory aliasing.  For example, `crate` and
 `CrateTwo` have `{prefix}` values of `cr/at` and `Cr/at`; these are distinct on
 Unix machines but alias to the same directory on Windows.  Using directories
 with normalized case avoids aliasing, but on case-sensitive filesystems it's
-harder to support older versions of Cargo that lack `{prefix}`/`{lowerprefix}`.
+harder to support older versions of Crabgo that lack `{prefix}`/`{lowerprefix}`.
 For example, nginx rewrite rules can easily construct `{prefix}` but can't
 perform case-conversion to construct `{lowerprefix}`.
 
 Registries should consider enforcing limitations on package names added to
-their index. Cargo itself allows names with any [alphanumeric], `-`, or `_`
+their index. Crabgo itself allows names with any [alphanumeric], `-`, or `_`
 characters. [crates.io] imposes its own limitations, including the following:
 
 - Only allows ASCII characters.
@@ -121,7 +121,7 @@ explaining the format of the entry.
             "name": "rand",
             // The SemVer requirement for this dependency.
             // This must be a valid version requirement defined at
-            // https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html.
+            // https://doc.rust-lang.org/crabgo/reference/specifying-dependencies.html.
             "req": "^0.6",
             // Array of features (as strings) enabled for this dependency.
             "features": ["i128_support"],
@@ -166,9 +166,9 @@ explaining the format of the entry.
     //
     // If this not specified, it should be interpreted as the default of 1.
     //
-    // Cargo (starting with version 1.51) will ignore versions it does not
+    // Crabgo (starting with version 1.51) will ignore versions it does not
     // recognize. This provides a method to safely introduce changes to index
-    // entries and allow older versions of cargo to ignore newer entries it
+    // entries and allow older versions of crabgo to ignore newer entries it
     // doesn't understand. Versions older than 1.51 ignore this field, and
     // thus may misinterpret the meaning of the index entry.
     //
@@ -185,15 +185,15 @@ explaining the format of the entry.
     //
     // This is separated from `features` because versions older than 1.19
     // will fail to load due to not being able to parse the new syntax, even
-    // with a `Cargo.lock` file.
+    // with a `Crabgo.lock` file.
     //
-    // Cargo will merge any values listed here with the "features" field.
+    // Crabgo will merge any values listed here with the "features" field.
     //
     // If this field is included, the "v" field should be set to at least 2.
     //
     // Registries are not required to use this field for extended feature
     // syntax, they are allowed to include those in the "features" field.
-    // Using this is only necessary if the registry wants to support cargo
+    // Using this is only necessary if the registry wants to support crabgo
     // versions older than 1.19, which in practice is only crates.io since
     // those older versions do not support other registries.
     "features2": {
@@ -208,13 +208,13 @@ explaining the format of the entry.
 The JSON objects should not be modified after they are added except for the
 `yanked` field whose value may change at any time.
 
-> **Note**: The index JSON format has subtle differences from the JSON format of the [Publish API] and [`cargo metadata`].
+> **Note**: The index JSON format has subtle differences from the JSON format of the [Publish API] and [`crabgo metadata`].
 > If you are using one of those as a source to generate index entries, you are encouraged to carefully inspect the documentation differences between them.
 >
 > For the [Publish API], the differences are:
 >
 > * `deps`
->     * `name` --- When the dependency is [renamed] in `Cargo.toml`, the publish API puts the original package name in the `name` field and the aliased name in the `explicit_name_in_toml` field.
+>     * `name` --- When the dependency is [renamed] in `Crabgo.toml`, the publish API puts the original package name in the `name` field and the aliased name in the `explicit_name_in_toml` field.
 >       The index places the aliased name in the `name` field, and the original package name in the `package` field.
 >     * `req` --- The Publish API field is called `version_req`.
 > * `cksum` --- The publish API does not specify the checksum, it must be computed by the registry before adding to the index.
@@ -225,27 +225,27 @@ The JSON objects should not be modified after they are added except for the
 >   These are intended to make it easier for a registry to obtain the metadata about the crate to display on a website without needing to extract and parse the `.crate` file.
 >   This additional information is typically added to a database on the registry server.
 > * Although `rust_version` is included here, [crates.io] will ignore this field
->   and instead read it from the `Cargo.toml` contained in the `.crate` file.
+>   and instead read it from the `Crabgo.toml` contained in the `.crate` file.
 >
-> For [`cargo metadata`], the differences are:
+> For [`crabgo metadata`], the differences are:
 >
-> * `vers` --- The `cargo metadata` field is called `version`.
+> * `vers` --- The `crabgo metadata` field is called `version`.
 > * `deps`
->   * `name` --- When the dependency is [renamed] in `Cargo.toml`, `cargo metadata` puts the original package name in the `name` field and the aliased name in the `rename` field.
+>   * `name` --- When the dependency is [renamed] in `Crabgo.toml`, `crabgo metadata` puts the original package name in the `name` field and the aliased name in the `rename` field.
 >     The index places the aliased name in the `name` field, and the original package name in the `package` field.
->   * `default_features` --- The `cargo metadata` field is called `uses_default_features`.
->   * `registry` --- `cargo metadata` uses a value of `null` to indicate that the dependency comes from [crates.io].
+>   * `default_features` --- The `crabgo metadata` field is called `uses_default_features`.
+>   * `registry` --- `crabgo metadata` uses a value of `null` to indicate that the dependency comes from [crates.io].
 >     The index uses a value of `null` to indicate that the dependency comes from the same registry as the index.
 >     When creating an index entry, a registry other than [crates.io] should translate a value of `null` to be `https://github.com/rust-lang/crates.io-index` and translate a URL that matches the current index to be `null`.
->   * `cargo metadata` includes some extra fields, such as `source` and `path`.
+>   * `crabgo metadata` includes some extra fields, such as `source` and `path`.
 > * The index includes additional fields such as `yanked`, `cksum`, and `v`.
 
-[renamed]: specifying-dependencies.md#renaming-dependencies-in-cargotoml
+[renamed]: specifying-dependencies.md#renaming-dependencies-in-crabgotoml
 [Publish API]: registry-web-api.md#publish
-[`cargo metadata`]: ../commands/cargo-metadata.md
+[`crabgo metadata`]: ../commands/crabgo-metadata.md
 
 ### Index Protocols
-Cargo supports two remote registry protocols: `git` and `sparse`. The `git` protocol
+Crabgo supports two remote registry protocols: `git` and `sparse`. The `git` protocol
 stores index files in a git repository and the `sparse` protocol fetches individual
 files over HTTP.
 
@@ -253,7 +253,7 @@ files over HTTP.
 The git protocol has no protocol prefix in the index url. For example the git index URL
 for [crates.io] is `https://github.com/rust-lang/crates.io-index`.
 
-Cargo caches the git repository on disk so that it can efficiently incrementally fetch
+Crabgo caches the git repository on disk so that it can efficiently incrementally fetch
 updates.
 
 #### Sparse Protocol
@@ -265,11 +265,11 @@ this results in a large number of small HTTP requests, performance is significan
 improved with a server that supports pipelining and HTTP/2.
 
 ##### Caching
-Cargo caches the crate metadata files, and captures the `ETag` or `Last-Modified` 
-HTTP header from the server for each entry. When refreshing crate metadata, Cargo
+Crabgo caches the crate metadata files, and captures the `ETag` or `Last-Modified` 
+HTTP header from the server for each entry. When refreshing crate metadata, Crabgo
 sends the `If-None-Match` or `If-Modified-Since` header to allow the server to respond
 with HTTP 304 "Not Modified" if the local cache is valid, saving time and bandwidth.
-If both `ETag` and `Last-Modified` headers are present, Cargo uses the `ETag` only.
+If both `ETag` and `Last-Modified` headers are present, Crabgo uses the `ETag` only.
 
 ##### Cache Invalidation
 If a registry is using some kind of CDN or proxy which caches access to the index files,
@@ -284,15 +284,15 @@ or 451 "Unavailable For Legal Reasons" code.
 ##### Sparse Limitations
 Since the URL of the registry is stored in the lockfile, it's not recommended to offer
 a registry with both protocols. Discussion about a transition plan is ongoing in issue 
-[#10964]. The [crates.io] registry is an exception, since Cargo internally substitutes
+[#10964]. The [crates.io] registry is an exception, since Crabgo internally substitutes
 the equivalent git URL when the sparse protocol is used.
 
 If a registry does offer both protocols, it's currently recommended to choose one protocol
 as the canonical protocol and use [source replacement] for the other protocol.
 
 
-[`cargo publish`]: ../commands/cargo-publish.md
+[`crabgo publish`]: ../commands/crabgo-publish.md
 [alphanumeric]: ../../std/primitive.char.html#method.is_alphanumeric
 [crates.io]: https://crates.io/
 [source replacement]: ../reference/source-replacement.md
-[#10964]: https://github.com/rust-lang/cargo/issues/10964
+[#10964]: https://github.com/rust-lang/crabgo/issues/10964

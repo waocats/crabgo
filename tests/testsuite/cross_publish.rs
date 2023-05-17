@@ -2,16 +2,16 @@
 
 use std::fs::File;
 
-use cargo_test_support::{cross_compile, project, publish, registry};
+use crabgo_test_support::{cross_compile, project, publish, registry};
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_cross_package() {
     if cross_compile::disabled() {
         return;
     }
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -38,7 +38,7 @@ fn simple_cross_package() {
 
     let target = cross_compile::alternate();
 
-    p.cargo("package --target")
+    p.crabgo("package --target")
         .arg(&target)
         .with_stderr(
             "\
@@ -56,12 +56,12 @@ fn simple_cross_package() {
     publish::validate_crate_contents(
         f,
         "foo-0.0.0.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
         &[],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_target() {
     if cross_compile::disabled() {
         return;
@@ -72,7 +72,7 @@ fn publish_with_target() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -99,7 +99,7 @@ fn publish_with_target() {
 
     let target = cross_compile::alternate();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .arg("--target")
         .arg(&target)

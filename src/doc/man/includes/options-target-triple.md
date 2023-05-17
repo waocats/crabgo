@@ -10,7 +10,7 @@ list of supported targets.
 This may also be specified with the `build.target`
 [config value](../reference/config.html).
 
-Note that specifying this flag makes Cargo run in a different mode where the
+Note that specifying this flag makes Crabgo run in a different mode where the
 target artifacts are placed in a separate directory. See the
 [build cache](../guide/build-cache.html) documentation for more details.
 {{/option}}

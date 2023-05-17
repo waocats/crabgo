@@ -1,6 +1,6 @@
 # Package Commands
-* [cargo init](cargo-init.md)
-* [cargo install](cargo-install.md)
-* [cargo new](cargo-new.md)
-* [cargo search](cargo-search.md)
-* [cargo uninstall](cargo-uninstall.md)
+* [crabgo init](crabgo-init.md)
+* [crabgo install](crabgo-install.md)
+* [crabgo new](crabgo-new.md)
+* [crabgo search](crabgo-search.md)
+* [crabgo uninstall](crabgo-uninstall.md)

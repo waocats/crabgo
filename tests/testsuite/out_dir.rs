@@ -1,19 +1,19 @@
 //! Tests for --out-dir flag.
 
-use cargo_test_support::sleep_ms;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::sleep_ms;
+use crabgo_test_support::{basic_manifest, project};
 use std::env;
 use std::fs;
 use std::path::Path;
 
-#[cargo_test]
+#[crabgo_test]
 fn binary_with_debug() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("Hello, World!") }"#)
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .enable_mac_dsym()
         .run();
     check_dir_contents(
@@ -25,11 +25,11 @@ fn binary_with_debug() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn static_library_with_debug() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -49,8 +49,8 @@ fn static_library_with_debug() {
         )
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .run();
     check_dir_contents(
         &p.root().join("out"),
@@ -61,11 +61,11 @@ fn static_library_with_debug() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dynamic_library_with_debug() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -85,8 +85,8 @@ fn dynamic_library_with_debug() {
         )
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .enable_mac_dsym()
         .run();
     check_dir_contents(
@@ -98,11 +98,11 @@ fn dynamic_library_with_debug() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rlib_with_debug() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -121,8 +121,8 @@ fn rlib_with_debug() {
         )
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .run();
     check_dir_contents(
         &p.root().join("out"),
@@ -133,11 +133,11 @@ fn rlib_with_debug() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn include_only_the_binary_from_the_current_package() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -161,12 +161,12 @@ fn include_only_the_binary_from_the_current_package() {
                 }
             "#,
         )
-        .file("utils/Cargo.toml", &basic_manifest("utils", "0.0.1"))
+        .file("utils/Crabgo.toml", &basic_manifest("utils", "0.0.1"))
         .file("utils/src/lib.rs", "")
         .build();
 
-    p.cargo("build -Z unstable-options --bin foo --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --bin foo --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .enable_mac_dsym()
         .run();
     check_dir_contents(
@@ -178,28 +178,28 @@ fn include_only_the_binary_from_the_current_package() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn out_dir_is_a_file() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("Hello, World!") }"#)
         .file("out", "")
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .with_status(101)
         .with_stderr_contains("[ERROR] failed to create directory [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replaces_artifacts() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("foo") }"#)
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .run();
     p.process(
         &p.root()
@@ -211,8 +211,8 @@ fn replaces_artifacts() {
     sleep_ms(1000);
     p.change_file("src/main.rs", r#"fn main() { println!("bar") }"#);
 
-    p.cargo("build -Z unstable-options --out-dir out")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .run();
     p.process(
         &p.root()
@@ -222,26 +222,26 @@ fn replaces_artifacts() {
     .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn avoid_build_scripts() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/main.rs", "fn main() {}")
         .file("a/build.rs", r#"fn main() { println!("hello-build-a"); }"#)
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/main.rs", "fn main() {}")
         .file("b/build.rs", r#"fn main() { println!("hello-build-b"); }"#)
         .build();
 
-    p.cargo("build -Z unstable-options --out-dir out -vv")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options --out-dir out -vv")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .enable_mac_dsym()
         .with_stdout_contains("[a 0.0.1] hello-build-a")
         .with_stdout_contains("[b 0.0.1] hello-build-b")
@@ -255,12 +255,12 @@ fn avoid_build_scripts() {
     );
 }
 
-#[cargo_test]
-fn cargo_build_out_dir() {
+#[crabgo_test]
+fn crabgo_build_out_dir() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("Hello, World!") }"#)
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             out-dir = "out"
@@ -268,8 +268,8 @@ fn cargo_build_out_dir() {
         )
         .build();
 
-    p.cargo("build -Z unstable-options")
-        .masquerade_as_nightly_cargo(&["out-dir"])
+    p.crabgo("build -Z unstable-options")
+        .masquerade_as_nightly_crabgo(&["out-dir"])
         .enable_mac_dsym()
         .run();
     check_dir_contents(

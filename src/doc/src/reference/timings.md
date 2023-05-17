@@ -3,10 +3,10 @@ The `--timings` option gives some information about how long each compilation
 takes, and tracks concurrency information over time.
 
 ```sh
-cargo build --timings
+crabgo build --timings
 ```
 
-This writes an HTML report in `target/cargo-timings/cargo-timing.html`. This
+This writes an HTML report in `target/crabgo-timings/crabgo-timing.html`. This
 also writes a copy of the report to the same directory with a timestamp in the
 filename, if you want to look at older runs.
 
@@ -38,7 +38,7 @@ highlighted in orange.
 
 ![build-unit-time](../images/build-unit-time.png)
 
-The second graph shows Cargo's concurrency over time. The background
+The second graph shows Crabgo's concurrency over time. The background
 indicates CPU usage. The three lines are:
 - "Waiting" (red) --- This is the number of units waiting for a CPU slot to
   open.
@@ -46,10 +46,10 @@ indicates CPU usage. The three lines are:
   dependencies to finish.
 - "Active" (green) --- This is the number of units currently running.
 
-![cargo-concurrency-over-time](../images/cargo-concurrency-over-time.png)
+![crabgo-concurrency-over-time](../images/crabgo-concurrency-over-time.png)
 
 Note: This does not show the concurrency in the compiler itself. `rustc`
-coordinates with Cargo via the "job server" to stay within the concurrency
+coordinates with Crabgo via the "job server" to stay within the concurrency
 limit. This currently mostly applies to the code generation phase.
 
 Tips for addressing compile times:

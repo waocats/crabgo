@@ -1,16 +1,16 @@
 //! Tests for the new feature resolver.
 
-use cargo_test_support::cross_compile::{self, alternate};
-use cargo_test_support::install::cargo_home;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::publish::validate_crate_contents;
-use cargo_test_support::registry::{Dependency, Package};
-use cargo_test_support::{basic_manifest, cargo_process, project, rustc_host, Project};
+use crabgo_test_support::cross_compile::{self, alternate};
+use crabgo_test_support::install::cargo_home;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::publish::validate_crate_contents;
+use crabgo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::{basic_manifest, crabgo_process, project, rustc_host, Project};
 use std::fs::File;
 
-/// Switches Cargo.toml to use `resolver = "2"`.
+/// Switches Crabgo.toml to use `resolver = "2"`.
 pub fn switch_to_resolver_2(p: &Project) {
-    let mut manifest = p.read_file("Cargo.toml");
+    let mut manifest = p.read_file("Crabgo.toml");
     if manifest.contains("resolver =") {
         panic!("did not expect manifest to already contain a resolver setting");
     }
@@ -21,10 +21,10 @@ pub fn switch_to_resolver_2(p: &Project) {
     } else {
         panic!("expected [package] or [workspace] in manifest");
     }
-    p.change_file("Cargo.toml", &manifest);
+    p.change_file("Crabgo.toml", &manifest);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inactivate_targets() {
     // Basic test of `itarget`. A shared dependency where an inactive [target]
     // changes the features.
@@ -49,7 +49,7 @@ fn inactivate_targets() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -63,16 +63,16 @@ fn inactivate_targets() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]f1 should not activate[..]")
         .run();
 
     switch_to_resolver_2(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inactive_target_optional() {
     // Activating optional [target] dependencies for inactivate target.
     Package::new("common", "1.0.0")
@@ -95,7 +95,7 @@ fn inactive_target_optional() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -129,7 +129,7 @@ fn inactive_target_optional() {
             "#,
         )
         .file(
-            "dep1/Cargo.toml",
+            "dep1/Crabgo.toml",
             r#"
             [package]
             name = "dep1"
@@ -147,7 +147,7 @@ fn inactive_target_optional() {
             r#"compile_error!("dep1 should not build");"#,
         )
         .file(
-            "dep2/Cargo.toml",
+            "dep2/Crabgo.toml",
             r#"
             [package]
             name = "dep2"
@@ -166,33 +166,33 @@ fn inactive_target_optional() {
         )
         .build();
 
-    p.cargo("run --all-features")
+    p.crabgo("run --all-features")
         .with_stdout("foo1\nfoo2\ndep1\ndep2\ncommon\nf1\nf2\nf3\nf4\n")
         .run();
-    p.cargo("run --features dep1")
+    p.crabgo("run --features dep1")
         .with_stdout("dep1\nf1\n")
         .run();
-    p.cargo("run --features foo1")
+    p.crabgo("run --features foo1")
         .with_stdout("foo1\ndep1\nf1\nf2\n")
         .run();
-    p.cargo("run --features dep2")
+    p.crabgo("run --features dep2")
         .with_stdout("dep2\nf3\n")
         .run();
-    p.cargo("run --features common")
+    p.crabgo("run --features common")
         .with_stdout("common\nf4\n")
         .run();
 
     switch_to_resolver_2(&p);
-    p.cargo("run --all-features")
+    p.crabgo("run --all-features")
         .with_stdout("foo1\nfoo2\ndep1\ndep2\ncommon")
         .run();
-    p.cargo("run --features dep1").with_stdout("dep1\n").run();
-    p.cargo("run --features foo1").with_stdout("foo1\n").run();
-    p.cargo("run --features dep2").with_stdout("dep2\n").run();
-    p.cargo("run --features common").with_stdout("common").run();
+    p.crabgo("run --features dep1").with_stdout("dep1\n").run();
+    p.crabgo("run --features foo1").with_stdout("foo1\n").run();
+    p.crabgo("run --features dep2").with_stdout("dep2\n").run();
+    p.crabgo("run --features common").with_stdout("common").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn itarget_proc_macro() {
     // itarget inside a proc-macro while cross-compiling
     if cross_compile::disabled() {
@@ -206,7 +206,7 @@ fn itarget_proc_macro() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -220,18 +220,18 @@ fn itarget_proc_macro() {
         .build();
 
     // Old behavior
-    p.cargo("check").run();
-    p.cargo("check --target").arg(alternate()).run();
+    p.crabgo("check").run();
+    p.crabgo("check --target").arg(alternate()).run();
 
     // New behavior
     switch_to_resolver_2(&p);
-    p.cargo("check").run();
-    p.cargo("check --target").arg(alternate()).run();
+    p.crabgo("check").run();
+    p.crabgo("check --target").arg(alternate()).run();
     // For good measure, just make sure things don't break.
-    p.cargo("check --target").arg(alternate()).run();
+    p.crabgo("check --target").arg(alternate()).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_host_deps() {
     // Basic test for `host_dep` decouple.
     Package::new("common", "1.0.0")
@@ -249,7 +249,7 @@ fn decouple_host_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -273,16 +273,16 @@ fn decouple_host_deps() {
         .file("src/lib.rs", "use common::bar;")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]unresolved import `common::bar`[..]")
         .run();
 
     switch_to_resolver_2(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_host_deps_nested() {
     // `host_dep` decouple of transitive dependencies.
     Package::new("common", "1.0.0")
@@ -300,7 +300,7 @@ fn decouple_host_deps_nested() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -323,7 +323,7 @@ fn decouple_host_deps_nested() {
         )
         .file("src/lib.rs", "use common::bar;")
         .file(
-            "bdep/Cargo.toml",
+            "bdep/Crabgo.toml",
             r#"
             [package]
             name = "bdep"
@@ -337,16 +337,16 @@ fn decouple_host_deps_nested() {
         .file("bdep/src/lib.rs", "pub use common::foo;")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]unresolved import `common::bar`[..]")
         .run();
 
     switch_to_resolver_2(&p);
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_dev_deps() {
     // Basic test for `dev_dep` decouple.
     Package::new("common", "1.0.0")
@@ -379,7 +379,7 @@ fn decouple_dev_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -445,7 +445,7 @@ fn decouple_dev_deps() {
 
             #[test]
             fn test_main() {
-                // Features are unified for main when run with `cargo test`,
+                // Features are unified for main when run with `crabgo test`,
                 // even with the new resolver.
                 let s = std::process::Command::new("target/debug/foo")
                     .arg("3")
@@ -457,18 +457,18 @@ fn decouple_dev_deps() {
         .build();
 
     // Old behavior
-    p.cargo("run 3").run();
-    p.cargo("test").run();
+    p.crabgo("run 3").run();
+    p.crabgo("test").run();
 
     // New behavior
     switch_to_resolver_2(&p);
-    p.cargo("run 1").run();
-    p.cargo("test").run();
+    p.crabgo("run 1").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_runtime_features() {
-    // Check that the CARGO_FEATURE_* environment variable is set correctly.
+    // Check that the CRABGO_FEATURE_* environment variable is set correctly.
     //
     // This has a common dependency between build/normal/dev-deps, and it
     // queries which features it was built with in different circumstances.
@@ -485,16 +485,16 @@ fn build_script_runtime_features() {
 
             fn main() {
                 let mut res = 0;
-                if is_set("CARGO_FEATURE_NORMAL") {
+                if is_set("CRABGO_FEATURE_NORMAL") {
                     res |= 1;
                 }
-                if is_set("CARGO_FEATURE_DEV") {
+                if is_set("CRABGO_FEATURE_DEV") {
                     res |= 2;
                 }
-                if is_set("CARGO_FEATURE_BUILD") {
+                if is_set("CRABGO_FEATURE_BUILD") {
                     res |= 4;
                 }
-                println!("cargo:rustc-cfg=RunCustomBuild=\"{}\"", res);
+                println!("crabgo:rustc-cfg=RunCustomBuild=\"{}\"", res);
 
                 let mut res = 0;
                 if cfg!(feature = "normal") {
@@ -506,7 +506,7 @@ fn build_script_runtime_features() {
                 if cfg!(feature = "build") {
                     res |= 4;
                 }
-                println!("cargo:rustc-cfg=CustomBuild=\"{}\"", res);
+                println!("crabgo:rustc-cfg=CustomBuild=\"{}\"", res);
             }
             "#,
         )
@@ -540,7 +540,7 @@ fn build_script_runtime_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -562,7 +562,7 @@ fn build_script_runtime_features() {
             r#"
             fn main() {
                 assert_eq!(common::foo(), common::build_time());
-                println!("cargo:rustc-cfg=from_build=\"{}\"", common::foo());
+                println!("crabgo:rustc-cfg=from_build=\"{}\"", common::foo());
             }
             "#,
         )
@@ -581,7 +581,7 @@ fn build_script_runtime_features() {
             fn test_lib() {
                 assert_eq!(common::foo(), common::build_time());
                 assert_eq!(common::foo(),
-                    std::env::var("CARGO_FEATURE_EXPECT").unwrap().parse().unwrap());
+                    std::env::var("CRABGO_FEATURE_EXPECT").unwrap().parse().unwrap());
             }
             "#,
         )
@@ -591,14 +591,14 @@ fn build_script_runtime_features() {
             fn main() {
                 assert_eq!(common::foo(), common::build_time());
                 assert_eq!(common::foo(),
-                    std::env::var("CARGO_FEATURE_EXPECT").unwrap().parse().unwrap());
+                    std::env::var("CRABGO_FEATURE_EXPECT").unwrap().parse().unwrap());
             }
 
             #[test]
             fn test_bin() {
                 assert_eq!(common::foo(), common::build_time());
                 assert_eq!(common::foo(),
-                    std::env::var("CARGO_FEATURE_EXPECT").unwrap().parse().unwrap());
+                    std::env::var("CRABGO_FEATURE_EXPECT").unwrap().parse().unwrap());
             }
             "#,
         )
@@ -609,12 +609,12 @@ fn build_script_runtime_features() {
             fn test_t1() {
                 assert_eq!(common::foo(), common::build_time());
                 assert_eq!(common::foo(),
-                    std::env::var("CARGO_FEATURE_EXPECT").unwrap().parse().unwrap());
+                    std::env::var("CRABGO_FEATURE_EXPECT").unwrap().parse().unwrap());
             }
 
             #[test]
             fn test_main() {
-                // Features are unified for main when run with `cargo test`,
+                // Features are unified for main when run with `crabgo test`,
                 // even with the new resolver.
                 let s = std::process::Command::new("target/debug/foo")
                     .status().unwrap();
@@ -625,25 +625,25 @@ fn build_script_runtime_features() {
         .build();
 
     // Old way, unifies all 3.
-    p.cargo("run").env("CARGO_FEATURE_EXPECT", "7").run();
-    p.cargo("test").env("CARGO_FEATURE_EXPECT", "7").run();
+    p.crabgo("run").env("CRABGO_FEATURE_EXPECT", "7").run();
+    p.crabgo("test").env("CRABGO_FEATURE_EXPECT", "7").run();
 
     // New behavior.
     switch_to_resolver_2(&p);
 
     // normal + build unify
-    p.cargo("run").env("CARGO_FEATURE_EXPECT", "1").run();
+    p.crabgo("run").env("CRABGO_FEATURE_EXPECT", "1").run();
 
-    // dev_deps are still unified with `cargo test`
-    p.cargo("test").env("CARGO_FEATURE_EXPECT", "3").run();
+    // dev_deps are still unified with `crabgo test`
+    p.crabgo("test").env("CRABGO_FEATURE_EXPECT", "3").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cyclical_dev_dep() {
     // Check how a cyclical dev-dependency will work.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -696,20 +696,20 @@ fn cyclical_dev_dep() {
         .build();
 
     // Old way unifies features.
-    p.cargo("run true").run();
+    p.crabgo("run true").run();
     // dev feature should always be enabled in tests.
-    p.cargo("test").run();
+    p.crabgo("test").run();
 
     // New behavior.
     switch_to_resolver_2(&p);
     // Should decouple main.
-    p.cargo("run false").run();
+    p.crabgo("run false").run();
 
     // And this should be no different.
-    p.cargo("test").run();
+    p.crabgo("test").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_feature_opts() {
     // All feature options at once.
     Package::new("common", "1.0.0")
@@ -734,7 +734,7 @@ fn all_feature_opts() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -774,24 +774,24 @@ fn all_feature_opts() {
         )
         .build();
 
-    p.cargo("run").env("EXPECTED_FEATS", "15").run();
-    p.cargo("test").env("EXPECTED_FEATS", "15").run();
+    p.crabgo("run").env("EXPECTED_FEATS", "15").run();
+    p.crabgo("test").env("EXPECTED_FEATS", "15").run();
 
     // New behavior.
     switch_to_resolver_2(&p);
     // Only normal feature.
-    p.cargo("run").env("EXPECTED_FEATS", "1").run();
+    p.crabgo("run").env("EXPECTED_FEATS", "1").run();
 
     // only normal+dev
-    p.cargo("test").env("EXPECTED_FEATS", "5").run();
+    p.crabgo("test").env("EXPECTED_FEATS", "5").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn required_features_host_dep() {
     // Check that required-features handles build-dependencies correctly.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -814,7 +814,7 @@ fn required_features_host_dep() {
             "#,
         )
         .file(
-            "bdep/Cargo.toml",
+            "bdep/Crabgo.toml",
             r#"
             [package]
             name = "bdep"
@@ -827,7 +827,7 @@ fn required_features_host_dep() {
         .file("bdep/src/lib.rs", "")
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
@@ -839,10 +839,10 @@ Consider enabling them by passing, e.g., `--features=\"bdep/f1\"`
 
     // New behavior.
     switch_to_resolver_2(&p);
-    p.cargo("run --features bdep/f1").run();
+    p.crabgo("run --features bdep/f1").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn disabled_shared_host_dep() {
     // Check for situation where an optional dep of a shared dep is enabled in
     // a normal dependency, but disabled in an optional one. The unit tree is:
@@ -884,7 +884,7 @@ fn disabled_shared_host_dep() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -909,15 +909,15 @@ fn disabled_shared_host_dep() {
         )
         .build();
 
-    p.cargo("run -v").with_stdout("hello from somedep").run();
+    p.crabgo("run -v").with_stdout("hello from somedep").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn required_features_inactive_dep() {
     // required-features with an inactivated dep.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -936,18 +936,18 @@ fn required_features_inactive_dep() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
-    p.cargo("check --features=feat1")
+    p.crabgo("check --features=feat1")
         .with_stderr("[CHECKING] foo[..]\n[FINISHED] [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_proc_macro() {
     // proc macro features are not shared
     Package::new("common", "1.0.0")
@@ -979,7 +979,7 @@ fn decouple_proc_macro() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1016,38 +1016,38 @@ fn decouple_proc_macro() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .env("TEST_EXPECTS_ENABLED", "1")
         .with_stdout("it is true")
         .run();
     // Make sure the test is fallible.
-    p.cargo("test --doc")
+    p.crabgo("test --doc")
         .with_status(101)
         .with_stdout_contains("[..]common is wrong[..]")
         .run();
-    p.cargo("test --doc").env("TEST_EXPECTS_ENABLED", "1").run();
-    p.cargo("doc").run();
+    p.crabgo("test --doc").env("TEST_EXPECTS_ENABLED", "1").run();
+    p.crabgo("doc").run();
     assert!(p
         .build_dir()
         .join("doc/common/constant.FEAT_ONLY_CONST.html")
         .exists());
-    // cargo doc should clean in-between runs, but it doesn't, and leaves stale files.
-    // https://github.com/rust-lang/cargo/issues/6783 (same for removed items)
+    // crabgo doc should clean in-between runs, but it doesn't, and leaves stale files.
+    // https://github.com/rust-lang/crabgo/issues/6783 (same for removed items)
     p.build_dir().join("doc").rm_rf();
 
     // New behavior.
     switch_to_resolver_2(&p);
-    p.cargo("run").with_stdout("it is false").run();
+    p.crabgo("run").with_stdout("it is false").run();
 
-    p.cargo("test --doc").run();
-    p.cargo("doc").run();
+    p.crabgo("test --doc").run();
+    p.crabgo("doc").run();
     assert!(!p
         .build_dir()
         .join("doc/common/constant.FEAT_ONLY_CONST.html")
         .exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_ws() {
     // Checks for bug with proc-macro in a workspace with dependency (shouldn't panic).
     //
@@ -1057,7 +1057,7 @@ fn proc_macro_ws() {
     // when it sees the shared build/runtime dependency when checking the complete workspace.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["foo", "pm"]
@@ -1068,7 +1068,7 @@ fn proc_macro_ws() {
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1080,7 +1080,7 @@ fn proc_macro_ws() {
         )
         .file("foo/src/lib.rs", "")
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
             [package]
             name = "pm"
@@ -1096,7 +1096,7 @@ fn proc_macro_ws() {
         .file("pm/src/lib.rs", "")
         .build();
 
-    p.cargo("check -p pm -v")
+    p.crabgo("check -p pm -v")
         .with_stderr_contains("[RUNNING] `rustc --crate-name foo [..]--cfg[..]feat1[..]")
         .run();
     // This may be surprising that `foo` doesn't get built separately. It is
@@ -1104,7 +1104,7 @@ fn proc_macro_ws() {
     // feature resolver must assume that normal deps get unified with it. This
     // is related to the bigger issue where the features selected in a
     // workspace depend on which packages are selected.
-    p.cargo("check --workspace -v")
+    p.crabgo("check --workspace -v")
         .with_stderr(
             "\
 [FRESH] foo v0.1.0 [..]
@@ -1114,19 +1114,19 @@ fn proc_macro_ws() {
         )
         .run();
     // Selecting just foo will build without unification.
-    p.cargo("check -p foo -v")
+    p.crabgo("check -p foo -v")
         // Make sure `foo` is built without feat1
         .with_stderr_line_without(&["[RUNNING] `rustc --crate-name foo"], &["--cfg[..]feat1"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn has_dev_dep_for_test() {
     // Check for a bug where the decision on whether or not "dev dependencies"
     // should be used did not consider `check --profile=test`.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1146,7 +1146,7 @@ fn has_dev_dep_for_test() {
             "#,
         )
         .file(
-            "dep/Cargo.toml",
+            "dep/Crabgo.toml",
             r#"
             [package]
             name = "dep"
@@ -1165,7 +1165,7 @@ fn has_dev_dep_for_test() {
         )
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr(
             "\
 [CHECKING] foo v0.1.0 [..]
@@ -1174,7 +1174,7 @@ fn has_dev_dep_for_test() {
 ",
         )
         .run();
-    p.cargo("check -v --profile=test")
+    p.crabgo("check -v --profile=test")
         .with_stderr(
             "\
 [CHECKING] dep v0.1.0 [..]
@@ -1188,7 +1188,7 @@ fn has_dev_dep_for_test() {
 
     // New resolver should not be any different.
     switch_to_resolver_2(&p);
-    p.cargo("check -v --profile=test")
+    p.crabgo("check -v --profile=test")
         .with_stderr(
             "\
 [FRESH] dep [..]
@@ -1199,7 +1199,7 @@ fn has_dev_dep_for_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_dep_activated() {
     // Build dependencies always match the host for [target.*.build-dependencies].
     if cross_compile::disabled() {
@@ -1226,7 +1226,7 @@ fn build_dep_activated() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1248,21 +1248,21 @@ fn build_dep_activated() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check --target").arg(alternate()).run();
+    p.crabgo("check").run();
+    p.crabgo("check --target").arg(alternate()).run();
 
     // New behavior.
     switch_to_resolver_2(&p);
-    p.cargo("check").run();
-    p.cargo("check --target").arg(alternate()).run();
+    p.crabgo("check").run();
+    p.crabgo("check --target").arg(alternate()).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_bad_setting() {
     // Unknown setting in `resolver`
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1273,11 +1273,11 @@ fn resolver_bad_setting() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[..]/foo/Cargo.toml`
+error: failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   `resolver` setting `foo` is not valid, valid options are \"1\" or \"2\"
@@ -1286,7 +1286,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_original() {
     // resolver="1" uses old unification behavior.
     Package::new("common", "1.0.0")
@@ -1325,26 +1325,26 @@ fn resolver_original() {
     };
 
     let p = project()
-        .file("Cargo.toml", &manifest("1"))
+        .file("Crabgo.toml", &manifest("1"))
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]f1 should not activate[..]")
         .run();
 
-    p.change_file("Cargo.toml", &manifest("2"));
+    p.change_file("Crabgo.toml", &manifest("2"));
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_not_both() {
     // Can't specify resolver in both workspace and package.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             resolver = "2"
@@ -1357,11 +1357,11 @@ fn resolver_not_both() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[..]/foo/Cargo.toml`
+error: failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   cannot specify `resolver` field in both `[workspace]` and `[package]`
@@ -1370,19 +1370,19 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_ws_member() {
     // Can't specify `resolver` in a ws member.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1393,12 +1393,12 @@ fn resolver_ws_member() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: resolver for the non root package will be ignored, specify resolver at the workspace root:
-package:   [..]/foo/a/Cargo.toml
-workspace: [..]/foo/Cargo.toml
+package:   [..]/foo/a/Crabgo.toml
+workspace: [..]/foo/Crabgo.toml
 [CHECKING] a v0.1.0 [..]
 [FINISHED] [..]
 ",
@@ -1406,12 +1406,12 @@ workspace: [..]/foo/Cargo.toml
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_ws_root_and_member() {
     // Check when specified in both ws root and member.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a"]
@@ -1419,7 +1419,7 @@ fn resolver_ws_root_and_member() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1431,7 +1431,7 @@ fn resolver_ws_root_and_member() {
         .build();
 
     // Ignores if they are the same.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] a v0.1.0 [..]
@@ -1441,7 +1441,7 @@ fn resolver_ws_root_and_member() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_enables_new_features() {
     // resolver="2" enables all the things.
     Package::new("common", "1.0.0")
@@ -1466,7 +1466,7 @@ fn resolver_enables_new_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
@@ -1474,7 +1474,7 @@ fn resolver_enables_new_features() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1513,7 +1513,7 @@ fn resolver_enables_new_features() {
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -1536,7 +1536,7 @@ fn resolver_enables_new_features() {
         .build();
 
     // Only normal.
-    p.cargo("run --bin a")
+    p.crabgo("run --bin a")
         .env("EXPECTED_FEATS", "1")
         .with_stderr(
             "\
@@ -1552,16 +1552,16 @@ fn resolver_enables_new_features() {
         .run();
 
     // only normal+dev
-    p.cargo("test").cwd("a").env("EXPECTED_FEATS", "5").run();
+    p.crabgo("test").cwd("a").env("EXPECTED_FEATS", "5").run();
 
     // Can specify features of packages from a different directory.
-    p.cargo("run -p b --features=ping")
+    p.crabgo("run -p b --features=ping")
         .cwd("a")
         .with_stdout("pong")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_resolve_behavior() {
     // install honors the resolver behavior.
     Package::new("common", "1.0.0")
@@ -1579,7 +1579,7 @@ fn install_resolve_behavior() {
 
     Package::new("foo", "1.0.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1597,15 +1597,15 @@ fn install_resolve_behavior() {
         .file("src/main.rs", "fn main() {}")
         .publish();
 
-    cargo_process("install foo").run();
+    crabgo_process("install foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_includes_resolve_behavior() {
-    // `cargo package` will inherit the correct resolve behavior.
+    // `crabgo package` will inherit the correct resolve behavior.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a"]
@@ -1613,7 +1613,7 @@ fn package_includes_resolve_behavior() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1627,7 +1627,7 @@ fn package_includes_resolve_behavior() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("package").cwd("a").run();
+    p.crabgo("package").cwd("a").run();
 
     let rewritten_toml = format!(
         r#"{}
@@ -1640,25 +1640,25 @@ homepage = "https://example.com/"
 license = "MIT"
 resolver = "2"
 "#,
-        cargo::core::package::MANIFEST_PREAMBLE
+        crabgo::core::package::MANIFEST_PREAMBLE
     );
 
     let f = File::open(&p.root().join("target/package/a-0.1.0.crate")).unwrap();
     validate_crate_contents(
         f,
         "a-0.1.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "src/lib.rs"],
-        &[("Cargo.toml", &rewritten_toml)],
+        &["Crabgo.toml", "Crabgo.toml.orig", "src/lib.rs"],
+        &[("Crabgo.toml", &rewritten_toml)],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn tree_all() {
-    // `cargo tree` with the new feature resolver.
+    // `crabgo tree` with the new feature resolver.
     Package::new("log", "0.4.8").feature("serde", &[]).publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1671,7 +1671,7 @@ fn tree_all() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("tree --target=all")
+    p.crabgo("tree --target=all")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1681,7 +1681,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shared_dep_same_but_dependencies() {
     // Checks for a bug of nondeterminism. This scenario creates a shared
     // dependency `dep` which needs to be built twice (once as normal, and
@@ -1693,7 +1693,7 @@ fn shared_dep_same_but_dependencies() {
     // and avoid the collision, and this bug won't manifest.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bin1", "bin2"]
@@ -1701,7 +1701,7 @@ fn shared_dep_same_but_dependencies() {
             "#,
         )
         .file(
-            "bin1/Cargo.toml",
+            "bin1/Crabgo.toml",
             r#"
                 [package]
                 name = "bin1"
@@ -1713,7 +1713,7 @@ fn shared_dep_same_but_dependencies() {
         )
         .file("bin1/src/main.rs", "fn main() { dep::feat_func(); }")
         .file(
-            "bin2/Cargo.toml",
+            "bin2/Crabgo.toml",
             r#"
                 [package]
                 name = "bin2"
@@ -1727,7 +1727,7 @@ fn shared_dep_same_but_dependencies() {
         .file("bin2/build.rs", "fn main() { dep::feat_func(); }")
         .file("bin2/src/main.rs", "fn main() {}")
         .file(
-            "dep/Cargo.toml",
+            "dep/Crabgo.toml",
             r#"
                 [package]
                 name = "dep"
@@ -1742,7 +1742,7 @@ fn shared_dep_same_but_dependencies() {
             "pub fn feat_func() { subdep::feat_func(); }",
         )
         .file(
-            "subdep/Cargo.toml",
+            "subdep/Crabgo.toml",
             r#"
                 [package]
                 name = "subdep"
@@ -1756,14 +1756,14 @@ fn shared_dep_same_but_dependencies() {
             "subdep/src/lib.rs",
             r#"
                 pub fn feat_func() {
-                    #[cfg(feature = "feat")] println!("cargo:warning=feat: enabled");
-                    #[cfg(not(feature = "feat"))] println!("cargo:warning=feat: not enabled");
+                    #[cfg(feature = "feat")] println!("crabgo:warning=feat: enabled");
+                    #[cfg(not(feature = "feat"))] println!("crabgo:warning=feat: not enabled");
                 }
             "#,
         )
         .build();
 
-    p.cargo("build --bin bin1 --bin bin2")
+    p.crabgo("build --bin bin1 --bin bin2")
         // unordered because bin1 and bin2 build at the same time
         .with_stderr_unordered(
             "\
@@ -1777,11 +1777,11 @@ warning: feat: enabled
         )
         .run();
     p.process(p.bin("bin1"))
-        .with_stdout("cargo:warning=feat: not enabled")
+        .with_stdout("crabgo:warning=feat: not enabled")
         .run();
 
     // Make sure everything stays cached.
-    p.cargo("build -v --bin bin1 --bin bin2")
+    p.crabgo("build -v --bin bin1 --bin bin2")
         .with_stderr_unordered(
             "\
 [FRESH] subdep [..]
@@ -1795,9 +1795,9 @@ warning: feat: enabled
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_proc_macro() {
-    // Running `cargo test` on a proc-macro, with a shared dependency that has
+    // Running `crabgo test` on a proc-macro, with a shared dependency that has
     // different features.
     //
     // There was a bug where `shared` was built twice (once with feature "B"
@@ -1806,7 +1806,7 @@ fn test_proc_macro() {
     // (the-macro-support).
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "runtime"
@@ -1821,7 +1821,7 @@ fn test_proc_macro() {
         )
         .file("src/lib.rs", "")
         .file(
-            "the-macro/Cargo.toml",
+            "the-macro/Crabgo.toml",
             r#"
                 [package]
                 name = "the-macro"
@@ -1847,7 +1847,7 @@ fn test_proc_macro() {
             ",
         )
         .file(
-            "the-macro-support/Cargo.toml",
+            "the-macro-support/Crabgo.toml",
             r#"
                 [package]
                 name = "the-macro-support"
@@ -1863,7 +1863,7 @@ fn test_proc_macro() {
             ",
         )
         .file(
-            "shared/Cargo.toml",
+            "shared/Crabgo.toml",
             r#"
                 [package]
                 name = "shared"
@@ -1874,12 +1874,12 @@ fn test_proc_macro() {
         )
         .file("shared/src/lib.rs", "pub struct Foo;")
         .build();
-    p.cargo("test --manifest-path the-macro/Cargo.toml").run();
+    p.crabgo("test --manifest-path the-macro/Crabgo.toml").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_optional() {
-    // Checks for a bug where `cargo doc` was failing with an inactive target
+    // Checks for a bug where `crabgo doc` was failing with an inactive target
     // that enables a shared optional dependency.
     Package::new("spin", "1.0.0").publish();
     Package::new("bar", "1.0.0")
@@ -1891,7 +1891,7 @@ fn doc_optional() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1908,7 +1908,7 @@ fn doc_optional() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -1924,7 +1924,7 @@ fn doc_optional() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn minimal_download() {
     // Various checks that it only downloads the minimum set of dependencies
     // needed in various situations.
@@ -1935,11 +1935,11 @@ fn minimal_download() {
     // independently. However, there are some cases where they do behave
     // independently. Specifically:
     //
-    // * `cargo test` forces dev_dep decoupling to be disabled.
-    // * `cargo tree --target=all` forces ignore_inactive_targets off and decouple_dev_deps off.
-    // * `cargo tree --target=all -e normal` forces ignore_inactive_targets off.
+    // * `crabgo test` forces dev_dep decoupling to be disabled.
+    // * `crabgo tree --target=all` forces ignore_inactive_targets off and decouple_dev_deps off.
+    // * `crabgo tree --target=all -e normal` forces ignore_inactive_targets off.
     //
-    // However, `cargo tree` is a little weird because it downloads everything
+    // However, `crabgo tree` is a little weird because it downloads everything
     // anyways.
     //
     // So to summarize the different permutations:
@@ -1948,14 +1948,14 @@ fn minimal_download() {
     // --------|----------|---------|----------------------------
     //         |          |         | -Zfeatures=compare (new resolver should behave same as old)
     //         |          |    ✓    | This scenario should not happen.
-    //         |     ✓    |         | `cargo tree --target=all -Zfeatures=all`†
-    //         |     ✓    |    ✓    | `cargo test`
+    //         |     ✓    |         | `crabgo tree --target=all -Zfeatures=all`†
+    //         |     ✓    |    ✓    | `crabgo test`
     //    ✓    |          |         | This scenario should not happen.
     //    ✓    |          |    ✓    | This scenario should not happen.
-    //    ✓    |     ✓    |         | `cargo tree --target=all -e normal -Z features=all`†
+    //    ✓    |     ✓    |         | `crabgo tree --target=all -e normal -Z features=all`†
     //    ✓    |     ✓    |    ✓    | A normal build.
     //
-    // † — However, `cargo tree` downloads everything.
+    // † — However, `crabgo tree` downloads everything.
     Package::new("normal", "1.0.0").publish();
     Package::new("normal_pm", "1.0.0").publish();
     Package::new("normal_opt", "1.0.0").publish();
@@ -1974,7 +1974,7 @@ fn minimal_download() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2019,8 +2019,8 @@ fn minimal_download() {
 
     // none
     // Should be the same as `-Zfeatures=all`
-    p.cargo("check -Zfeatures=compare")
-        .masquerade_as_nightly_cargo(&["features=compare"])
+    p.crabgo("check -Zfeatures=compare")
+        .masquerade_as_nightly_crabgo(&["features=compare"])
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -2044,7 +2044,7 @@ fn minimal_download() {
     switch_to_resolver_2(&p);
 
     // all
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_unordered(
             "\
 [DOWNLOADING] crates ...
@@ -2064,7 +2064,7 @@ fn minimal_download() {
     clear();
 
     // This disables decouple_dev_deps.
-    p.cargo("test --no-run")
+    p.crabgo("test --no-run")
         .with_stderr_unordered(
             "\
 [DOWNLOADING] crates ...
@@ -2089,7 +2089,7 @@ fn minimal_download() {
     clear();
 
     // This disables itarget, but leaves decouple_dev_deps enabled.
-    p.cargo("tree -e normal --target=all")
+    p.crabgo("tree -e normal --target=all")
         .with_stderr_unordered(
             "\
 [DOWNLOADING] crates ...
@@ -2116,7 +2116,7 @@ foo v0.1.0 ([ROOT]/foo)
     clear();
 
     // This disables itarget and decouple_dev_deps.
-    p.cargo("tree --target=all")
+    p.crabgo("tree --target=all")
         .with_stderr_unordered(
             "\
 [DOWNLOADING] crates ...
@@ -2157,7 +2157,7 @@ foo v0.1.0 ([ROOT]/foo)
     clear();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn pm_with_int_shared() {
     // This is a somewhat complex scenario of a proc-macro in a workspace with
     // an integration test where the proc-macro is used for other things, and
@@ -2166,12 +2166,12 @@ fn pm_with_int_shared() {
     // incorrectly computed based on the order that the graph was traversed.
     //
     // There are some uncertainties about exactly how proc-macros should behave
-    // with `--workspace`, see https://github.com/rust-lang/cargo/issues/8312.
+    // with `--workspace`, see https://github.com/rust-lang/crabgo/issues/8312.
     //
     // This uses a const-eval hack to do compile-time feature checking.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "pm", "shared"]
@@ -2179,7 +2179,7 @@ fn pm_with_int_shared() {
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2199,7 +2199,7 @@ fn pm_with_int_shared() {
             "#,
         )
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -2227,7 +2227,7 @@ fn pm_with_int_shared() {
             "#,
         )
         .file(
-            "shared/Cargo.toml",
+            "shared/Crabgo.toml",
             r#"
                 [package]
                 name = "shared"
@@ -2256,7 +2256,7 @@ fn pm_with_int_shared() {
         )
         .build();
 
-    p.cargo("build --workspace --all-targets --all-features -v")
+    p.crabgo("build --workspace --all-targets --all-features -v")
         .with_stderr_unordered(
             "\
 [COMPILING] shared [..]
@@ -2276,7 +2276,7 @@ fn pm_with_int_shared() {
         .run();
 
     // And again, should stay fresh.
-    p.cargo("build --workspace --all-targets --all-features -v")
+    p.crabgo("build --workspace --all-targets --all-features -v")
         .with_stderr_unordered(
             "\
 [FRESH] shared [..]
@@ -2287,7 +2287,7 @@ fn pm_with_int_shared() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_proc_macro() {
     // Checks for a bug when documenting a proc-macro with a dependency. The
     // doc unit builder was not carrying the "for host" setting through the
@@ -2295,7 +2295,7 @@ fn doc_proc_macro() {
     // it was looking for target features instead of host features.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2308,7 +2308,7 @@ fn doc_proc_macro() {
         )
         .file("src/lib.rs", "")
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -2322,7 +2322,7 @@ fn doc_proc_macro() {
             "#,
         )
         .file("pm/src/lib.rs", "")
-        .file("pm-dep/Cargo.toml", &basic_manifest("pm-dep", "0.1.0"))
+        .file("pm-dep/Crabgo.toml", &basic_manifest("pm-dep", "0.1.0"))
         .file("pm-dep/src/lib.rs", "")
         .build();
 
@@ -2331,10 +2331,10 @@ fn doc_proc_macro() {
     // "Checking pm-dep". This is because it is both building it and checking
     // it in parallel (building so it can build the proc-macro, and checking
     // so rustdoc can load it).
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn edition_2021_default_2() {
     // edition = 2021 defaults to v2 resolver.
     Package::new("common", "1.0.0")
@@ -2352,7 +2352,7 @@ fn edition_2021_default_2() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2367,7 +2367,7 @@ fn edition_2021_default_2() {
         .build();
 
     // First without edition.
-    p.cargo("tree -f")
+    p.crabgo("tree -f")
         .arg("{p} feats:{f}")
         .with_stdout(
             "\
@@ -2379,9 +2379,9 @@ foo v0.1.0 [..]
         .run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
-            cargo-features = ["edition2021"]
+            crabgo-features = ["edition2021"]
 
             [package]
             name = "foo"
@@ -2395,7 +2395,7 @@ foo v0.1.0 [..]
     );
 
     // Importantly, this does not include `f1` on `common`.
-    p.cargo("tree -f")
+    p.crabgo("tree -f")
         .arg("{p} feats:{f}")
         .with_stdout(
             "\
@@ -2407,7 +2407,7 @@ foo v0.1.0 [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn all_features_merges_with_features() {
     Package::new("dep", "0.1.0")
         .feature("feat1", &[])
@@ -2424,7 +2424,7 @@ fn all_features_merges_with_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2453,7 +2453,7 @@ fn all_features_merges_with_features() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("run --example ex --all-features --features dep/feat1")
+    p.crabgo("run --example ex --all-features --features dep/feat1")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -2470,7 +2470,7 @@ fn all_features_merges_with_features() {
 
     switch_to_resolver_2(&p);
 
-    p.cargo("run --example ex --all-features --features dep/feat1")
+    p.crabgo("run --example ex --all-features --features dep/feat1")
         .with_stderr(
             "\
 [FINISHED] [..]
@@ -2481,12 +2481,12 @@ fn all_features_merges_with_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_optional_host_deps_activated() {
-    // To prevent regression like rust-lang/cargo#11330
+    // To prevent regression like rust-lang/crabgo#11330
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2499,7 +2499,7 @@ fn dep_with_optional_host_deps_activated() {
         )
         .file("src/lib.rs", "")
         .file(
-            "serde/Cargo.toml",
+            "serde/Crabgo.toml",
             r#"
                 [package]
                 name = "serde"
@@ -2520,7 +2520,7 @@ fn dep_with_optional_host_deps_activated() {
         .file("serde/src/lib.rs", "")
         .file("serde/build.rs", "fn main() {}")
         .file(
-            "serde_derive/Cargo.toml",
+            "serde_derive/Crabgo.toml",
             r#"
                 [package]
                 name = "serde_derive"
@@ -2533,13 +2533,13 @@ fn dep_with_optional_host_deps_activated() {
         )
         .file("serde_derive/src/lib.rs", "")
         .file(
-            "serde_build/Cargo.toml",
+            "serde_build/Crabgo.toml",
             &basic_manifest("serde_build", "0.1.0"),
         )
         .file("serde_build/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [COMPILING] serde_build v0.1.0 ([CWD]/serde_build)

@@ -1,5 +1,5 @@
 name: Tracking Issue
-description: A tracking issue for an accepted feature or RFC in Cargo.
+description: A tracking issue for an accepted feature or RFC in Crabgo.
 title: "Tracking Issue for _FEATURE_NAME_"
 labels: ["C-tracking-issue"]
 body:
@@ -18,7 +18,7 @@ body:
         RFC: [#NNNN](https://github.com/rust-lang/rfcs/pull/NNNN) <!-- If this is an RFC -->
         Original issue: #NNNN <!-- if there is a related issue that spawned this feature -->
         Implementation: #NNNN <!-- link to the PR that implemented this feature if applicable -->
-        Documentation: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#my-feature
+        Documentation: https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#my-feature
 
         Please enter a short, one-sentence description here.
     validations:

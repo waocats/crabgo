@@ -1,23 +1,23 @@
 //! Tests for corrupt git repos.
 
-use cargo_test_support::paths;
-use cargo_test_support::{basic_manifest, git, project};
-use cargo_util::paths as cargopaths;
+use crabgo_test_support::paths;
+use crabgo_test_support::{basic_manifest, git, project};
+use crabgo_util::paths as crabgopaths;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[cargo_test]
+#[crabgo_test]
 fn deleting_database_files() {
     let project = project();
     let git_project = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -34,20 +34,20 @@ fn deleting_database_files() {
         .file("src/lib.rs", "")
         .build();
 
-    project.cargo("check").run();
+    project.crabgo("check").run();
 
     let mut files = Vec::new();
-    find_files(&paths::home().join(".cargo/git/db"), &mut files);
+    find_files(&paths::home().join(".crabgo/git/db"), &mut files);
     assert!(!files.is_empty());
 
-    let log = "cargo::sources::git=trace";
+    let log = "crabgo::sources::git=trace";
     for file in files {
         if !file.exists() {
             continue;
         }
         println!("deleting {}", file.display());
-        cargopaths::remove_file(&file).unwrap();
-        project.cargo("check -v").env("CARGO_LOG", log).run();
+        crabgopaths::remove_file(&file).unwrap();
+        project.crabgo("check -v").env("CRABGO_LOG", log).run();
 
         if !file.exists() {
             continue;
@@ -60,22 +60,22 @@ fn deleting_database_files() {
             .unwrap()
             .set_len(2)
             .unwrap();
-        project.cargo("check -v").env("CARGO_LOG", log).run();
+        project.crabgo("check -v").env("CRABGO_LOG", log).run();
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deleting_checkout_files() {
     let project = project();
     let git_project = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -92,10 +92,10 @@ fn deleting_checkout_files() {
         .file("src/lib.rs", "")
         .build();
 
-    project.cargo("check").run();
+    project.crabgo("check").run();
 
     let dir = paths::home()
-        .join(".cargo/git/checkouts")
+        .join(".crabgo/git/checkouts")
         // get the first entry in the checkouts dir for the package's location
         .read_dir()
         .unwrap()
@@ -116,14 +116,14 @@ fn deleting_checkout_files() {
     find_files(&dir, &mut files);
     assert!(!files.is_empty());
 
-    let log = "cargo::sources::git=trace";
+    let log = "crabgo::sources::git=trace";
     for file in files {
         if !file.exists() {
             continue;
         }
         println!("deleting {}", file.display());
-        cargopaths::remove_file(&file).unwrap();
-        project.cargo("check -v").env("CARGO_LOG", log).run();
+        crabgopaths::remove_file(&file).unwrap();
+        project.crabgo("check -v").env("CRABGO_LOG", log).run();
 
         if !file.exists() {
             continue;
@@ -136,7 +136,7 @@ fn deleting_checkout_files() {
             .unwrap()
             .set_len(2)
             .unwrap();
-        project.cargo("check -v").env("CARGO_LOG", log).run();
+        project.crabgo("check -v").env("CRABGO_LOG", log).run();
     }
 }
 

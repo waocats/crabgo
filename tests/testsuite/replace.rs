@@ -1,22 +1,22 @@
 //! Tests for `[replace]` table source replacement.
 
-use cargo_test_support::git;
-use cargo_test_support::paths;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::git;
+use crabgo_test_support::paths;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn override_simple() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -39,7 +39,7 @@ fn override_simple() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -52,18 +52,18 @@ fn override_simple() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_with_features() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -86,7 +86,7 @@ fn override_with_features() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..] index
@@ -101,18 +101,18 @@ will not take effect because the replacement dependency does not support this me
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_with_setting_default_features() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -135,7 +135,7 @@ fn override_with_setting_default_features() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..] index
@@ -150,11 +150,11 @@ will not take effect because the replacement dependency does not support this me
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn missing_version() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -171,7 +171,7 @@ fn missing_version() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -184,11 +184,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_semver_version() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -205,7 +205,7 @@ fn invalid_semver_version() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -218,14 +218,14 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn different_version() {
     Package::new("bar", "0.2.0").publish();
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -242,7 +242,7 @@ fn different_version() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -255,7 +255,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn transitive() {
     Package::new("bar", "0.1.0").publish();
     Package::new("baz", "0.2.0")
@@ -264,13 +264,13 @@ fn transitive() {
         .publish();
 
     let foo = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -290,7 +290,7 @@ fn transitive() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -305,21 +305,21 @@ fn transitive() {
         )
         .run();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn persists_across_rebuilds() {
     Package::new("bar", "0.1.0").publish();
 
     let foo = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -342,7 +342,7 @@ fn persists_across_rebuilds() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -354,22 +354,22 @@ fn persists_across_rebuilds() {
         )
         .run();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replace_registry_with_path() {
     Package::new("bar", "0.1.0").publish();
 
     let _ = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -389,7 +389,7 @@ fn replace_registry_with_path() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -401,7 +401,7 @@ fn replace_registry_with_path() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn use_a_spec_to_select() {
     Package::new("baz", "0.1.1")
         .file("src/lib.rs", "pub fn baz1() {}")
@@ -416,13 +416,13 @@ fn use_a_spec_to_select() {
         .publish();
 
     let foo = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("baz", "0.2.0"))
+        .file("Crabgo.toml", &basic_manifest("baz", "0.2.0"))
         .file("src/lib.rs", "pub fn baz3() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -454,7 +454,7 @@ fn use_a_spec_to_select() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -472,14 +472,14 @@ fn use_a_spec_to_select() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_adds_some_deps() {
     Package::new("baz", "0.1.1").publish();
     Package::new("bar", "0.1.0").publish();
 
     let foo = git::repo(&paths::root().join("override"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -495,7 +495,7 @@ fn override_adds_some_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -515,7 +515,7 @@ fn override_adds_some_deps() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -530,10 +530,10 @@ fn override_adds_some_deps() {
         )
         .run();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
     Package::new("baz", "0.1.2").publish();
-    p.cargo("update -p")
+    p.crabgo("update -p")
         .arg(&format!("{}#bar", foo.url()))
         .with_stderr(
             "\
@@ -542,7 +542,7 @@ fn override_adds_some_deps() {
 ",
         )
         .run();
-    p.cargo("update -p https://github.com/rust-lang/crates.io-index#bar")
+    p.crabgo("update -p https://github.com/rust-lang/crates.io-index#bar")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -550,10 +550,10 @@ fn override_adds_some_deps() {
         )
         .run();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn locked_means_locked_yes_no_seriously_i_mean_locked() {
     // this in theory exercises #2041
     Package::new("baz", "0.1.0").publish();
@@ -562,7 +562,7 @@ fn locked_means_locked_yes_no_seriously_i_mean_locked() {
 
     let foo = git::repo(&paths::root().join("override"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -578,7 +578,7 @@ fn locked_means_locked_yes_no_seriously_i_mean_locked() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -599,24 +599,24 @@ fn locked_means_locked_yes_no_seriously_i_mean_locked() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
-    p.cargo("check").with_stdout("").run();
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_wrong_name() {
     Package::new("baz", "0.1.0").publish();
 
     let foo = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -636,7 +636,7 @@ fn override_wrong_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -653,7 +653,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_with_nothing() {
     Package::new("bar", "0.1.0").publish();
 
@@ -663,7 +663,7 @@ fn override_with_nothing() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -683,7 +683,7 @@ fn override_with_nothing() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -698,17 +698,17 @@ Caused by:
   Unable to update file://[..]
 
 Caused by:
-  Could not find Cargo.toml in `[..]`
+  Could not find Crabgo.toml in `[..]`
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_wrong_version() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -722,7 +722,7 @@ fn override_wrong_version() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -735,18 +735,18 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_specs() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -769,7 +769,7 @@ fn multiple_specs() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -789,18 +789,18 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_override_dep() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -820,7 +820,7 @@ fn test_override_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("test -p bar")
+    p.crabgo("test -p bar")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -833,18 +833,18 @@ Please re-run this command with [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update() {
     Package::new("bar", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -864,8 +864,8 @@ fn update() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("update")
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("update")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -877,13 +877,13 @@ fn update() {
 
 // foo -> near -> far
 // near is overridden with itself
-#[cargo_test]
+#[crabgo_test]
 fn no_override_self() {
     let deps = git::repo(&paths::root().join("override"))
-        .file("far/Cargo.toml", &basic_manifest("far", "0.1.0"))
+        .file("far/Crabgo.toml", &basic_manifest("far", "0.1.0"))
         .file("far/src/lib.rs", "")
         .file(
-            "near/Cargo.toml",
+            "near/Crabgo.toml",
             r#"
                 [package]
                 name = "near"
@@ -899,7 +899,7 @@ fn no_override_self() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -919,10 +919,10 @@ fn no_override_self() {
         .file("src/lib.rs", "#![no_std] pub extern crate near;")
         .build();
 
-    p.cargo("check --verbose").run();
+    p.crabgo("check --verbose").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_an_override() {
     Package::new("chrono", "0.2.0")
         .dep("serde", "< 0.9")
@@ -936,7 +936,7 @@ fn override_an_override() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -953,7 +953,7 @@ fn override_an_override() {
             "#,
         )
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             r#"
                 [[package]]
                 name = "foo"
@@ -1005,7 +1005,7 @@ fn override_an_override() {
         ",
         )
         .file(
-            "chrono/Cargo.toml",
+            "chrono/Crabgo.toml",
             r#"
                 [package]
                 name = "chrono"
@@ -1025,21 +1025,21 @@ fn override_an_override() {
             }
         ",
         )
-        .file("serde/Cargo.toml", &basic_manifest("serde", "0.8.0"))
+        .file("serde/Crabgo.toml", &basic_manifest("serde", "0.8.0"))
         .file("serde/src/lib.rs", "pub fn serde08_override() {}")
         .build();
 
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn overriding_nonexistent_no_spurious() {
     Package::new("bar", "0.1.0").dep("baz", "0.1").publish();
     Package::new("baz", "0.1.0").publish();
 
     let bar = git::repo(&paths::root().join("override"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1051,13 +1051,13 @@ fn overriding_nonexistent_no_spurious() {
             "#,
         )
         .file("src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1078,8 +1078,8 @@ fn overriding_nonexistent_no_spurious() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check")
+    p.crabgo("check").run();
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] package replacement is not used: [..]baz@0.1.0
@@ -1090,14 +1090,14 @@ fn overriding_nonexistent_no_spurious() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_warnings_when_replace_is_used_in_another_workspace_member() {
     Package::new("bar", "0.1.0").publish();
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = [ "first_crate", "second_crate"]
@@ -1107,7 +1107,7 @@ fn no_warnings_when_replace_is_used_in_another_workspace_member() {
             "#,
         )
         .file(
-            "first_crate/Cargo.toml",
+            "first_crate/Crabgo.toml",
             r#"
                 [package]
                 name = "first_crate"
@@ -1119,15 +1119,15 @@ fn no_warnings_when_replace_is_used_in_another_workspace_member() {
         )
         .file("first_crate/src/lib.rs", "")
         .file(
-            "second_crate/Cargo.toml",
+            "second_crate/Crabgo.toml",
             &basic_manifest("second_crate", "0.1.0"),
         )
         .file("second_crate/src/lib.rs", "")
-        .file("local_bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("local_bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("local_bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("first_crate")
         .with_stdout("")
         .with_stderr(
@@ -1139,7 +1139,7 @@ fn no_warnings_when_replace_is_used_in_another_workspace_member() {
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("second_crate")
         .with_stdout("")
         .with_stderr(
@@ -1150,14 +1150,14 @@ fn no_warnings_when_replace_is_used_in_another_workspace_member() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replace_to_path_dep() {
     Package::new("bar", "0.1.0").dep("baz", "0.1").publish();
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1173,7 +1173,7 @@ fn replace_to_path_dep() {
         )
         .file("src/lib.rs", "extern crate bar;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1188,14 +1188,14 @@ fn replace_to_path_dep() {
             "bar/src/lib.rs",
             "extern crate baz; pub fn bar() { baz::baz(); }",
         )
-        .file("bar/baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("bar/baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("bar/baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_with_default_feature() {
     Package::new("another", "0.1.0").publish();
     Package::new("another", "0.1.1").dep("bar", "0.1").publish();
@@ -1203,7 +1203,7 @@ fn override_with_default_feature() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1221,7 +1221,7 @@ fn override_with_default_feature() {
         )
         .file("src/main.rs", "extern crate bar; fn main() { bar::bar(); }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1240,7 +1240,7 @@ fn override_with_default_feature() {
             "#,
         )
         .file(
-            "another2/Cargo.toml",
+            "another2/Crabgo.toml",
             r#"
                 [package]
                 name = "another2"
@@ -1254,16 +1254,16 @@ fn override_with_default_feature() {
         .file("another2/src/lib.rs", "")
         .build();
 
-    p.cargo("run").run();
+    p.crabgo("run").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_plus_dep() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1279,7 +1279,7 @@ fn override_plus_dep() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1293,7 +1293,7 @@ fn override_plus_dep() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("error: cyclic package dependency: [..]")
         .run();

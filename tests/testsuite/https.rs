@@ -1,20 +1,20 @@
 //! Network tests for https transport.
 //!
-//! Note that these tests will generally require setting CARGO_CONTAINER_TESTS
-//! or CARGO_PUBLIC_NETWORK_TESTS.
+//! Note that these tests will generally require setting CRABGO_CONTAINER_TESTS
+//! or CRABGO_PUBLIC_NETWORK_TESTS.
 
-use cargo_test_support::containers::Container;
-use cargo_test_support::project;
+use crabgo_test_support::containers::Container;
+use crabgo_test_support::project;
 
-#[cargo_test(container_test)]
+#[crabgo_test(container_test)]
 fn self_signed_should_fail() {
-    // Cargo should not allow a connection to a self-signed certificate.
+    // Crabgo should not allow a connection to a self-signed certificate.
     let apache = Container::new("apache").launch();
     let port = apache.port_mappings[&443];
     let url = format!("https://127.0.0.1:{port}/repos/bar.git");
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -38,7 +38,7 @@ fn self_signed_should_fail() {
     } else {
         panic!("target not supported");
     };
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_status(101)
         .with_stderr(&format!(
             "\
@@ -52,12 +52,12 @@ Caused by:
   Unable to update https://127.0.0.1:[..]/repos/bar.git
 
 Caused by:
-  failed to clone into: [ROOT]/home/.cargo/git/db/bar-[..]
+  failed to clone into: [ROOT]/home/.crabgo/git/db/bar-[..]
 
 Caused by:
   network failure seems to have happened
   if a proxy or similar is necessary `net.git-fetch-with-cli` may help here
-  https://doc.rust-lang.org/cargo/reference/config.html#netgit-fetch-with-cli
+  https://doc.rust-lang.org/crabgo/reference/config.html#netgit-fetch-with-cli
 
 Caused by:
   {err_msg}
@@ -66,7 +66,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test(container_test)]
+#[crabgo_test(container_test)]
 fn self_signed_with_cacert() {
     // When using cainfo, that should allow a connection to a self-signed cert.
 
@@ -100,7 +100,7 @@ fn self_signed_with_cacert() {
     let server_crt = apache.read_file("/usr/local/apache2/conf/server.crt");
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -114,7 +114,7 @@ fn self_signed_with_cacert() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             &format!(
                 r#"
                     [http]
@@ -124,17 +124,17 @@ fn self_signed_with_cacert() {
         )
         .file("server.crt", &server_crt)
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr("[UPDATING] git repository `https://127.0.0.1:[..]/repos/bar.git`")
         .run();
 }
 
-#[cargo_test(public_network_test)]
+#[crabgo_test(public_network_test)]
 fn github_works() {
     // Check that an https connection to github.com works.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -146,7 +146,7 @@ fn github_works() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr("[UPDATING] git repository `https://github.com/rust-lang/bitflags.git`")
         .run();
 }

@@ -1,12 +1,12 @@
 //! Tests for network configuration.
 
-use cargo_test_support::project;
+use crabgo_test_support::project;
 
-#[cargo_test]
+#[crabgo_test]
 fn net_retry_loads_from_config() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -19,7 +19,7 @@ fn net_retry_loads_from_config() {
         )
         .file("src/main.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
            [net]
            retry=1
@@ -29,7 +29,7 @@ fn net_retry_loads_from_config() {
         )
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr_contains(
             "[WARNING] spurious network error \
@@ -38,11 +38,11 @@ fn net_retry_loads_from_config() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn net_retry_git_outputs_warning() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -54,7 +54,7 @@ fn net_retry_git_outputs_warning() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
            [http]
            timeout=1
@@ -63,7 +63,7 @@ fn net_retry_git_outputs_warning() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check -v -j 1")
+    p.crabgo("check -v -j 1")
         .with_status(101)
         .with_stderr_contains(
             "[WARNING] spurious network error \

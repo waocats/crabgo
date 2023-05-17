@@ -1,17 +1,17 @@
 //! Tests for targets with `required-features`.
 
-use cargo_test_support::install::{
+use crabgo_test_support::install::{
     assert_has_installed_exe, assert_has_not_installed_exe, cargo_home,
 };
-use cargo_test_support::is_nightly;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::project;
+use crabgo_test_support::is_nightly;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::project;
 
-#[cargo_test]
+#[crabgo_test]
 fn build_bin_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -43,15 +43,15 @@ fn build_bin_default_features() {
         .file("src/lib.rs", r#"#[cfg(feature = "a")] pub fn foo() {}"#)
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.bin("foo").is_file());
 
-    p.cargo("build --no-default-features").run();
+    p.crabgo("build --no-default-features").run();
 
-    p.cargo("build --bin=foo").run();
+    p.crabgo("build --bin=foo").run();
     assert!(p.bin("foo").is_file());
 
-    p.cargo("build --bin=foo --no-default-features")
+    p.crabgo("build --bin=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -62,11 +62,11 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_bin_arg_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -84,15 +84,15 @@ fn build_bin_arg_features() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --features a").run();
+    p.crabgo("build --features a").run();
     assert!(p.bin("foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_bin_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -120,24 +120,24 @@ fn build_bin_multiple_required_features() {
         .file("src/foo_2.rs", "fn main() {}")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     assert!(!p.bin("foo_1").is_file());
     assert!(p.bin("foo_2").is_file());
 
-    p.cargo("build --features c").run();
+    p.crabgo("build --features c").run();
 
     assert!(p.bin("foo_1").is_file());
     assert!(p.bin("foo_2").is_file());
 
-    p.cargo("build --no-default-features").run();
+    p.crabgo("build --no-default-features").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_example_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -156,10 +156,10 @@ fn build_example_default_features() {
         .file("examples/foo.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --example=foo").run();
+    p.crabgo("build --example=foo").run();
     assert!(p.bin("examples/foo").is_file());
 
-    p.cargo("build --example=foo --no-default-features")
+    p.crabgo("build --example=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -170,11 +170,11 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_example_arg_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -192,15 +192,15 @@ fn build_example_arg_features() {
         .file("examples/foo.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --example=foo --features a").run();
+    p.crabgo("build --example=foo --features a").run();
     assert!(p.bin("examples/foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_example_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -226,7 +226,7 @@ fn build_example_multiple_required_features() {
         .file("examples/foo_2.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --example=foo_1")
+    p.crabgo("build --example=foo_1")
         .with_status(101)
         .with_stderr(
             "\
@@ -235,18 +235,18 @@ Consider enabling them by passing, e.g., `--features=\"b c\"`
 ",
         )
         .run();
-    p.cargo("build --example=foo_2").run();
+    p.crabgo("build --example=foo_2").run();
 
     assert!(!p.bin("examples/foo_1").is_file());
     assert!(p.bin("examples/foo_2").is_file());
 
-    p.cargo("build --example=foo_1 --features c").run();
-    p.cargo("build --example=foo_2 --features c").run();
+    p.crabgo("build --example=foo_1 --features c").run();
+    p.crabgo("build --example=foo_2 --features c").run();
 
     assert!(p.bin("examples/foo_1").is_file());
     assert!(p.bin("examples/foo_2").is_file());
 
-    p.cargo("build --example=foo_1 --no-default-features")
+    p.crabgo("build --example=foo_1 --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -255,7 +255,7 @@ Consider enabling them by passing, e.g., `--features=\"b c\"`
 ",
         )
         .run();
-    p.cargo("build --example=foo_2 --no-default-features")
+    p.crabgo("build --example=foo_2 --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -266,11 +266,11 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -289,7 +289,7 @@ fn test_default_features() {
         .file("tests/foo.rs", "#[test]\nfn test() {}")
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -299,12 +299,12 @@ fn test_default_features() {
         .with_stdout_contains("test test ... ok")
         .run();
 
-    p.cargo("test --no-default-features")
+    p.crabgo("test --no-default-features")
         .with_stderr("[FINISHED] test [unoptimized + debuginfo] target(s) in [..]")
         .with_stdout("")
         .run();
 
-    p.cargo("test --test=foo")
+    p.crabgo("test --test=foo")
         .with_stderr(
             "\
 [FINISHED] test [unoptimized + debuginfo] target(s) in [..]
@@ -313,7 +313,7 @@ fn test_default_features() {
         .with_stdout_contains("test test ... ok")
         .run();
 
-    p.cargo("test --test=foo --no-default-features")
+    p.crabgo("test --test=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -324,11 +324,11 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_arg_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -346,7 +346,7 @@ fn test_arg_features() {
         .file("tests/foo.rs", "#[test]\nfn test() {}")
         .build();
 
-    p.cargo("test --features a")
+    p.crabgo("test --features a")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -357,11 +357,11 @@ fn test_arg_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -387,7 +387,7 @@ fn test_multiple_required_features() {
         .file("tests/foo_2.rs", "#[test]\nfn test() {}")
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -397,7 +397,7 @@ fn test_multiple_required_features() {
         .with_stdout_contains("test test ... ok")
         .run();
 
-    p.cargo("test --features c")
+    p.crabgo("test --features c")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -408,17 +408,17 @@ fn test_multiple_required_features() {
         .with_stdout_contains_n("test test ... ok", 2)
         .run();
 
-    p.cargo("test --no-default-features")
+    p.crabgo("test --no-default-features")
         .with_stderr("[FINISHED] test [unoptimized + debuginfo] target(s) in [..]")
         .with_stdout("")
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -447,7 +447,7 @@ fn bench_default_features() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -457,12 +457,12 @@ fn bench_default_features() {
         .with_stdout_contains("test bench ... bench: [..]")
         .run();
 
-    p.cargo("bench --no-default-features")
+    p.crabgo("bench --no-default-features")
         .with_stderr("[FINISHED] bench [optimized] target(s) in [..]".to_string())
         .with_stdout("")
         .run();
 
-    p.cargo("bench --bench=foo")
+    p.crabgo("bench --bench=foo")
         .with_stderr(
             "\
 [FINISHED] bench [optimized] target(s) in [..]
@@ -471,7 +471,7 @@ fn bench_default_features() {
         .with_stdout_contains("test bench ... bench: [..]")
         .run();
 
-    p.cargo("bench --bench=foo --no-default-features")
+    p.crabgo("bench --bench=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -482,11 +482,11 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_arg_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -514,7 +514,7 @@ fn bench_arg_features() {
         )
         .build();
 
-    p.cargo("bench --features a")
+    p.crabgo("bench --features a")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -525,11 +525,11 @@ fn bench_arg_features() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -575,7 +575,7 @@ fn bench_multiple_required_features() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -585,7 +585,7 @@ fn bench_multiple_required_features() {
         .with_stdout_contains("test bench ... bench: [..]")
         .run();
 
-    p.cargo("bench --features c")
+    p.crabgo("bench --features c")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -596,17 +596,17 @@ fn bench_multiple_required_features() {
         .with_stdout_contains_n("test bench ... bench: [..]", 2)
         .run();
 
-    p.cargo("bench --no-default-features")
+    p.crabgo("bench --no-default-features")
         .with_stderr("[FINISHED] bench [optimized] target(s) in [..]")
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_default_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -630,11 +630,11 @@ fn install_default_features() {
         .file("examples/foo.rs", "fn main() {}")
         .build();
 
-    p.cargo("install --path .").run();
+    p.crabgo("install --path .").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --no-default-features")
+    p.crabgo("install --path . --no-default-features")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -648,11 +648,11 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"a\
         .run();
     assert_has_not_installed_exe(cargo_home(), "foo");
 
-    p.cargo("install --path . --bin=foo").run();
+    p.crabgo("install --path . --bin=foo").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --bin=foo --no-default-features")
+    p.crabgo("install --path . --bin=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -668,11 +668,11 @@ Caused by:
         .run();
     assert_has_not_installed_exe(cargo_home(), "foo");
 
-    p.cargo("install --path . --example=foo").run();
+    p.crabgo("install --path . --example=foo").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --example=foo --no-default-features")
+    p.crabgo("install --path . --example=foo --no-default-features")
         .with_status(101)
         .with_stderr(
             "\
@@ -689,11 +689,11 @@ Caused by:
     assert_has_not_installed_exe(cargo_home(), "foo");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_arg_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -711,16 +711,16 @@ fn install_arg_features() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("install --features a").run();
+    p.crabgo("install --features a").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -760,36 +760,36 @@ fn install_multiple_required_features() {
         .file("src/foo_4.rs", "fn main() {}")
         .build();
 
-    p.cargo("install --path .").run();
+    p.crabgo("install --path .").run();
     assert_has_not_installed_exe(cargo_home(), "foo_1");
     assert_has_installed_exe(cargo_home(), "foo_2");
     assert_has_not_installed_exe(cargo_home(), "foo_3");
     assert_has_not_installed_exe(cargo_home(), "foo_4");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --bins --examples").run();
+    p.crabgo("install --path . --bins --examples").run();
     assert_has_not_installed_exe(cargo_home(), "foo_1");
     assert_has_installed_exe(cargo_home(), "foo_2");
     assert_has_not_installed_exe(cargo_home(), "foo_3");
     assert_has_installed_exe(cargo_home(), "foo_4");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --features c").run();
+    p.crabgo("install --path . --features c").run();
     assert_has_installed_exe(cargo_home(), "foo_1");
     assert_has_installed_exe(cargo_home(), "foo_2");
     assert_has_not_installed_exe(cargo_home(), "foo_3");
     assert_has_not_installed_exe(cargo_home(), "foo_4");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --features c --bins --examples")
+    p.crabgo("install --path . --features c --bins --examples")
         .run();
     assert_has_installed_exe(cargo_home(), "foo_1");
     assert_has_installed_exe(cargo_home(), "foo_2");
     assert_has_installed_exe(cargo_home(), "foo_3");
     assert_has_installed_exe(cargo_home(), "foo_4");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 
-    p.cargo("install --path . --no-default-features")
+    p.crabgo("install --path . --no-default-features")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -803,7 +803,7 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"b 
 ",
         )
         .run();
-    p.cargo("install --path . --no-default-features --bins")
+    p.crabgo("install --path . --no-default-features --bins")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -818,7 +818,7 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"b 
 ",
         )
         .run();
-    p.cargo("install --path . --no-default-features --examples")
+    p.crabgo("install --path . --no-default-features --examples")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -833,7 +833,7 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"b 
 ",
         )
         .run();
-    p.cargo("install --path . --no-default-features --bins --examples")
+    p.crabgo("install --path . --no-default-features --bins --examples")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -854,11 +854,11 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"b 
     assert_has_not_installed_exe(cargo_home(), "foo_4");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_feature_in_toml() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -900,7 +900,7 @@ fn dep_feature_in_toml() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -914,18 +914,18 @@ fn dep_feature_in_toml() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     // bin
-    p.cargo("build --bin=foo").run();
+    p.crabgo("build --bin=foo").run();
     assert!(p.bin("foo").is_file());
 
     // example
-    p.cargo("build --example=foo").run();
+    p.crabgo("build --example=foo").run();
     assert!(p.bin("examples/foo").is_file());
 
     // test
-    p.cargo("test --test=foo")
+    p.crabgo("test --test=foo")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -937,7 +937,7 @@ fn dep_feature_in_toml() {
 
     // bench
     if is_nightly() {
-        p.cargo("bench --bench=foo")
+        p.crabgo("bench --bench=foo")
             .with_stderr(
                 "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -950,16 +950,16 @@ fn dep_feature_in_toml() {
     }
 
     // install
-    p.cargo("install").run();
+    p.crabgo("install").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_feature_in_cmd_line() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1011,7 +1011,7 @@ fn dep_feature_in_cmd_line() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1026,11 +1026,11 @@ fn dep_feature_in_cmd_line() {
         .build();
 
     // This is a no-op
-    p.cargo("build").with_stderr("[FINISHED] dev [..]").run();
+    p.crabgo("build").with_stderr("[FINISHED] dev [..]").run();
     assert!(!p.bin("foo").is_file());
 
     // bin
-    p.cargo("build --bin=foo")
+    p.crabgo("build --bin=foo")
         .with_status(101)
         .with_stderr(
             "\
@@ -1040,11 +1040,11 @@ Consider enabling them by passing, e.g., `--features=\"bar/a\"`
         )
         .run();
 
-    p.cargo("build --bin=foo --features bar/a").run();
+    p.crabgo("build --bin=foo --features bar/a").run();
     assert!(p.bin("foo").is_file());
 
     // example
-    p.cargo("build --example=foo")
+    p.crabgo("build --example=foo")
         .with_status(101)
         .with_stderr(
             "\
@@ -1054,19 +1054,19 @@ Consider enabling them by passing, e.g., `--features=\"bar/a\"`
         )
         .run();
 
-    p.cargo("build --example=foo --features bar/a").run();
+    p.crabgo("build --example=foo --features bar/a").run();
     assert!(p.bin("examples/foo").is_file());
 
     // test
     // This is a no-op, since no tests are enabled
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr("[FINISHED] test [unoptimized + debuginfo] target(s) in [..]")
         .with_stdout("")
         .run();
 
     // Delete the target directory so this can check if the main.rs gets built.
     p.build_dir().rm_rf();
-    p.cargo("test --test=foo --features bar/a")
+    p.crabgo("test --test=foo --features bar/a")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -1079,12 +1079,12 @@ Consider enabling them by passing, e.g., `--features=\"bar/a\"`
 
     // bench
     if is_nightly() {
-        p.cargo("bench")
+        p.crabgo("bench")
             .with_stderr("[FINISHED] bench [optimized] target(s) in [..]")
             .with_stdout("")
             .run();
 
-        p.cargo("bench --bench=foo --features bar/a")
+        p.crabgo("bench --bench=foo --features bar/a")
             .with_stderr(
                 "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -1097,7 +1097,7 @@ Consider enabling them by passing, e.g., `--features=\"bar/a\"`
     }
 
     // install
-    p.cargo("install --path .")
+    p.crabgo("install --path .")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([..])
@@ -1111,16 +1111,16 @@ Consider enabling some of the needed features by passing, e.g., `--features=\"ba
         .run();
     assert_has_not_installed_exe(cargo_home(), "foo");
 
-    p.cargo("install --features bar/a").run();
+    p.crabgo("install --features bar/a").run();
     assert_has_installed_exe(cargo_home(), "foo");
-    p.cargo("uninstall foo").run();
+    p.crabgo("uninstall foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_skips_compiling_bin_with_missing_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1141,7 +1141,7 @@ fn test_skips_compiling_bin_with_missing_required_features() {
         .file("benches/foo.rs", "")
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -1151,7 +1151,7 @@ fn test_skips_compiling_bin_with_missing_required_features() {
         .with_stdout_contains("running 0 tests")
         .run();
 
-    p.cargo("test --features a -j 1")
+    p.crabgo("test --features a -j 1")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -1161,7 +1161,7 @@ error[E0463]: can't find crate for `bar`",
         .run();
 
     if is_nightly() {
-        p.cargo("bench")
+        p.crabgo("bench")
             .with_stderr(
                 "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -1171,7 +1171,7 @@ error[E0463]: can't find crate for `bar`",
             .with_stdout_contains("running 0 tests")
             .run();
 
-        p.cargo("bench --features a -j 1")
+        p.crabgo("bench --features a -j 1")
             .with_status(101)
             .with_stderr_contains(
                 "\
@@ -1182,11 +1182,11 @@ error[E0463]: can't find crate for `bar`",
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_default() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1206,7 +1206,7 @@ fn run_default() {
         .file("src/main.rs", "extern crate foo; fn main() {}")
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
@@ -1216,14 +1216,14 @@ Consider enabling them by passing, e.g., `--features=\"a\"`
         )
         .run();
 
-    p.cargo("run --features a").run();
+    p.crabgo("run --features a").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_default_multiple_required_features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1257,22 +1257,22 @@ fn run_default_multiple_required_features() {
         .file("src/foo2.rs", "extern crate foo; fn main() {}")
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
-error: `cargo run` could not determine which binary to run[..]
+error: `crabgo run` could not determine which binary to run[..]
 available binaries: foo1, foo2, foo3",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn renamed_required_features() {
     // Test that required-features uses renamed package feature names.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1298,7 +1298,7 @@ fn renamed_required_features() {
             "#,
         )
         .file(
-            "a1/Cargo.toml",
+            "a1/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1319,7 +1319,7 @@ fn renamed_required_features() {
             "#,
         )
         .file(
-            "a2/Cargo.toml",
+            "a2/Crabgo.toml",
             r#"
               [package]
              name = "a"
@@ -1341,7 +1341,7 @@ fn renamed_required_features() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
@@ -1351,20 +1351,20 @@ Consider enabling them by passing, e.g., `--features=\"a1/f1\"`
         )
         .run();
 
-    p.cargo("build --features a1/f1").run();
+    p.crabgo("build --features a1/f1").run();
     p.rename_run("x", "x_with_f1").with_stdout("a1 f1").run();
 
-    p.cargo("build --features a1/f1,a2/f2").run();
+    p.crabgo("build --features a1/f1,a2/f2").run();
     p.rename_run("x", "x_with_f1_f2")
         .with_stdout("a1 f1\na2 f2")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn truncated_install_warning_message() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
     [package]
     name = "foo"
@@ -1436,7 +1436,7 @@ fn truncated_install_warning_message() {
         .file("examples/example1.rs", "fn main() {}")
         .build();
 
-    p.cargo("install --path .").with_stderr("\
+    p.crabgo("install --path .").with_stderr("\
 [INSTALLING] foo v0.1.0 ([..])
 [FINISHED] release [optimized] target(s) in [..]
 [WARNING] none of the package's binaries are available for install using the selected features
@@ -1447,6 +1447,6 @@ fn truncated_install_warning_message() {
   bin \"foo5\" requires the features: `feature1`, `feature2`, `feature3`, `feature4`, `feature5`
   bin \"foo6\" requires the features: `feature1`, `feature2`, `feature3`, `feature4`, `feature5`
   bin \"foo7\" requires the features: `feature1`, `feature2`, `feature3`, `feature4`, `feature5`
-4 more targets also requires features not enabled. See them in the Cargo.toml file.
+4 more targets also requires features not enabled. See them in the Crabgo.toml file.
 Consider enabling some of the needed features by passing, e.g., `--features=\"feature1 feature2 feature3\"`").run();
 }

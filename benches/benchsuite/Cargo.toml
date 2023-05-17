@@ -3,13 +3,13 @@ name = "benchsuite"
 version = "0.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/rust-lang/cargo"
-repository = "https://github.com/rust-lang/cargo"
-description = "Benchmarking suite for Cargo."
+homepage = "https://github.com/rust-lang/crabgo"
+repository = "https://github.com/rust-lang/crabgo"
+description = "Benchmarking suite for Crabgo."
 publish = false
 
 [dependencies]
-cargo.workspace = true
+crabgo.workspace = true
 criterion.workspace = true
 flate2.workspace = true
 tar.workspace = true

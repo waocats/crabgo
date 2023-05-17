@@ -1,9 +1,9 @@
-//! Tests for the `cargo tree` command.
+//! Tests for the `crabgo tree` command.
 
 use super::features2::switch_to_resolver_2;
-use cargo_test_support::cross_compile::{self, alternate};
-use cargo_test_support::registry::{Dependency, Package};
-use cargo_test_support::{basic_manifest, git, project, rustc_host, Project};
+use crabgo_test_support::cross_compile::{self, alternate};
+use crabgo_test_support::registry::{Dependency, Package};
+use crabgo_test_support::{basic_manifest, git, project, rustc_host, Project};
 
 fn make_simple_proj() -> Project {
     Package::new("c", "1.0.0").publish();
@@ -14,7 +14,7 @@ fn make_simple_proj() -> Project {
 
     project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -36,12 +36,12 @@ fn make_simple_proj() -> Project {
         .build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     // A simple test with a few different dependencies.
     let p = make_simple_proj();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -59,7 +59,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -p bdep")
+    p.crabgo("tree -p bdep")
         .with_stdout(
             "\
 bdep v1.0.0
@@ -70,22 +70,22 @@ bdep v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn virtual_workspace() {
     // Multiple packages in a virtual workspace.
     Package::new("somedep", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "baz", "c"]
             "#,
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "1.0.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "1.0.0"))
         .file("a/src/lib.rs", "")
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
             [package]
             name = "baz"
@@ -97,11 +97,11 @@ fn virtual_workspace() {
             "#,
         )
         .file("baz/src/lib.rs", "")
-        .file("c/Cargo.toml", &basic_manifest("c", "1.0.0"))
+        .file("c/Crabgo.toml", &basic_manifest("c", "1.0.0"))
         .file("c/src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 a v1.0.0 ([..]/foo/a)
@@ -115,9 +115,9 @@ c v1.0.0 ([..]/foo/c)
         )
         .run();
 
-    p.cargo("tree -p a").with_stdout("a v1.0.0 [..]").run();
+    p.crabgo("tree -p a").with_stdout("a v1.0.0 [..]").run();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .cwd("baz")
         .with_stdout(
             "\
@@ -129,7 +129,7 @@ baz v0.1.0 ([..]/foo/baz)
         .run();
 
     // exclude baz
-    p.cargo("tree --workspace --exclude baz")
+    p.crabgo("tree --workspace --exclude baz")
         .with_stdout(
             "\
 a v1.0.0 ([..]/foo/a)
@@ -140,7 +140,7 @@ c v1.0.0 ([..]/foo/c)
         .run();
 
     // exclude glob '*z'
-    p.cargo("tree --workspace --exclude '*z'")
+    p.crabgo("tree --workspace --exclude '*z'")
         .with_stdout(
             "\
 a v1.0.0 ([..]/foo/a)
@@ -151,7 +151,7 @@ c v1.0.0 ([..]/foo/c)
         .run();
 
     // include glob '*z'
-    p.cargo("tree -p '*z'")
+    p.crabgo("tree -p '*z'")
         .with_stdout(
             "\
 baz v0.1.0 ([..]/foo/baz)
@@ -162,9 +162,9 @@ baz v0.1.0 ([..]/foo/baz)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dedupe_edges() {
-    // Works around https://github.com/rust-lang/cargo/issues/7985
+    // Works around https://github.com/rust-lang/crabgo/issues/7985
     Package::new("bitflags", "1.0.0").publish();
     Package::new("manyfeat", "1.0.0")
         .feature("f1", &[])
@@ -184,7 +184,7 @@ fn dedupe_edges() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -199,7 +199,7 @@ fn dedupe_edges() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -215,7 +215,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn renamed_deps() {
     // Handles renamed dependencies.
     Package::new("one", "1.0.0").publish();
@@ -224,7 +224,7 @@ fn renamed_deps() {
     Package::new("bar", "2.0.0").dep("two", "1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -238,7 +238,7 @@ fn renamed_deps() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v1.0.0 ([..]/foo)
@@ -251,17 +251,17 @@ foo v1.0.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn source_kinds() {
     // Handles git and path sources.
     Package::new("regdep", "1.0.0").publish();
     let git_project = git::new("gitdep", |p| {
-        p.file("Cargo.toml", &basic_manifest("gitdep", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("gitdep", "1.0.0"))
             .file("src/lib.rs", "")
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -277,11 +277,11 @@ fn source_kinds() {
             ),
         )
         .file("src/lib.rs", "")
-        .file("pathdep/Cargo.toml", &basic_manifest("pathdep", "1.0.0"))
+        .file("pathdep/Crabgo.toml", &basic_manifest("pathdep", "1.0.0"))
         .file("pathdep/src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -293,14 +293,14 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features() {
     // Exercises a variety of feature behaviors.
     Package::new("optdep_default", "1.0.0").publish();
     Package::new("optdep", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -317,7 +317,7 @@ fn features() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo)
@@ -326,7 +326,7 @@ a v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --no-default-features")
+    p.crabgo("tree --no-default-features")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo)
@@ -334,7 +334,7 @@ a v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --all-features")
+    p.crabgo("tree --all-features")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo)
@@ -344,7 +344,7 @@ a v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --features optdep")
+    p.crabgo("tree --features optdep")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo)
@@ -355,7 +355,7 @@ a v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn filters_target() {
     // --target flag
     if cross_compile::disabled() {
@@ -376,7 +376,7 @@ fn filters_target() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -408,7 +408,7 @@ fn filters_target() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -421,7 +421,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --target")
+    p.crabgo("tree --target")
         .arg(alternate())
         .with_stdout(
             "\
@@ -437,7 +437,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --target")
+    p.crabgo("tree --target")
         .arg(rustc_host())
         .with_stdout(
             "\
@@ -451,7 +451,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --target=all")
+    p.crabgo("tree --target=all")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -471,7 +471,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // no-proc-macro
-    p.cargo("tree --target=all -e no-proc-macro")
+    p.crabgo("tree --target=all -e no-proc-macro")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -489,7 +489,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_selected_target_dependency() {
     // --target flag
     if cross_compile::disabled() {
@@ -499,7 +499,7 @@ fn no_selected_target_dependency() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -517,7 +517,7 @@ fn no_selected_target_dependency() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -525,7 +525,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -i targetdep")
+    p.crabgo("tree -i targetdep")
         .with_stderr(
             "\
 [WARNING] nothing to print.
@@ -535,7 +535,7 @@ try to use option `--target all` first, and then narrow your search scope accord
 ",
         )
         .run();
-    p.cargo("tree -i targetdep --target all")
+    p.crabgo("tree -i targetdep --target all")
         .with_stdout(
             "\
 targetdep v1.0.0
@@ -545,7 +545,7 @@ targetdep v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_kinds() {
     Package::new("inner-devdep", "1.0.0").publish();
     Package::new("inner-builddep", "1.0.0").publish();
@@ -573,7 +573,7 @@ fn dep_kinds() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -592,7 +592,7 @@ fn dep_kinds() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -616,7 +616,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e no-dev")
+    p.crabgo("tree -e no-dev")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -633,7 +633,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e normal")
+    p.crabgo("tree -e normal")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -643,7 +643,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e dev,build")
+    p.crabgo("tree -e dev,build")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -660,7 +660,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e dev,build,no-proc-macro")
+    p.crabgo("tree -e dev,build,no-proc-macro")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -677,12 +677,12 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cyclic_dev_dep() {
     // Cyclical dev-dependency and inverse flag.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -694,7 +694,7 @@ fn cyclic_dev_dep() {
         )
         .file("src/lib.rs", "")
         .file(
-            "dev-dep/Cargo.toml",
+            "dev-dep/Crabgo.toml",
             r#"
             [package]
             name = "dev-dep"
@@ -707,7 +707,7 @@ fn cyclic_dev_dep() {
         .file("dev-dep/src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -718,7 +718,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --invert foo")
+    p.crabgo("tree --invert foo")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -730,7 +730,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invert() {
     Package::new("b1", "1.0.0").dep("c", "1.0").publish();
     Package::new("b2", "1.0.0").dep("d", "1.0").publish();
@@ -738,7 +738,7 @@ fn invert() {
     Package::new("d", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -753,7 +753,7 @@ fn invert() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -766,7 +766,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --invert c")
+    p.crabgo("tree --invert c")
         .with_stdout(
             "\
 c v1.0.0
@@ -778,14 +778,14 @@ c v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invert_with_build_dep() {
     // -i for a common dependency between normal and build deps.
     Package::new("common", "1.0.0").publish();
     Package::new("bdep", "1.0.0").dep("common", "1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -801,7 +801,7 @@ fn invert_with_build_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -813,7 +813,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -i common")
+    p.crabgo("tree -i common")
         .with_stdout(
             "\
 common v1.0.0
@@ -826,11 +826,11 @@ common v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_indent() {
     let p = make_simple_proj();
 
-    p.cargo("tree --prefix=none")
+    p.crabgo("tree --prefix=none")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -847,11 +847,11 @@ b v1.0.0 (*)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prefix_depth() {
     let p = make_simple_proj();
 
-    p.cargo("tree --prefix=depth")
+    p.crabgo("tree --prefix=depth")
         .with_stdout(
             "\
 0foo v0.1.0 ([..]/foo)
@@ -868,11 +868,11 @@ fn prefix_depth() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_dedupe() {
     let p = make_simple_proj();
 
-    p.cargo("tree --no-dedupe")
+    p.crabgo("tree --no-dedupe")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -893,12 +893,12 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_dedupe_cycle() {
     // --no-dedupe with a dependency cycle
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -910,7 +910,7 @@ fn no_dedupe_cycle() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -923,7 +923,7 @@ fn no_dedupe_cycle() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -934,7 +934,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --no-dedupe")
+    p.crabgo("tree --no-dedupe")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -946,7 +946,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicates() {
     Package::new("dog", "1.0.0").publish();
     Package::new("dog", "2.0.0").publish();
@@ -958,14 +958,14 @@ fn duplicates() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -978,7 +978,7 @@ fn duplicates() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -992,7 +992,7 @@ fn duplicates() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("tree -p a")
+    p.crabgo("tree -p a")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo/a)
@@ -1002,7 +1002,7 @@ a v0.1.0 ([..]/foo/a)
         )
         .run();
 
-    p.cargo("tree -p b")
+    p.crabgo("tree -p b")
         .with_stdout(
             "\
 b v0.1.0 ([..]/foo/b)
@@ -1014,7 +1014,7 @@ b v0.1.0 ([..]/foo/b)
         )
         .run();
 
-    p.cargo("tree -p a -d")
+    p.crabgo("tree -p a -d")
         .with_stdout(
             "\
 dog v1.0.0
@@ -1026,7 +1026,7 @@ dog v2.0.0
         )
         .run();
 
-    p.cargo("tree -p b -d")
+    p.crabgo("tree -p b -d")
         .with_stdout(
             "\
 cat v1.0.0
@@ -1040,7 +1040,7 @@ cat v2.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicates_with_target() {
     // --target flag
     if cross_compile::disabled() {
@@ -1051,7 +1051,7 @@ fn duplicates_with_target() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1070,22 +1070,22 @@ fn duplicates_with_target() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .build();
-    p.cargo("tree -d").with_stdout("").run();
+    p.crabgo("tree -d").with_stdout("").run();
 
-    p.cargo("tree -d --target")
+    p.crabgo("tree -d --target")
         .arg(alternate())
         .with_stdout("")
         .run();
 
-    p.cargo("tree -d --target")
+    p.crabgo("tree -d --target")
         .arg(rustc_host())
         .with_stdout("")
         .run();
 
-    p.cargo("tree -d --target=all").with_stdout("").run();
+    p.crabgo("tree -d --target=all").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicates_with_proc_macro() {
     Package::new("dupe-dep", "1.0.0").publish();
     Package::new("dupe-dep", "2.0.0").publish();
@@ -1095,7 +1095,7 @@ fn duplicates_with_proc_macro() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1109,7 +1109,7 @@ fn duplicates_with_proc_macro() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1120,7 +1120,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --duplicates")
+    p.crabgo("tree --duplicates")
         .with_stdout(
             "\
 dupe-dep v1.0.0
@@ -1133,15 +1133,15 @@ dupe-dep v2.0.0
         )
         .run();
 
-    p.cargo("tree --duplicates --edges no-proc-macro")
+    p.crabgo("tree --duplicates --edges no-proc-macro")
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn charset() {
     let p = make_simple_proj();
-    p.cargo("tree --charset ascii")
+    p.crabgo("tree --charset ascii")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1160,14 +1160,14 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn format() {
     Package::new("dep", "1.0.0").publish();
     Package::new("other-dep", "1.0.0").publish();
 
     Package::new("dep_that_is_awesome", "1.0.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "dep_that_is_awesome"
@@ -1182,13 +1182,13 @@ fn format() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
             version = "0.1.0"
             license = "MIT"
-            repository = "https://github.com/rust-lang/cargo"
+            repository = "https://github.com/rust-lang/crabgo"
 
             [dependencies]
             dep = {version="1.0", optional=true}
@@ -1205,11 +1205,11 @@ fn format() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("tree --format <<<{p}>>>")
+    p.crabgo("tree --format <<<{p}>>>")
         .with_stdout("<<<foo v0.1.0 ([..]/foo)>>>")
         .run();
 
-    p.cargo("tree --format {}")
+    p.crabgo("tree --format {}")
         .with_stderr(
             "\
 [ERROR] tree format `{}` not valid
@@ -1221,21 +1221,21 @@ Caused by:
         .with_status(101)
         .run();
 
-    p.cargo("tree --format {p}-{{hello}}")
+    p.crabgo("tree --format {p}-{{hello}}")
         .with_stdout("foo v0.1.0 ([..]/foo)-{hello}")
         .run();
 
-    p.cargo("tree --format")
+    p.crabgo("tree --format")
         .arg("{p} {l} {r}")
-        .with_stdout("foo v0.1.0 ([..]/foo) MIT https://github.com/rust-lang/cargo")
+        .with_stdout("foo v0.1.0 ([..]/foo) MIT https://github.com/rust-lang/crabgo")
         .run();
 
-    p.cargo("tree --format")
+    p.crabgo("tree --format")
         .arg("{p} {f}")
         .with_stdout("foo v0.1.0 ([..]/foo) bar,default,foo")
         .run();
 
-    p.cargo("tree --all-features --format")
+    p.crabgo("tree --all-features --format")
         .arg("{p} [{f}]")
         .with_stdout(
             "\
@@ -1247,7 +1247,7 @@ foo v0.1.0 ([..]/foo) [bar,default,dep,dep_that_is_awesome,foo,other-dep]
         )
         .run();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .arg("--features=other-dep,dep_that_is_awesome")
         .arg("--format={lib}")
         .with_stdout(
@@ -1259,7 +1259,7 @@ foo v0.1.0 ([..]/foo) [bar,default,dep,dep_that_is_awesome,foo,other-dep]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dep_feature() {
     // New feature resolver with optional dep
     Package::new("optdep", "1.0.0").publish();
@@ -1268,7 +1268,7 @@ fn dev_dep_feature() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1285,7 +1285,7 @@ fn dev_dep_feature() {
         .build();
 
     // Old behavior.
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1297,7 +1297,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e normal")
+    p.crabgo("tree -e normal")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1310,7 +1310,7 @@ foo v0.1.0 ([..]/foo)
     // New behavior.
     switch_to_resolver_2(&p);
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1322,7 +1322,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e normal")
+    p.crabgo("tree -e normal")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1332,7 +1332,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn host_dep_feature() {
     // New feature resolver with optional build dep
     Package::new("optdep", "1.0.0").publish();
@@ -1341,7 +1341,7 @@ fn host_dep_feature() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1359,7 +1359,7 @@ fn host_dep_feature() {
         .build();
 
     // Old behavior
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1372,7 +1372,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // -p
-    p.cargo("tree -p bar")
+    p.crabgo("tree -p bar")
         .with_stdout(
             "\
 bar v1.0.0
@@ -1382,7 +1382,7 @@ bar v1.0.0
         .run();
 
     // invert
-    p.cargo("tree -i optdep")
+    p.crabgo("tree -i optdep")
         .with_stdout(
             "\
 optdep v1.0.0
@@ -1397,7 +1397,7 @@ optdep v1.0.0
     // New behavior.
     switch_to_resolver_2(&p);
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1409,7 +1409,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -p bar")
+    p.crabgo("tree -p bar")
         .with_stdout(
             "\
 bar v1.0.0
@@ -1420,7 +1420,7 @@ bar v1.0.0
         )
         .run();
 
-    p.cargo("tree -i optdep")
+    p.crabgo("tree -i optdep")
         .with_stdout(
             "\
 optdep v1.0.0
@@ -1432,7 +1432,7 @@ optdep v1.0.0
         .run();
 
     // Check that -d handles duplicates with features.
-    p.cargo("tree -d")
+    p.crabgo("tree -d")
         .with_stdout(
             "\
 bar v1.0.0
@@ -1446,7 +1446,7 @@ bar v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_features() {
     // New feature resolver with a proc-macro
     Package::new("optdep", "1.0.0").publish();
@@ -1459,7 +1459,7 @@ fn proc_macro_features() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1474,7 +1474,7 @@ fn proc_macro_features() {
         .build();
 
     // Old behavior
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1487,7 +1487,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // Old behavior + no-proc-macro
-    p.cargo("tree -e no-proc-macro")
+    p.crabgo("tree -e no-proc-macro")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1498,7 +1498,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // -p
-    p.cargo("tree -p somedep")
+    p.crabgo("tree -p somedep")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1508,7 +1508,7 @@ somedep v1.0.0
         .run();
 
     // -p -e no-proc-macro
-    p.cargo("tree -p somedep -e no-proc-macro")
+    p.crabgo("tree -p somedep -e no-proc-macro")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1518,7 +1518,7 @@ somedep v1.0.0
         .run();
 
     // invert
-    p.cargo("tree -i somedep")
+    p.crabgo("tree -i somedep")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1530,7 +1530,7 @@ somedep v1.0.0
         .run();
 
     // invert + no-proc-macro
-    p.cargo("tree -i somedep -e no-proc-macro")
+    p.crabgo("tree -i somedep -e no-proc-macro")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1543,7 +1543,7 @@ somedep v1.0.0
     switch_to_resolver_2(&p);
 
     // Note the missing (*)
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1555,7 +1555,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -e no-proc-macro")
+    p.crabgo("tree -e no-proc-macro")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1564,7 +1564,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree -p somedep")
+    p.crabgo("tree -p somedep")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1575,7 +1575,7 @@ somedep v1.0.0
         )
         .run();
 
-    p.cargo("tree -i somedep")
+    p.crabgo("tree -i somedep")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1588,7 +1588,7 @@ somedep v1.0.0
         )
         .run();
 
-    p.cargo("tree -i somedep -e no-proc-macro")
+    p.crabgo("tree -i somedep -e no-proc-macro")
         .with_stdout(
             "\
 somedep v1.0.0
@@ -1598,7 +1598,7 @@ somedep v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn itarget_opt_dep() {
     // New feature resolver with optional target dep
     Package::new("optdep", "1.0.0").publish();
@@ -1608,7 +1608,7 @@ fn itarget_opt_dep() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1626,7 +1626,7 @@ fn itarget_opt_dep() {
         .build();
 
     // Old behavior
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v1.0.0 ([..]/foo)
@@ -1639,7 +1639,7 @@ foo v1.0.0 ([..]/foo)
     // New behavior.
     switch_to_resolver_2(&p);
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 foo v1.0.0 ([..]/foo)
@@ -1649,7 +1649,7 @@ foo v1.0.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ambiguous_name() {
     // -p that is ambiguous.
     Package::new("dep", "1.0.0").publish();
@@ -1657,7 +1657,7 @@ fn ambiguous_name() {
     Package::new("bar", "1.0.0").dep("dep", "2.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1671,7 +1671,7 @@ fn ambiguous_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -p dep")
+    p.crabgo("tree -p dep")
         .with_stderr_contains(
             "\
 error: There are multiple `dep` packages in your project, and the specification `dep` is ambiguous.
@@ -1684,9 +1684,9 @@ Please re-run this command with `-p <spec>` where `<spec>` is one of the followi
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_features_are_local() {
-    // The features for workspace packages should be the same as `cargo build`
+    // The features for workspace packages should be the same as `crabgo build`
     // (i.e., the features selected depend on the "current" package).
     Package::new("optdep", "1.0.0").publish();
     Package::new("somedep", "1.0.0")
@@ -1694,14 +1694,14 @@ fn workspace_features_are_local() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1713,7 +1713,7 @@ fn workspace_features_are_local() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -1726,7 +1726,7 @@ fn workspace_features_are_local() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("tree")
+    p.crabgo("tree")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo/a)
@@ -1739,7 +1739,7 @@ b v0.1.0 ([..]/foo/b)
         )
         .run();
 
-    p.cargo("tree -p a")
+    p.crabgo("tree -p a")
         .with_stdout(
             "\
 a v0.1.0 ([..]/foo/a)
@@ -1749,7 +1749,7 @@ a v0.1.0 ([..]/foo/a)
         )
         .run();
 
-    p.cargo("tree -p b")
+    p.crabgo("tree -p b")
         .with_stdout(
             "\
 b v0.1.0 ([..]/foo/b)
@@ -1759,14 +1759,14 @@ b v0.1.0 ([..]/foo/b)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unknown_edge_kind() {
     let p = project()
-        .file("Cargo.toml", "")
+        .file("Crabgo.toml", "")
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e unknown")
+    p.crabgo("tree -e unknown")
         .with_stderr(
             "\
 [ERROR] unknown edge kind `unknown`, valid values are \
@@ -1779,11 +1779,11 @@ fn unknown_edge_kind() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn mixed_no_edge_kinds() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1793,7 +1793,7 @@ fn mixed_no_edge_kinds() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e no-build,normal")
+    p.crabgo("tree -e no-build,normal")
         .with_stderr(
             "\
 [ERROR] `normal` dependency kind cannot be mixed with \
@@ -1804,7 +1804,7 @@ fn mixed_no_edge_kinds() {
         .run();
 
     // `no-proc-macro` can be mixed with others
-    p.cargo("tree -e no-proc-macro,normal")
+    p.crabgo("tree -e no-proc-macro,normal")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1813,11 +1813,11 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn depth_limit() {
     let p = make_simple_proj();
 
-    p.cargo("tree --depth 0")
+    p.crabgo("tree --depth 0")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1827,7 +1827,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --depth 1")
+    p.crabgo("tree --depth 1")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1841,7 +1841,7 @@ foo v0.1.0 ([..]/foo)
         )
         .run();
 
-    p.cargo("tree --depth 2")
+    p.crabgo("tree --depth 2")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1859,7 +1859,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // specify a package
-    p.cargo("tree -p bdep --depth 1")
+    p.crabgo("tree -p bdep --depth 1")
         .with_stdout(
             "\
 bdep v1.0.0
@@ -1869,7 +1869,7 @@ bdep v1.0.0
         .run();
 
     // different prefix
-    p.cargo("tree --depth 1 --prefix depth")
+    p.crabgo("tree --depth 1 --prefix depth")
         .with_stdout(
             "\
 0foo v0.1.0 ([..]/foo)
@@ -1882,7 +1882,7 @@ bdep v1.0.0
         .run();
 
     // with edge-kinds
-    p.cargo("tree --depth 1 -e no-dev")
+    p.crabgo("tree --depth 1 -e no-dev")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1895,7 +1895,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // invert
-    p.cargo("tree --depth 1 --invert c")
+    p.crabgo("tree --depth 1 --invert c")
         .with_stdout(
             "\
 c v1.0.0
@@ -1906,11 +1906,11 @@ c v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prune() {
     let p = make_simple_proj();
 
-    p.cargo("tree --prune c")
+    p.crabgo("tree --prune c")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1927,7 +1927,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // multiple prune
-    p.cargo("tree --prune c --prune bdep")
+    p.crabgo("tree --prune c --prune bdep")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1942,7 +1942,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // with edge-kinds
-    p.cargo("tree --prune c -e normal")
+    p.crabgo("tree --prune c -e normal")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1953,7 +1953,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // pruning self does not works
-    p.cargo("tree --prune foo")
+    p.crabgo("tree --prune foo")
         .with_stdout(
             "\
 foo v0.1.0 ([..]/foo)
@@ -1972,7 +1972,7 @@ foo v0.1.0 ([..]/foo)
         .run();
 
     // dep not exist
-    p.cargo("tree --prune no-dep")
+    p.crabgo("tree --prune no-dep")
         .with_stderr(
             "\
 [ERROR] package ID specification `no-dep` did not match any packages
@@ -1984,12 +1984,12 @@ foo v0.1.0 ([..]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cyclic_features() {
     // Check for stack overflow with cyclic features (oops!).
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2004,11 +2004,11 @@ fn cyclic_features() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout("foo v1.0.0 ([ROOT]/foo)")
         .run();
 
-    p.cargo("tree -e features -i foo")
+    p.crabgo("tree -e features -i foo")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2023,12 +2023,12 @@ foo v1.0.0 ([ROOT]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dep_cycle_with_feature() {
     // Cycle with features and a dev-dependency.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2043,7 +2043,7 @@ fn dev_dep_cycle_with_feature() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2059,7 +2059,7 @@ fn dev_dep_cycle_with_feature() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features --features a")
+    p.crabgo("tree -e features --features a")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2072,7 +2072,7 @@ foo v1.0.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features a -i foo")
+    p.crabgo("tree -e features --features a -i foo")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2090,14 +2090,14 @@ foo v1.0.0 ([ROOT]/foo)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_dep_cycle_with_feature_nested() {
     // Checks for an issue where a cyclic dev dependency tries to activate a
     // feature on its parent that tries to activate the feature back on the
     // dev-dependency.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2113,7 +2113,7 @@ fn dev_dep_cycle_with_feature_nested() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2129,7 +2129,7 @@ fn dev_dep_cycle_with_feature_nested() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2142,7 +2142,7 @@ foo v1.0.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features a -i foo")
+    p.crabgo("tree -e features --features a -i foo")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2161,7 +2161,7 @@ foo v1.0.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features b -i foo")
+    p.crabgo("tree -e features --features b -i foo")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)
@@ -2180,7 +2180,7 @@ foo v1.0.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features bar/feat1 -i foo")
+    p.crabgo("tree -e features --features bar/feat1 -i foo")
         .with_stdout(
             "\
 foo v1.0.0 ([ROOT]/foo)

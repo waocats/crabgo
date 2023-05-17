@@ -1,11 +1,11 @@
 ## Features
 
-Cargo "features" provide a mechanism to express [conditional compilation] and
+Crabgo "features" provide a mechanism to express [conditional compilation] and
 [optional dependencies](#optional-dependencies). A package defines a set of
-named features in the `[features]` table of `Cargo.toml`, and each feature can
+named features in the `[features]` table of `Crabgo.toml`, and each feature can
 either be enabled or disabled. Features for the package being built can be
 enabled on the command-line with flags such as `--features`. Features for
-dependencies can be enabled in the dependency declaration in `Cargo.toml`.
+dependencies can be enabled in the dependency declaration in `Crabgo.toml`.
 
 See also the [Features Examples] chapter for some examples of how features can
 be used.
@@ -15,7 +15,7 @@ be used.
 
 ### The `[features]` section
 
-Features are defined in the `[features]` table in `Cargo.toml`. Each feature
+Features are defined in the `[features]` table in `Crabgo.toml`. Each feature
 specifies an array of other features or optional dependencies that it enables.
 The following examples illustrate how features could be used for a 2D image
 processing library where support for different image formats can be optionally
@@ -37,7 +37,7 @@ inside `lib.rs` of the package could include this:
 pub mod webp;
 ```
 
-Cargo sets features in the package using the `rustc` [`--cfg` flag], and code
+Crabgo sets features in the package using the `rustc` [`--cfg` flag], and code
 can test for their presence with the [`cfg` attribute] or the [`cfg` macro].
 
 Features can list other features to enable. For example, the ICO image format
@@ -233,7 +233,7 @@ enabled:
 
 * `--features` _FEATURES_: Enables the listed features. Multiple features may
   be separated with commas or spaces. If using spaces, be sure to use quotes
-  around all the features if running Cargo from a shell (such as `--features
+  around all the features if running Crabgo from a shell (such as `--features
   "foo bar"`). If building multiple packages in a [workspace], the
   `package-name/feature-name` syntax can be used to specify features for
   specific workspace members.
@@ -251,7 +251,7 @@ enabled:
 Features are unique to the package that defines them. Enabling a feature on a
 package does not enable a feature of the same name on other packages.
 
-When a dependency is used by multiple packages, Cargo will use the union of
+When a dependency is used by multiple packages, Crabgo will use the union of
 all features enabled on that dependency when building it. This helps ensure
 that only a single copy of the dependency is used. See the [features section]
 of the resolver documentation for more details.
@@ -265,7 +265,7 @@ another dependency `bar` which enables the "std" and "winnt" features of
 ![winapi features example](../images/winapi-features.svg)
 
 [`winapi`]: https://crates.io/crates/winapi
-[winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Cargo.toml#L25-L431
+[winapi-features]: https://github.com/retep998/winapi-rs/blob/0.3.9/Crabgo.toml#L25-L431
 
 A consequence of this is that features should be *additive*. That is, enabling
 a feature should not disable functionality, and it should usually be safe to
@@ -321,27 +321,27 @@ Instead of using mutually exclusive features, consider some other options:
 #### Inspecting resolved features
 
 In complex dependency graphs, it can sometimes be difficult to understand how
-different features get enabled on various packages. The [`cargo tree`] command
+different features get enabled on various packages. The [`crabgo tree`] command
 offers several options to help inspect and visualize which features are
 enabled. Some options to try:
 
-* `cargo tree -e features`: This will show features in the dependency graph.
+* `crabgo tree -e features`: This will show features in the dependency graph.
   Each feature will appear showing which package enabled it.
-* `cargo tree -f "{p} {f}"`: This is a more compact view that shows a
+* `crabgo tree -f "{p} {f}"`: This is a more compact view that shows a
   comma-separated list of features enabled on each package.
-* `cargo tree -e features -i foo`: This will invert the tree, showing how
+* `crabgo tree -e features -i foo`: This will invert the tree, showing how
   features flow into the given package "foo". This can be useful because
   viewing the entire graph can be quite large and overwhelming. Use this when
   you are trying to figure out which features are enabled on a specific
-  package and why. See the example at the bottom of the [`cargo tree`] page on
+  package and why. See the example at the bottom of the [`crabgo tree`] page on
   how to read this.
 
-[`cargo tree`]: ../commands/cargo-tree.md
+[`crabgo tree`]: ../commands/crabgo-tree.md
 
 ### Feature resolver version 2
 
 A different feature resolver can be specified with the `resolver` field in
-`Cargo.toml`, like this:
+`Crabgo.toml`, like this:
 
 ```toml
 [package]
@@ -377,8 +377,8 @@ are built multiple times to reduce overall build time. If it is not *required*
 to build those duplicated packages with separate features, consider adding
 features to the `features` list in the [dependency
 declaration](#dependency-features) so that the duplicates end up with the same
-features (and thus Cargo will build it only once). You can detect these
-duplicate dependencies with the [`cargo tree --duplicates`][`cargo tree`]
+features (and thus Crabgo will build it only once). You can detect these
+duplicate dependencies with the [`crabgo tree --duplicates`][`crabgo tree`]
 command. It will show which packages are built multiple times; look for any
 entries listed with the same version. See [Inspecting resolved
 features](#inspecting-resolved-features) for more on fetching information on
@@ -394,7 +394,7 @@ The `resolver = "2"` setting also changes the behavior of the `--features` and
 With version `"1"`, you can only enable features for the package in the
 current working directory. For example, in a workspace with packages `foo` and
 `bar`, and you are in the directory for package `foo`, and ran the command
-`cargo build -p bar --features bar-feat`, this would fail because the
+`crabgo build -p bar --features bar-feat`, this would fail because the
 `--features` flag only allowed enabling features on `foo`.
 
 With `resolver = "2"`, the features flags allow enabling features for any of
@@ -404,10 +404,10 @@ For example:
 ```sh
 # This command is allowed with resolver = "2", regardless of which directory
 # you are in.
-cargo build -p foo -p bar --features foo-feat,bar-feat
+crabgo build -p foo -p bar --features foo-feat,bar-feat
 
 # This explicit equivalent works with any resolver version:
-cargo build -p foo -p bar --features foo/foo-feat,bar/bar-feat
+crabgo build -p foo -p bar --features foo/foo-feat,bar/bar-feat
 ```
 
 Additionally, with `resolver = "1"`, the `--no-default-features` flag only
@@ -422,19 +422,19 @@ version "2", it will disable the default features for all workspace members.
 ### Build scripts
 
 [Build scripts] can detect which features are enabled on the package by
-inspecting the `CARGO_FEATURE_<name>` environment variable, where `<name>` is
+inspecting the `CRABGO_FEATURE_<name>` environment variable, where `<name>` is
 the feature name converted to uppercase and `-` converted to `_`.
 
 [build scripts]: build-scripts.md
 
 ### Required features
 
-The [`required-features` field] can be used to disable specific [Cargo
+The [`required-features` field] can be used to disable specific [Crabgo
 targets] if a feature is not enabled. See the linked documentation for more
 details.
 
-[`required-features` field]: cargo-targets.md#the-required-features-field
-[Cargo targets]: cargo-targets.md
+[`required-features` field]: crabgo-targets.md#the-required-features-field
+[Crabgo targets]: crabgo-targets.md
 
 ### SemVer compatibility
 
@@ -445,26 +445,26 @@ found in the [SemVer Compatibility chapter](semver.md).
 
 Care should be taken when adding and removing feature definitions and optional
 dependencies, as these can sometimes be backwards-incompatible changes. More
-details can be found in the [Cargo section](semver.md#cargo) of the SemVer
+details can be found in the [Crabgo section](semver.md#crabgo) of the SemVer
 Compatibility chapter. In short, follow these rules:
 
 * The following is usually safe to do in a minor release:
-  * Add a [new feature][cargo-feature-add] or [optional dependency][cargo-dep-add].
-  * [Change the features used on a dependency][cargo-change-dep-feature].
+  * Add a [new feature][crabgo-feature-add] or [optional dependency][crabgo-dep-add].
+  * [Change the features used on a dependency][crabgo-change-dep-feature].
 * The following should usually **not** be done in a minor release:
-  * [Remove a feature][cargo-feature-remove] or [optional dependency][cargo-remove-opt-dep].
+  * [Remove a feature][crabgo-feature-remove] or [optional dependency][crabgo-remove-opt-dep].
   * [Moving existing public code behind a feature][item-remove].
-  * [Remove a feature from a feature list][cargo-feature-remove-another].
+  * [Remove a feature from a feature list][crabgo-feature-remove-another].
 
 See the links for caveats and examples.
 
-[cargo-change-dep-feature]: semver.md#cargo-change-dep-feature
-[cargo-dep-add]: semver.md#cargo-dep-add
-[cargo-feature-add]: semver.md#cargo-feature-add
+[crabgo-change-dep-feature]: semver.md#crabgo-change-dep-feature
+[crabgo-dep-add]: semver.md#crabgo-dep-add
+[crabgo-feature-add]: semver.md#crabgo-feature-add
 [item-remove]: semver.md#item-remove
-[cargo-feature-remove]: semver.md#cargo-feature-remove
-[cargo-remove-opt-dep]: semver.md#cargo-remove-opt-dep
-[cargo-feature-remove-another]: semver.md#cargo-feature-remove-another
+[crabgo-feature-remove]: semver.md#crabgo-feature-remove
+[crabgo-remove-opt-dep]: semver.md#crabgo-remove-opt-dep
+[crabgo-feature-remove-another]: semver.md#crabgo-feature-remove-another
 
 ### Feature documentation and discovery
 
@@ -481,7 +481,7 @@ considered "unstable" or otherwise shouldn't be used. For example, if there is
 an optional dependency, but you don't want users to explicitly list that
 optional dependency as a feature, exclude it from the documented list.
 
-Documentation published on [docs.rs] can use metadata in `Cargo.toml` to
+Documentation published on [docs.rs] can use metadata in `Crabgo.toml` to
 control which features are enabled when the documentation is built. See
 [docs.rs metadata documentation] for more details.
 
@@ -506,13 +506,13 @@ control which features are enabled when the documentation is built. See
 When features are documented in the library API, this can make it easier for
 your users to discover which features are available and what they do. If the
 feature documentation for a package isn't readily available, you can look at
-the `Cargo.toml` file, but sometimes it can be hard to track it down. The
+the `Crabgo.toml` file, but sometimes it can be hard to track it down. The
 crate page on [crates.io] has a link to the source repository if available.
-Tools like [`cargo vendor`] or [cargo-clone-crate] can be used to download the
+Tools like [`crabgo vendor`] or [crabgo-clone-crate] can be used to download the
 source and inspect it.
 
-[`cargo vendor`]: ../commands/cargo-vendor.md
-[cargo-clone-crate]: https://crates.io/crates/cargo-clone-crate
+[`crabgo vendor`]: ../commands/crabgo-vendor.md
+[crabgo-clone-crate]: https://crates.io/crates/crabgo-clone-crate
 
 ### Feature combinations
 

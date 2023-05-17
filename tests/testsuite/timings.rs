@@ -1,15 +1,15 @@
 //! Tests for --timings.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
-#[cargo_test]
+#[crabgo_test]
 fn timings_works() {
     Package::new("dep", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -25,7 +25,7 @@ fn timings_works() {
         .file("examples/ex1.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --all-targets --timings")
+    p.crabgo("build --all-targets --timings")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -34,20 +34,20 @@ fn timings_works() {
 [COMPILING] dep v0.1.0
 [COMPILING] foo v0.1.0 [..]
 [FINISHED] [..]
-      Timing report saved to [..]/foo/target/cargo-timings/cargo-timing-[..].html
+      Timing report saved to [..]/foo/target/crabgo-timings/crabgo-timing-[..].html
 ",
         )
         .run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
-    p.cargo("test --timings").run();
+    p.crabgo("test --timings").run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
-    p.cargo("check --timings").run();
+    p.crabgo("check --timings").run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
-    p.cargo("doc --timings").run();
+    p.crabgo("doc --timings").run();
 }

@@ -1,18 +1,18 @@
 //! Tests for renaming dependencies.
 
-use cargo_test_support::git;
-use cargo_test_support::paths;
-use cargo_test_support::registry::{self, Package};
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::git;
+use crabgo_test_support::paths;
+use crabgo_test_support::registry::{self, Package};
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_dependency() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.2.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -27,14 +27,14 @@ fn rename_dependency() {
         .file("src/lib.rs", "extern crate bar; extern crate baz;")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_with_different_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -47,7 +47,7 @@ fn rename_with_different_names() {
         )
         .file("src/lib.rs", "extern crate baz;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -61,10 +61,10 @@ fn rename_with_different_names() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lots_of_names() {
     registry::alt_init();
     Package::new("foo", "0.1.0")
@@ -79,13 +79,13 @@ fn lots_of_names() {
         .publish();
 
     let g = git::repo(&paths::root().join("another"))
-        .file("Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("src/lib.rs", "pub fn foo3() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -121,20 +121,20 @@ fn lots_of_names() {
                 }
             ",
         )
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "pub fn foo4() {}")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_and_patch() {
     Package::new("foo", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -152,20 +152,20 @@ fn rename_and_patch() {
             "src/lib.rs",
             "extern crate bar; pub fn foo() { bar::foo(); }",
         )
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "pub fn foo() {}")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_twice() {
     Package::new("foo", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -181,7 +181,7 @@ fn rename_twice() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -194,13 +194,13 @@ error: the crate `test v0.1.0 ([CWD])` depends on crate `foo v0.1.0` multiple ti
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_affects_fingerprint() {
     Package::new("foo", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -214,10 +214,10 @@ fn rename_affects_fingerprint() {
         .file("src/lib.rs", "extern crate foo;")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
                 [package]
                 name = "test"
@@ -229,20 +229,20 @@ fn rename_affects_fingerprint() {
         "#,
     );
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr_contains("[..]can't find crate for `foo`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn can_run_doc_tests() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.2.0").publish();
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -262,7 +262,7 @@ fn can_run_doc_tests() {
         )
         .build();
 
-    foo.cargo("test -v")
+    foo.crabgo("test -v")
         .with_stderr_contains(
             "\
 [DOCTEST] foo
@@ -276,14 +276,14 @@ fn can_run_doc_tests() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_still_work() {
     Package::new("foo", "0.1.0").publish();
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -297,7 +297,7 @@ fn features_still_work() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "p1"
@@ -310,7 +310,7 @@ fn features_still_work() {
         )
         .file("a/src/lib.rs", "extern crate b;")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "p2"
@@ -327,17 +327,17 @@ fn features_still_work() {
         .file("b/src/lib.rs", "extern crate b;")
         .build();
 
-    p.cargo("build -v").run();
+    p.crabgo("build -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_not_working() {
     Package::new("foo", "0.1.0").publish();
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -352,10 +352,10 @@ fn features_not_working() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("a/Cargo.toml", &basic_manifest("p1", "0.1.0"))
+        .file("a/Crabgo.toml", &basic_manifest("p1", "0.1.0"))
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -368,11 +368,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rename_with_dash() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "qwerty"
@@ -383,9 +383,9 @@ fn rename_with_dash() {
             "#,
         )
         .file("src/lib.rs", "extern crate foo_bar;")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.1.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.1.0"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }

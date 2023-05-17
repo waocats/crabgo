@@ -1,7 +1,7 @@
 //! Tests for the -Zrustdoc-map feature.
 
-use cargo_test_support::registry::{self, Package};
-use cargo_test_support::{paths, project, Project};
+use crabgo_test_support::registry::{self, Package};
+use crabgo_test_support::{paths, project, Project};
 
 fn basic_project() -> Project {
     Package::new("bar", "1.0.0")
@@ -10,7 +10,7 @@ fn basic_project() -> Project {
 
     project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -32,21 +32,21 @@ fn basic_project() -> Project {
         .build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignores_on_stable() {
     // Requires -Zrustdoc-map to use.
     let p = basic_project();
-    p.cargo("doc -v --no-deps")
+    p.crabgo("doc -v --no-deps")
         .with_stderr_does_not_contain("[..]--extern-html-root-url[..]")
         .run();
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn simple() {
     // Basic test that it works with crates.io.
     let p = basic_project();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo [..]bar=https://docs.rs/bar/1.0.0/[..]",
         )
@@ -56,14 +56,14 @@ fn simple() {
 }
 
 #[ignore = "Broken, temporarily disabled until https://github.com/rust-lang/rust/pull/82776 is resolved."]
-#[cargo_test]
-// #[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test]
+// #[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn std_docs() {
     // Mapping std docs somewhere else.
     // For local developers, skip this test if docs aren't installed.
     let docs = std::path::Path::new(&paths::sysroot()).join("share/doc/rust/html");
     if !docs.exists() {
-        if cargo_util::is_ci() {
+        if crabgo_util::is_ci() {
             panic!("std docs are not installed, check that the rust-docs component is installed");
         } else {
             eprintln!(
@@ -76,28 +76,28 @@ fn std_docs() {
     }
     let p = basic_project();
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [doc.extern-map]
             std = "local"
         "#,
     );
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains("[RUNNING] `rustdoc [..]--crate-name foo [..]std=file://[..]")
         .run();
     let myfun = p.read_file("target/doc/foo/fn.myfun.html");
     assert!(myfun.contains(r#"share/doc/rust/html/core/option/enum.Option.html""#));
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [doc.extern-map]
             std = "https://example.com/rust/"
         "#,
     );
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo [..]std=https://example.com/rust/[..]",
         )
@@ -106,7 +106,7 @@ fn std_docs() {
     assert!(myfun.contains(r#"href="https://example.com/rust/core/option/enum.Option.html""#));
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn renamed_dep() {
     // Handles renamed dependencies.
     Package::new("bar", "1.0.0")
@@ -115,7 +115,7 @@ fn renamed_dep() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -135,8 +135,8 @@ fn renamed_dep() {
             "#,
         )
         .build();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo [..]bar=https://docs.rs/bar/1.0.0/[..]",
         )
@@ -145,12 +145,12 @@ fn renamed_dep() {
     assert!(myfun.contains(r#"href="https://docs.rs/bar/1.0.0/bar/struct.Straw.html""#));
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn lib_name() {
     // Handles lib name != package name.
     Package::new("bar", "1.0.0")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -165,7 +165,7 @@ fn lib_name() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -184,8 +184,8 @@ fn lib_name() {
             "#,
         )
         .build();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo [..]rumpelstiltskin=https://docs.rs/bar/1.0.0/[..]",
         )
@@ -194,7 +194,7 @@ fn lib_name() {
     assert!(myfun.contains(r#"href="https://docs.rs/bar/1.0.0/rumpelstiltskin/struct.Straw.html""#));
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn alt_registry() {
     // Supports other registry names.
     registry::alt_init();
@@ -220,7 +220,7 @@ fn alt_registry() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -241,7 +241,7 @@ fn alt_registry() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [doc.extern-map.registries]
                 alternative = "https://example.com/{pkg_name}/{version}/"
@@ -249,8 +249,8 @@ fn alt_registry() {
             "#,
         )
         .build();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo \
             [..]bar=https://example.com/bar/1.0.0/[..]grimm=https://docs.rs/grimm/1.0.0/[..]",
@@ -261,7 +261,7 @@ fn alt_registry() {
     // The king example fails to link. Rustdoc seems to want the origin crate
     // name (baz) for re-exports. There are many issues in the issue tracker
     // for rustdoc re-exports, so I'm not sure, but I think this is maybe a
-    // rustdoc issue. Alternatively, Cargo could provide mappings for all
+    // rustdoc issue. Alternatively, Crabgo could provide mappings for all
     // transitive dependencies to fix this.
     let king = p.read_file("target/doc/foo/fn.king.html");
     assert!(king.contains(r#"-&gt; King"#));
@@ -270,7 +270,7 @@ fn alt_registry() {
     assert!(gold.contains(r#"href="https://docs.rs/grimm/1.0.0/grimm/struct.Gold.html""#));
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn multiple_versions() {
     // What happens when there are multiple versions.
     // NOTE: This is currently broken behavior. Rustdoc does not provide a way
@@ -283,7 +283,7 @@ fn multiple_versions() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -303,8 +303,8 @@ fn multiple_versions() {
             ",
         )
         .build();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo \
             [..]bar=https://docs.rs/bar/1.0.0/[..]bar=https://docs.rs/bar/2.0.0/[..]",
@@ -318,32 +318,32 @@ fn multiple_versions() {
     assert!(fn2.contains(r#"href="https://docs.rs/bar/2.0.0/bar/struct.Straw.html""#));
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn rebuilds_when_changing() {
     // Make sure it rebuilds if the map changes.
     let p = basic_project();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains("[..]--extern-html-root-url[..]")
         .run();
 
     // This also tests that the map for docs.rs can be overridden.
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
             [doc.extern-map.registries]
             crates-io = "https://example.com/"
         "#,
     );
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--extern-html-root-url [..]bar=https://example.com/bar/1.0.0/[..]",
         )
         .run();
 }
 
-#[cargo_test(nightly, reason = "--extern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "--extern-html-root-url is unstable")]
 fn alt_sparse_registry() {
     // Supports other registry names.
 
@@ -375,7 +375,7 @@ fn alt_sparse_registry() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -396,7 +396,7 @@ fn alt_sparse_registry() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [doc.extern-map.registries]
                 alternative = "https://example.com/{pkg_name}/{version}/"
@@ -404,8 +404,8 @@ fn alt_sparse_registry() {
             "#,
         )
         .build();
-    p.cargo("doc -v --no-deps -Zrustdoc-map")
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+    p.crabgo("doc -v --no-deps -Zrustdoc-map")
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..]--crate-name foo \
             [..]bar=https://example.com/bar/1.0.0/[..]grimm=https://docs.rs/grimm/1.0.0/[..]",
@@ -416,7 +416,7 @@ fn alt_sparse_registry() {
     // The king example fails to link. Rustdoc seems to want the origin crate
     // name (baz) for re-exports. There are many issues in the issue tracker
     // for rustdoc re-exports, so I'm not sure, but I think this is maybe a
-    // rustdoc issue. Alternatively, Cargo could provide mappings for all
+    // rustdoc issue. Alternatively, Crabgo could provide mappings for all
     // transitive dependencies to fix this.
     let king = p.read_file("target/doc/foo/fn.king.html");
     assert!(king.contains(r#"-&gt; King"#));

@@ -1,11 +1,11 @@
 //! Tests for target filter flags with glob patterns.
 
-use cargo_test_support::{project, Project};
+use crabgo_test_support::{project, Project};
 
-#[cargo_test]
+#[crabgo_test]
 fn build_example() {
     full_project()
-        .cargo("build -v --example 'ex*1'")
+        .crabgo("build -v --example 'ex*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -16,10 +16,10 @@ fn build_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_bin() {
     full_project()
-        .cargo("build -v --bin 'bi*1'")
+        .crabgo("build -v --bin 'bi*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -30,10 +30,10 @@ fn build_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_bench() {
     full_project()
-        .cargo("build -v --bench 'be*1'")
+        .crabgo("build -v --bench 'be*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bench1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -51,10 +51,10 @@ fn build_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_test() {
     full_project()
-        .cargo("build -v --test 'te*1'")
+        .crabgo("build -v --test 'te*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name test1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -72,10 +72,10 @@ fn build_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_example() {
     full_project()
-        .cargo("check -v --example 'ex*1'")
+        .crabgo("check -v --example 'ex*1'")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -86,10 +86,10 @@ fn check_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_bin() {
     full_project()
-        .cargo("check -v --bin 'bi*1'")
+        .crabgo("check -v --bin 'bi*1'")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -100,10 +100,10 @@ fn check_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_bench() {
     full_project()
-        .cargo("check -v --bench 'be*1'")
+        .crabgo("check -v --bench 'be*1'")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -114,10 +114,10 @@ fn check_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_test() {
     full_project()
-        .cargo("check -v --test 'te*1'")
+        .crabgo("check -v --test 'te*1'")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -128,10 +128,10 @@ fn check_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_bin() {
     full_project()
-        .cargo("doc -v --bin 'bi*1'")
+        .crabgo("doc -v --bin 'bi*1'")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -142,10 +142,10 @@ fn doc_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_example() {
     full_project()
-        .cargo("fix -v --example 'ex*1' --allow-no-vcs")
+        .crabgo("fix -v --example 'ex*1' --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -157,10 +157,10 @@ fn fix_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_bin() {
     full_project()
-        .cargo("fix -v --bin 'bi*1' --allow-no-vcs")
+        .crabgo("fix -v --bin 'bi*1' --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -172,10 +172,10 @@ fn fix_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_bench() {
     full_project()
-        .cargo("fix -v --bench 'be*1' --allow-no-vcs")
+        .crabgo("fix -v --bench 'be*1' --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -187,10 +187,10 @@ fn fix_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix_test() {
     full_project()
-        .cargo("fix -v --test 'te*1' --allow-no-vcs")
+        .crabgo("fix -v --test 'te*1' --allow-no-vcs")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -202,24 +202,24 @@ fn fix_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example_and_bin() {
     let p = full_project();
-    p.cargo("run -v --bin 'bi*1'")
+    p.crabgo("run -v --bin 'bi*1'")
         .with_status(101)
-        .with_stderr("[ERROR] `cargo run` does not support glob patterns on target selection")
+        .with_stderr("[ERROR] `crabgo run` does not support glob patterns on target selection")
         .run();
 
-    p.cargo("run -v --example 'ex*1'")
+    p.crabgo("run -v --example 'ex*1'")
         .with_status(101)
-        .with_stderr("[ERROR] `cargo run` does not support glob patterns on target selection")
+        .with_stderr("[ERROR] `crabgo run` does not support glob patterns on target selection")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_example() {
     full_project()
-        .cargo("test -v --example 'ex*1'")
+        .crabgo("test -v --example 'ex*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -231,10 +231,10 @@ fn test_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_bin() {
     full_project()
-        .cargo("test -v --bin 'bi*1'")
+        .crabgo("test -v --bin 'bi*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -246,10 +246,10 @@ fn test_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_bench() {
     full_project()
-        .cargo("test -v --bench 'be*1'")
+        .crabgo("test -v --bench 'be*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bench1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -268,10 +268,10 @@ fn test_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_test() {
     full_project()
-        .cargo("test -v --test 'te*1'")
+        .crabgo("test -v --test 'te*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name test1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -290,10 +290,10 @@ fn test_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bench_example() {
     full_project()
-        .cargo("bench -v --example 'ex*1'")
+        .crabgo("bench -v --example 'ex*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -305,10 +305,10 @@ fn bench_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bench_bin() {
     full_project()
-        .cargo("bench -v --bin 'bi*1'")
+        .crabgo("bench -v --bin 'bi*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -320,10 +320,10 @@ fn bench_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bench_bench() {
     full_project()
-        .cargo("bench -v --bench 'be*1'")
+        .crabgo("bench -v --bench 'be*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bench1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -342,10 +342,10 @@ fn bench_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bench_test() {
     full_project()
-        .cargo("bench -v --test 'te*1'")
+        .crabgo("bench -v --test 'te*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name test1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -364,16 +364,16 @@ fn bench_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_example() {
     full_project()
-        .cargo("install --path . --example 'ex*1'")
+        .crabgo("install --path . --example 'ex*1'")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([CWD])
 [COMPILING] foo v0.0.1 ([CWD])
 [FINISHED] release [optimized] target(s) in [..]
-[INSTALLING] [..]/home/.cargo/bin/example1[EXE]
+[INSTALLING] [..]/home/.crabgo/bin/example1[EXE]
 [INSTALLED] package `foo v0.0.1 ([CWD])` (executable `example1[EXE]`)
 [WARNING] be sure to add [..]
 ",
@@ -381,16 +381,16 @@ fn install_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn install_bin() {
     full_project()
-        .cargo("install --path . --bin 'bi*1'")
+        .crabgo("install --path . --bin 'bi*1'")
         .with_stderr(
             "\
 [INSTALLING] foo v0.0.1 ([CWD])
 [COMPILING] foo v0.0.1 ([CWD])
 [FINISHED] release [optimized] target(s) in [..]
-[INSTALLING] [..]/home/.cargo/bin/bin1[EXE]
+[INSTALLING] [..]/home/.crabgo/bin/bin1[EXE]
 [INSTALLED] package `foo v0.0.1 ([CWD])` (executable `bin1[EXE]`)
 [WARNING] be sure to add [..]
 ",
@@ -398,10 +398,10 @@ fn install_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_example() {
     full_project()
-        .cargo("rustdoc -v --example 'ex*1'")
+        .crabgo("rustdoc -v --example 'ex*1'")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -412,10 +412,10 @@ fn rustdoc_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_bin() {
     full_project()
-        .cargo("rustdoc -v --bin 'bi*1'")
+        .crabgo("rustdoc -v --bin 'bi*1'")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -426,10 +426,10 @@ fn rustdoc_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_bench() {
     full_project()
-        .cargo("rustdoc -v --bench 'be*1'")
+        .crabgo("rustdoc -v --bench 'be*1'")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -440,10 +440,10 @@ fn rustdoc_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_test() {
     full_project()
-        .cargo("rustdoc -v --test 'te*1'")
+        .crabgo("rustdoc -v --test 'te*1'")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -454,10 +454,10 @@ fn rustdoc_test() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_example() {
     full_project()
-        .cargo("rustc -v --example 'ex*1'")
+        .crabgo("rustc -v --example 'ex*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -468,10 +468,10 @@ fn rustc_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_bin() {
     full_project()
-        .cargo("rustc -v --bin 'bi*1'")
+        .crabgo("rustc -v --bin 'bi*1'")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -482,10 +482,10 @@ fn rustc_bin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_bench() {
     full_project()
-        .cargo("rustc -v --bench 'be*1'")
+        .crabgo("rustc -v --bench 'be*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bench1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")
@@ -503,10 +503,10 @@ fn rustc_bench() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_test() {
     full_project()
-        .cargo("rustc -v --test 'te*1'")
+        .crabgo("rustc -v --test 'te*1'")
         .with_stderr_contains("[RUNNING] `rustc --crate-name test1 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin2 [..]`")
         .with_stderr_contains("[RUNNING] `rustc --crate-name bin1 [..]`")

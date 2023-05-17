@@ -24,7 +24,7 @@ is right for your project.
 
 ### Code generation
 
-Some Cargo packages need to have code generated just before they are compiled
+Some Crabgo packages need to have code generated just before they are compiled
 for various reasons. Here we’ll walk through a simple example which generates a
 library call as part of the build script.
 
@@ -32,7 +32,7 @@ First, let’s take a look at the directory structure of this package:
 
 ```text
 .
-├── Cargo.toml
+├── Crabgo.toml
 ├── build.rs
 └── src
     └── main.rs
@@ -44,7 +44,7 @@ Here we can see that we have a `build.rs` build script and our binary in
 `main.rs`. This package has a basic manifest:
 
 ```toml
-# Cargo.toml
+# Crabgo.toml
 
 [package]
 name = "hello-from-generated-code"
@@ -71,7 +71,7 @@ fn main() {
         }
         "
     ).unwrap();
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("crabgo:rerun-if-changed=build.rs");
 }
 ```
 
@@ -84,15 +84,15 @@ There’s a couple of points of note here:
 * In general, build scripts should not modify any files outside of `OUT_DIR`.
   It may seem fine on the first blush, but it does cause problems when you use
   such crate as a dependency, because there's an *implicit* invariant that
-  sources in `.cargo/registry` should be immutable. `cargo` won't allow such
+  sources in `.crabgo/registry` should be immutable. `crabgo` won't allow such
   scripts when packaging.
 * This script is relatively simple as it just writes out a small generated file.
   One could imagine that other more fanciful operations could take place such as
   generating a Rust module from a C header file or another language definition,
   for example.
 * The [`rerun-if-changed` instruction](build-scripts.md#rerun-if-changed)
-  tells Cargo that the build script only needs to re-run if the build script
-  itself changes. Without this line, Cargo will automatically run the build
+  tells Crabgo that the build script only needs to re-run if the build script
+  itself changes. Without this line, Crabgo will automatically run the build
   script if any file in the package changes. If your code generation uses some
   input files, this is where you would print a list of each of those files.
 
@@ -131,7 +131,7 @@ Like above, let’s first take a look at the package layout:
 
 ```text
 .
-├── Cargo.toml
+├── Crabgo.toml
 ├── build.rs
 └── src
     ├── hello.c
@@ -143,7 +143,7 @@ Like above, let’s first take a look at the package layout:
 Pretty similar to before! Next, the manifest:
 
 ```toml
-# Cargo.toml
+# Crabgo.toml
 
 [package]
 name = "hello-world-from-c"
@@ -173,15 +173,15 @@ fn main() {
                       .current_dir(&Path::new(&out_dir))
                       .status().unwrap();
 
-    println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=hello");
-    println!("cargo:rerun-if-changed=src/hello.c");
+    println!("crabgo:rustc-link-search=native={}", out_dir);
+    println!("crabgo:rustc-link-lib=static=hello");
+    println!("crabgo:rerun-if-changed=src/hello.c");
 }
 ```
 
 This build script starts out by compiling our C file into an object file (by
 invoking `gcc`) and then converting this object file into a static library (by
-invoking `ar`). The final step is feedback to Cargo itself to say that our
+invoking `ar`). The final step is feedback to Crabgo itself to say that our
 output was in `out_dir` and the compiler should link the crate to `libhello.a`
 statically via the `-l static=hello` flag.
 
@@ -195,10 +195,10 @@ Note that there are a number of drawbacks to this hard-coded approach:
   an ARM executable.
 
 Not to fear, though, this is where a `build-dependencies` entry would help!
-The Cargo ecosystem has a number of packages to make this sort of task much
+The Crabgo ecosystem has a number of packages to make this sort of task much
 easier, portable, and standardized. Let's try the [`cc`
 crate](https://crates.io/crates/cc) from [crates.io]. First, add it to the
-`build-dependencies` in `Cargo.toml`:
+`build-dependencies` in `Crabgo.toml`:
 
 ```toml
 [build-dependencies]
@@ -214,7 +214,7 @@ fn main() {
     cc::Build::new()
         .file("src/hello.c")
         .compile("hello");
-    println!("cargo:rerun-if-changed=src/hello.c");
+    println!("crabgo:rerun-if-changed=src/hello.c");
 }
 ```
 
@@ -260,7 +260,7 @@ fn main() {
 ```
 
 And there we go! This should complete our example of building some C code from a
-Cargo package using the build script itself. This also shows why using a build
+Crabgo package using the build script itself. This also shows why using a build
 dependency can be crucial in many situations and even much more concise!
 
 We’ve also seen a brief example of how a build script can use a crate as a
@@ -288,12 +288,12 @@ out [the source code][libz-source] for the full example.
 
 To make it easy to find the location of the library, we will use the
 [`pkg-config` crate]. This crate uses the system's `pkg-config` utility to
-discover information about a library. It will automatically tell Cargo what is
+discover information about a library. It will automatically tell Crabgo what is
 needed to link the library. This will likely only work on Unix-like systems
 with `pkg-config` installed. Let's start by setting up the manifest:
 
 ```toml
-# Cargo.toml
+# Crabgo.toml
 
 [package]
 name = "libz-sys"
@@ -306,7 +306,7 @@ pkg-config = "0.3.16"
 ```
 
 Take note that we included the `links` key in the `package` table. This tells
-Cargo that we are linking to the `libz` library. See ["Using another sys
+Crabgo that we are linking to the `libz` library. See ["Using another sys
 crate"](#using-another-sys-crate) for an example that will leverage this.
 
 The build script is fairly simple:
@@ -316,7 +316,7 @@ The build script is fairly simple:
 
 fn main() {
     pkg_config::Config::new().probe("zlib").unwrap();
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("crabgo:rerun-if-changed=build.rs");
 }
 ```
 
@@ -340,16 +340,16 @@ fn test_crc32() {
 }
 ```
 
-Run `cargo build -vv` to see the output from the build script. On a system
+Run `crabgo build -vv` to see the output from the build script. On a system
 with `libz` already installed, it may look something like this:
 
 ```text
-[libz-sys 0.1.0] cargo:rustc-link-search=native=/usr/lib
-[libz-sys 0.1.0] cargo:rustc-link-lib=z
-[libz-sys 0.1.0] cargo:rerun-if-changed=build.rs
+[libz-sys 0.1.0] crabgo:rustc-link-search=native=/usr/lib
+[libz-sys 0.1.0] crabgo:rustc-link-lib=z
+[libz-sys 0.1.0] crabgo:rerun-if-changed=build.rs
 ```
 
-Nice! `pkg-config` did all the work of finding the library and telling Cargo
+Nice! `pkg-config` did all the work of finding the library and telling Crabgo
 where it is.
 
 It is not unusual for packages to include the source for the library, and
@@ -380,7 +380,7 @@ script can read that metadata with the `DEP_Z_INCLUDE` environment variable.
 Here's an example:
 
 ```toml
-# Cargo.toml
+# Crabgo.toml
 
 [package]
 name = "zuser"
@@ -408,7 +408,7 @@ fn main() {
         cfg.include(include);
     }
     cfg.compile("zuser");
-    println!("cargo:rerun-if-changed=src/zuser.c");
+    println!("crabgo:rerun-if-changed=src/zuser.c");
 }
 ```
 
@@ -440,7 +440,7 @@ script looks something [like
 this](https://github.com/sfackler/rust-openssl/blob/dc72a8e2c429e46c275e528b61a733a66e7877fc/openssl-sys/build/main.rs#L216):
 
 ```rust,ignore
-println!("cargo:version_number={:x}", openssl_version);
+println!("crabgo:version_number={:x}", openssl_version);
 ```
 
 This instruction causes the `DEP_OPENSSL_VERSION_NUMBER` environment variable
@@ -460,19 +460,19 @@ if let Ok(version) = env::var("DEP_OPENSSL_VERSION_NUMBER") {
     let version = u64::from_str_radix(&version, 16).unwrap();
 
     if version >= 0x1_00_01_00_0 {
-        println!("cargo:rustc-cfg=ossl101");
+        println!("crabgo:rustc-cfg=ossl101");
     }
     if version >= 0x1_00_02_00_0 {
-        println!("cargo:rustc-cfg=ossl102");
+        println!("crabgo:rustc-cfg=ossl102");
     }
     if version >= 0x1_01_00_00_0 {
-        println!("cargo:rustc-cfg=ossl110");
+        println!("crabgo:rustc-cfg=ossl110");
     }
     if version >= 0x1_01_00_07_0 {
-        println!("cargo:rustc-cfg=ossl110g");
+        println!("crabgo:rustc-cfg=ossl110g");
     }
     if version >= 0x1_01_01_00_0 {
-        println!("cargo:rustc-cfg=ossl111");
+        println!("crabgo:rustc-cfg=ossl111");
     }
 }
 ```

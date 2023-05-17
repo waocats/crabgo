@@ -1,7 +1,7 @@
 //! Tests for whether or not warnings are displayed for build scripts.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{project, Project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{project, Project};
 
 static WARNING1: &str = "Hello! I'm a warning. :)";
 static WARNING2: &str = "And one more!";
@@ -9,7 +9,7 @@ static WARNING2: &str = "And one more!";
 fn make_lib(lib_src: &str) {
     Package::new("bar", "0.0.1")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -24,10 +24,10 @@ fn make_lib(lib_src: &str) {
                 r#"
                     fn main() {{
                         use std::io::Write;
-                        println!("cargo:warning={{}}", "{}");
+                        println!("crabgo:warning={{}}", "{}");
                         println!("hidden stdout");
                         write!(&mut ::std::io::stderr(), "hidden stderr");
-                        println!("cargo:warning={{}}", "{}");
+                        println!("crabgo:warning={{}}", "{}");
                     }}
                 "#,
                 WARNING1, WARNING2
@@ -40,7 +40,7 @@ fn make_lib(lib_src: &str) {
 fn make_upstream(main_src: &str) -> Project {
     project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -55,12 +55,12 @@ fn make_upstream(main_src: &str) -> Project {
         .build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_warning_on_success() {
     make_lib("");
     let upstream = make_upstream("");
     upstream
-        .cargo("build")
+        .crabgo("build")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -74,12 +74,12 @@ fn no_warning_on_success() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_warning_on_bin_failure() {
     make_lib("");
     let upstream = make_upstream("hi()");
     upstream
-        .cargo("build")
+        .crabgo("build")
         .with_status(101)
         .with_stdout_does_not_contain("hidden stdout")
         .with_stderr_does_not_contain("hidden stderr")
@@ -92,12 +92,12 @@ fn no_warning_on_bin_failure() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warning_on_lib_failure() {
     make_lib("err()");
     let upstream = make_upstream("");
     upstream
-        .cargo("build")
+        .crabgo("build")
         .with_status(101)
         .with_stdout_does_not_contain("hidden stdout")
         .with_stderr_does_not_contain("hidden stderr")

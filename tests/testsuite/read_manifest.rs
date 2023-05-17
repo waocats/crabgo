@@ -1,6 +1,6 @@
-//! Tests for the `cargo read-manifest` command.
+//! Tests for the `crabgo read-manifest` command.
 
-use cargo_test_support::{basic_bin_manifest, main_file, project};
+use crabgo_test_support::{basic_bin_manifest, main_file, project};
 
 fn manifest_output(readme_value: &str) -> String {
     format!(
@@ -38,7 +38,7 @@ fn manifest_output(readme_value: &str) -> String {
         "src_path":"[..]/foo/src/foo.rs"
     }}],
     "features":{{}},
-    "manifest_path":"[..]Cargo.toml",
+    "manifest_path":"[..]Crabgo.toml",
     "metadata": null,
     "publish": null
 }}"#,
@@ -68,139 +68,139 @@ pub fn basic_bin_manifest_with_readme(name: &str, readme_filename: &str) -> Stri
     )
 }
 
-#[cargo_test]
-fn cargo_read_manifest_path_to_cargo_toml_relative() {
+#[crabgo_test]
+fn crabgo_read_manifest_path_to_crabgo_toml_relative() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest --manifest-path foo/Cargo.toml")
+    p.crabgo("read-manifest --manifest-path foo/Crabgo.toml")
         .cwd(p.root().parent().unwrap())
         .with_json(&manifest_output_no_readme())
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_path_to_cargo_toml_absolute() {
+#[crabgo_test]
+fn crabgo_read_manifest_path_to_crabgo_toml_absolute() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest --manifest-path")
-        .arg(p.root().join("Cargo.toml"))
+    p.crabgo("read-manifest --manifest-path")
+        .arg(p.root().join("Crabgo.toml"))
         .cwd(p.root().parent().unwrap())
         .with_json(&manifest_output_no_readme())
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_path_to_cargo_toml_parent_relative() {
+#[crabgo_test]
+fn crabgo_read_manifest_path_to_crabgo_toml_parent_relative() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest --manifest-path foo")
+    p.crabgo("read-manifest --manifest-path foo")
         .cwd(p.root().parent().unwrap())
         .with_status(101)
         .with_stderr(
             "[ERROR] the manifest-path must be \
-             a path to a Cargo.toml file",
+             a path to a Crabgo.toml file",
         )
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_path_to_cargo_toml_parent_absolute() {
+#[crabgo_test]
+fn crabgo_read_manifest_path_to_crabgo_toml_parent_absolute() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest --manifest-path")
+    p.crabgo("read-manifest --manifest-path")
         .arg(p.root())
         .cwd(p.root().parent().unwrap())
         .with_status(101)
         .with_stderr(
             "[ERROR] the manifest-path must be \
-             a path to a Cargo.toml file",
+             a path to a Crabgo.toml file",
         )
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_cwd() {
+#[crabgo_test]
+fn crabgo_read_manifest_cwd() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest")
+    p.crabgo("read-manifest")
         .with_json(&manifest_output_no_readme())
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_with_specified_readme() {
+#[crabgo_test]
+fn crabgo_read_manifest_with_specified_readme() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &basic_bin_manifest_with_readme("foo", r#""SomeReadme.txt""#),
         )
         .file("SomeReadme.txt", "Sample Project")
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest")
+    p.crabgo("read-manifest")
         .with_json(&manifest_output(&format!(r#""{}""#, "SomeReadme.txt")))
         .run();
 }
 
-#[cargo_test]
-fn cargo_read_manifest_default_readme() {
+#[crabgo_test]
+fn crabgo_read_manifest_default_readme() {
     let readme_filenames = ["README.md", "README.txt", "README"];
 
     for readme in readme_filenames.iter() {
         let p = project()
-            .file("Cargo.toml", &basic_bin_manifest("foo"))
+            .file("Crabgo.toml", &basic_bin_manifest("foo"))
             .file(readme, "Sample project")
             .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
             .build();
 
-        p.cargo("read-manifest")
+        p.crabgo("read-manifest")
             .with_json(&manifest_output(&format!(r#""{}""#, readme)))
             .run();
     }
 }
 
-#[cargo_test]
-fn cargo_read_manifest_suppress_default_readme() {
+#[crabgo_test]
+fn crabgo_read_manifest_suppress_default_readme() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &basic_bin_manifest_with_readme("foo", "false"),
         )
         .file("README.txt", "Sample project")
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest")
+    p.crabgo("read-manifest")
         .with_json(&manifest_output_no_readme())
         .run();
 }
 
 // If a file named README.md exists, and `readme = true`, the value `README.md` should be defaulted in.
-#[cargo_test]
-fn cargo_read_manifest_defaults_readme_if_true() {
+#[crabgo_test]
+fn crabgo_read_manifest_defaults_readme_if_true() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest_with_readme("foo", "true"))
+        .file("Crabgo.toml", &basic_bin_manifest_with_readme("foo", "true"))
         .file("README.md", "Sample project")
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("read-manifest")
+    p.crabgo("read-manifest")
         .with_json(&manifest_output(r#""README.md""#))
         .run();
 }

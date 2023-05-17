@@ -10,8 +10,8 @@ to do each of these.
 
 ### Specifying dependencies from crates.io
 
-Cargo is configured to look for dependencies on [crates.io] by default. Only
-the name and a version string are required in this case. In [the cargo
+Crabgo is configured to look for dependencies on [crates.io] by default. Only
+the name and a version string are required in this case. In [the crabgo
 guide](../guide/index.md), we specified a dependency on the `time` crate:
 
 ```toml
@@ -23,10 +23,10 @@ The string `"0.1.12"` is a version requirement. Although it looks like a
 specific *version* of the `time` crate, it actually specifies a *range* of
 versions and allows [SemVer] compatible updates. An update is allowed if the new
 version number does not modify the left-most non-zero digit in the major, minor,
-patch grouping. In this case, if we ran `cargo update -p time`, cargo should
+patch grouping. In this case, if we ran `crabgo update -p time`, crabgo should
 update us to version `0.1.13` if it is the latest `0.1.z` release, but would not
 update us to `0.2.0`. If instead we had specified the version string as `1.0`,
-cargo should update to `1.1` if it is the latest `1.y` release, but not `2.0`.
+crabgo should update to `1.1` if it is the latest `1.y` release, but not `2.0`.
 The version `0.0.x` is not considered compatible with any other version.
 
 [SemVer]: https://semver.org
@@ -47,7 +47,7 @@ be allowed with them:
 
 This compatibility convention is different from SemVer in the way it treats
 versions before 1.0.0. While SemVer says there is no compatibility before
-1.0.0, Cargo considers `0.x.y` to be compatible with `0.x.z`, where `y ≥ z`
+1.0.0, Crabgo considers `0.x.y` to be compatible with `0.x.z`, where `y ≥ z`
 and `x > 0`.
 
 It is possible to further tweak the logic for selecting compatible versions
@@ -110,7 +110,7 @@ separated with a comma, e.g., `>= 1.2, < 1.5`.
 ### Specifying dependencies from other registries
 
 To specify a dependency from a registry other than [crates.io], first the
-registry must be configured in a `.cargo/config.toml` file. See the [registries
+registry must be configured in a `.crabgo/config.toml` file. See the [registries
 documentation] for more information. In the dependency, set the `registry` key
 to the name of the registry to use.
 
@@ -134,12 +134,12 @@ you need to specify is the location of the repository with the `git` key:
 regex = { git = "https://github.com/rust-lang/regex.git" }
 ```
 
-Cargo will fetch the `git` repository at this location then look for a
-`Cargo.toml` for the requested crate anywhere inside the `git` repository
+Crabgo will fetch the `git` repository at this location then look for a
+`Crabgo.toml` for the requested crate anywhere inside the `git` repository
 (not necessarily at the root --- for example, specifying a member crate name
 of a workspace and setting `git` to the repository containing the workspace).
 
-Since we haven’t specified any other information, Cargo assumes that
+Since we haven’t specified any other information, Crabgo assumes that
 we intend to use the latest commit on the main branch to build our package.
 You can combine the `git` key with the `rev`, `tag`, or `branch` keys to
 specify something else. Here's an example of specifying that you want to use
@@ -157,10 +157,10 @@ varies by where the repo is hosted; GitHub in particular exposes a reference to
 the most recent commit of every pull request as shown, but other git hosts often
 provide something equivalent, possibly under a different naming scheme.
 
-Once a `git` dependency has been added, Cargo will lock that dependency to the
+Once a `git` dependency has been added, Crabgo will lock that dependency to the
 latest commit at the time. New commits will not be pulled down automatically
 once the lock is in place. However, they can be pulled down manually with
-`cargo update`.
+`crabgo update`.
 
 See [Git Authentication] for help with git authentication for private repos.
 
@@ -174,28 +174,28 @@ See [Git Authentication] for help with git authentication for private repos.
 
 Over time, our `hello_world` package from [the guide](../guide/index.md) has
 grown significantly in size! It’s gotten to the point that we probably want to
-split out a separate crate for others to use. To do this Cargo supports **path
+split out a separate crate for others to use. To do this Crabgo supports **path
 dependencies** which are typically sub-crates that live within one repository.
 Let’s start off by making a new crate inside of our `hello_world` package:
 
 ```console
 # inside of hello_world/
-$ cargo new hello_utils
+$ crabgo new hello_utils
 ```
 
-This will create a new folder `hello_utils` inside of which a `Cargo.toml` and
-`src` folder are ready to be configured. In order to tell Cargo about this, open
-up `hello_world/Cargo.toml` and add `hello_utils` to your dependencies:
+This will create a new folder `hello_utils` inside of which a `Crabgo.toml` and
+`src` folder are ready to be configured. In order to tell Crabgo about this, open
+up `hello_world/Crabgo.toml` and add `hello_utils` to your dependencies:
 
 ```toml
 [dependencies]
 hello_utils = { path = "hello_utils" }
 ```
 
-This tells Cargo that we depend on a crate called `hello_utils` which is found
-in the `hello_utils` folder (relative to the `Cargo.toml` it’s written in).
+This tells Crabgo that we depend on a crate called `hello_utils` which is found
+in the `hello_utils` folder (relative to the `Crabgo.toml` it’s written in).
 
-And that’s it! The next `cargo build` will automatically build `hello_utils` and
+And that’s it! The next `crabgo build` will automatically build `hello_utils` and
 all of its own dependencies, and others can also start using the crate as well.
 However, crates that use dependencies specified with only a path are not
 permitted on [crates.io]. If we wanted to publish our `hello_world` crate, we
@@ -229,7 +229,7 @@ bitflags = { path = "my-bitflags", version = "1.0" }
 # version 1.0 from crates.io when published.
 smallvec = { git = "https://github.com/servo/rust-smallvec.git", version = "1.0" }
 
-# N.B. that if a version doesn't match, Cargo will fail to compile!
+# N.B. that if a version doesn't match, Crabgo will fail to compile!
 ```
 
 One example where this can be useful is when you have split up a library into
@@ -288,7 +288,7 @@ These values will not work as expected and will always have the default value
 returned by `rustc --print=cfg`.
 There is currently no way to add dependencies based on these configuration values.
 
-In addition to `#[cfg]` syntax, Cargo also supports listing out the full target
+In addition to `#[cfg]` syntax, Crabgo also supports listing out the full target
 the dependencies would apply to:
 
 ```toml
@@ -317,7 +317,7 @@ native = { path = "native/i686" }
 
 ### Development dependencies
 
-You can add a `[dev-dependencies]` section to your `Cargo.toml` whose format
+You can add a `[dev-dependencies]` section to your `Crabgo.toml` whose format
 is equivalent to `[dependencies]`:
 
 ```toml
@@ -349,7 +349,7 @@ mio = "0.0.1"
 
 ### Build dependencies
 
-You can depend on other Cargo-based crates for use in your build scripts.
+You can depend on other Crabgo-based crates for use in your build scripts.
 Dependencies are declared through the `build-dependencies` section of the
 manifest:
 
@@ -376,7 +376,7 @@ in the `dependencies` or `dev-dependencies` section. Build
 dependencies will likewise not be available to the package itself
 unless listed under the `dependencies` section as well. A package
 itself and its build script are built separately, so their
-dependencies need not coincide. Cargo is kept simpler and cleaner by
+dependencies need not coincide. Crabgo is kept simpler and cleaner by
 using independent dependencies for independent purposes.
 
 ### Choosing features
@@ -395,9 +395,9 @@ features = ["secure-password", "civet"]
 More information about features can be found in the [features
 chapter](features.md#dependency-features).
 
-### Renaming dependencies in `Cargo.toml`
+### Renaming dependencies in `Crabgo.toml`
 
-When writing a `[dependencies]` section in `Cargo.toml` the key you write for a
+When writing a `[dependencies]` section in `Crabgo.toml` the key you write for a
 dependency typically matches up to the name of the crate you import from in the
 code. For some projects, though, you may wish to reference the crate with a
 different name in the code regardless of how it's published on crates.io. For
@@ -407,7 +407,7 @@ example you may wish to:
 * Depend on multiple versions of a crate.
 * Depend on crates with the same name from different registries.
 
-To support this Cargo supports a `package` key in the `[dependencies]` section
+To support this Crabgo supports a `package` key in the `[dependencies]` section
 of which package should be depended on:
 
 ```toml
@@ -430,7 +430,7 @@ extern crate baz; // registry `custom`
 ```
 
 All three of these crates have the package name of `foo` in their own
-`Cargo.toml`, so we're explicitly using the `package` key to inform Cargo that
+`Crabgo.toml`, so we're explicitly using the `package` key to inform Crabgo that
 we want the `foo` package even though we're calling it something else locally.
 The `package` key, if not specified, defaults to the name of the dependency
 being requested.

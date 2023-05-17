@@ -1,22 +1,22 @@
 //! Tests for --build-plan feature.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_bin_manifest, basic_manifest, main_file, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_bin_manifest, basic_manifest, main_file, project};
 
-#[cargo_test]
-fn cargo_build_plan_simple() {
+#[crabgo_test]
+fn crabgo_build_plan_simple() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("build --build-plan -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["build-plan"])
+    p.crabgo("build --build-plan -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["build-plan"])
         .with_json(
             r#"
             {
                 "inputs": [
-                    "[..]/foo/Cargo.toml"
+                    "[..]/foo/Crabgo.toml"
                 ],
                 "invocations": [
                     {
@@ -41,11 +41,11 @@ fn cargo_build_plan_simple() {
     assert!(!p.bin("foo").is_file());
 }
 
-#[cargo_test]
-fn cargo_build_plan_single_dep() {
+#[crabgo_test]
+fn crabgo_build_plan_single_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -66,17 +66,17 @@ fn cargo_build_plan_single_dep() {
                 fn test() { foo(); }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
-    p.cargo("build --build-plan -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["build-plan"])
+    p.crabgo("build --build-plan -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["build-plan"])
         .with_json(
             r#"
             {
                 "inputs": [
-                    "[..]/foo/Cargo.toml",
-                    "[..]/foo/bar/Cargo.toml"
+                    "[..]/foo/Crabgo.toml",
+                    "[..]/foo/bar/Crabgo.toml"
                 ],
                 "invocations": [
                     {
@@ -120,11 +120,11 @@ fn cargo_build_plan_single_dep() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_build_plan_build_script() {
+#[crabgo_test]
+fn crabgo_build_plan_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -138,13 +138,13 @@ fn cargo_build_plan_build_script() {
         .file("build.rs", r#"fn main() {}"#)
         .build();
 
-    p.cargo("build --build-plan -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["build-plan"])
+    p.crabgo("build --build-plan -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["build-plan"])
         .with_json(
             r#"
             {
                 "inputs": [
-                    "[..]/foo/Cargo.toml"
+                    "[..]/foo/Crabgo.toml"
                 ],
                 "invocations": [
                     {
@@ -196,13 +196,13 @@ fn cargo_build_plan_build_script() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_plan_with_dev_dep() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -216,7 +216,7 @@ fn build_plan_with_dev_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build --build-plan -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["build-plan"])
+    p.crabgo("build --build-plan -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["build-plan"])
         .run();
 }

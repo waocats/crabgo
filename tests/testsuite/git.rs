@@ -9,18 +9,18 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 
-use cargo_test_support::git::cargo_uses_gitoxide;
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_lib_manifest, basic_manifest, git, main_file, path2url, project};
-use cargo_test_support::{sleep_ms, t, Project};
+use crabgo_test_support::git::crabgo_uses_gitoxide;
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_lib_manifest, basic_manifest, git, main_file, path2url, project};
+use crabgo_test_support::{sleep_ms, t, Project};
 
-#[cargo_test]
-fn cargo_compile_simple_git_dep() {
+#[crabgo_test]
+fn crabgo_compile_simple_git_dep() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "src/dep1.rs",
                 r#"
@@ -33,7 +33,7 @@ fn cargo_compile_simple_git_dep() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -58,7 +58,7 @@ fn cargo_compile_simple_git_dep() {
     let git_root = git_project.root();
 
     project
-        .cargo("build")
+        .crabgo("build")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [COMPILING] dep1 v0.5.0 ({}#[..])\n\
@@ -77,12 +77,12 @@ fn cargo_compile_simple_git_dep() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_git_dep_branch() {
+#[crabgo_test]
+fn crabgo_compile_git_dep_branch() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "src/dep1.rs",
                 r#"
@@ -101,7 +101,7 @@ fn cargo_compile_git_dep_branch() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -128,7 +128,7 @@ fn cargo_compile_git_dep_branch() {
     let git_root = git_project.root();
 
     project
-        .cargo("build")
+        .crabgo("build")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [COMPILING] dep1 v0.5.0 ({}?branch=branchy#[..])\n\
@@ -147,12 +147,12 @@ fn cargo_compile_git_dep_branch() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_git_dep_tag() {
+#[crabgo_test]
+fn crabgo_compile_git_dep_tag() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "src/dep1.rs",
                 r#"
@@ -177,7 +177,7 @@ fn cargo_compile_git_dep_tag() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -203,7 +203,7 @@ fn cargo_compile_git_dep_tag() {
     let git_root = git_project.root();
 
     project
-        .cargo("build")
+        .crabgo("build")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [COMPILING] dep1 v0.5.0 ({}?tag=v0.1.0#[..])\n\
@@ -221,15 +221,15 @@ fn cargo_compile_git_dep_tag() {
         .with_stdout("hello world\n")
         .run();
 
-    project.cargo("build").run();
+    project.crabgo("build").run();
 }
 
-#[cargo_test]
-fn cargo_compile_git_dep_pull_request() {
+#[crabgo_test]
+fn crabgo_compile_git_dep_pull_request() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "src/dep1.rs",
                 r#"
@@ -250,7 +250,7 @@ fn cargo_compile_git_dep_pull_request() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -272,7 +272,7 @@ fn cargo_compile_git_dep_pull_request() {
     let git_root = git_project.root();
 
     project
-        .cargo("build")
+        .crabgo("build")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [COMPILING] dep1 v0.5.0 ({}?rev=refs/pull/330/head#[..])\n\
@@ -286,12 +286,12 @@ fn cargo_compile_git_dep_pull_request() {
     assert!(project.bin("foo").is_file());
 }
 
-#[cargo_test]
-fn cargo_compile_with_nested_paths() {
+#[crabgo_test]
+fn crabgo_compile_with_nested_paths() {
     let git_project = git::new("dep1", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                     [package]
 
@@ -319,7 +319,7 @@ fn cargo_compile_with_nested_paths() {
                     }
                 "#,
             )
-            .file("vendor/dep2/Cargo.toml", &basic_lib_manifest("dep2"))
+            .file("vendor/dep2/Crabgo.toml", &basic_lib_manifest("dep2"))
             .file(
                 "vendor/dep2/src/dep2.rs",
                 r#"
@@ -332,7 +332,7 @@ fn cargo_compile_with_nested_paths() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -359,18 +359,18 @@ fn cargo_compile_with_nested_paths() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     assert!(p.bin("foo").is_file());
 
     p.process(&p.bin("foo")).with_stdout("hello world\n").run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_malformed_nested_paths() {
+#[crabgo_test]
+fn crabgo_compile_with_malformed_nested_paths() {
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "src/dep1.rs",
                 r#"
@@ -379,9 +379,9 @@ fn cargo_compile_with_malformed_nested_paths() {
                     }
                 "#,
             )
-            .file("vendor/dep2/Cargo.toml", "!INVALID!")
+            .file("vendor/dep2/Crabgo.toml", "!INVALID!")
             .file(
-                "vendor/dep3/Cargo.toml",
+                "vendor/dep3/Crabgo.toml",
                 r#"
                 [package]
                 name = "dep3"
@@ -395,7 +395,7 @@ fn cargo_compile_with_malformed_nested_paths() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -422,18 +422,18 @@ fn cargo_compile_with_malformed_nested_paths() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     assert!(p.bin("foo").is_file());
 
     p.process(&p.bin("foo")).with_stdout("hello world\n").run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_meta_package() {
+#[crabgo_test]
+fn crabgo_compile_with_meta_package() {
     let git_project = git::new("meta-dep", |project| {
         project
-            .file("dep1/Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("dep1/Crabgo.toml", &basic_lib_manifest("dep1"))
             .file(
                 "dep1/src/dep1.rs",
                 r#"
@@ -442,7 +442,7 @@ fn cargo_compile_with_meta_package() {
                     }
                 "#,
             )
-            .file("dep2/Cargo.toml", &basic_lib_manifest("dep2"))
+            .file("dep2/Crabgo.toml", &basic_lib_manifest("dep2"))
             .file(
                 "dep2/src/dep2.rs",
                 r#"
@@ -455,7 +455,7 @@ fn cargo_compile_with_meta_package() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -491,7 +491,7 @@ fn cargo_compile_with_meta_package() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     assert!(p.bin("foo").is_file());
 
@@ -500,13 +500,13 @@ fn cargo_compile_with_meta_package() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_short_ssh_git() {
+#[crabgo_test]
+fn crabgo_compile_with_short_ssh_git() {
     let url = "git@github.com:a/dep";
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -532,7 +532,7 @@ fn cargo_compile_with_short_ssh_git() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stdout("")
         .with_stderr(&format!(
@@ -547,17 +547,17 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn recompilation() {
     let git_project = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("bar"))
+            .file("Crabgo.toml", &basic_lib_manifest("bar"))
             .file("src/bar.rs", "pub fn bar() {}")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -578,7 +578,7 @@ fn recompilation() {
         .build();
 
     // First time around we should compile both foo and bar
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [CHECKING] bar v0.5.0 ({}#[..])\n\
@@ -591,21 +591,21 @@ fn recompilation() {
         .run();
 
     // Don't recompile the second time
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
     // Modify a file manually, shouldn't trigger a recompile
     git_project.change_file("src/bar.rs", r#"pub fn bar() { println!("hello!"); }"#);
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
-    p.cargo("update")
+    p.crabgo("update")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`",
             git_project.url()
         ))
         .run();
 
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
     // Commit the changes and make sure we don't trigger a recompile because the
     // lock file says not to change
@@ -614,11 +614,11 @@ fn recompilation() {
     git::commit(&repo);
 
     println!("compile after commit");
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
     p.root().move_into_the_past();
 
     // Update the dependency and carry on!
-    p.cargo("update")
+    p.crabgo("update")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [UPDATING] bar v0.5.0 ([..]) -> #[..]\n\
@@ -627,7 +627,7 @@ fn recompilation() {
         ))
         .run();
     println!("going for the last compile");
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "[CHECKING] bar v0.5.0 ({}#[..])\n\
              [CHECKING] foo v0.5.0 ([CWD])\n\
@@ -638,8 +638,8 @@ fn recompilation() {
         .run();
 
     // Make sure clean only cleans one dep
-    p.cargo("clean -p foo").with_stdout("").run();
-    p.cargo("check")
+    p.crabgo("clean -p foo").with_stdout("").run();
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] foo v0.5.0 ([CWD])\n\
              [FINISHED] dev [unoptimized + debuginfo] target(s) \
@@ -648,17 +648,17 @@ fn recompilation() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_with_shared_deps() {
     let git_project = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("bar"))
+            .file("Crabgo.toml", &basic_lib_manifest("bar"))
             .file("src/bar.rs", "pub fn bar() {}")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -682,7 +682,7 @@ fn update_with_shared_deps() {
             "#,
         )
         .file(
-            "dep1/Cargo.toml",
+            "dep1/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -699,7 +699,7 @@ fn update_with_shared_deps() {
         )
         .file("dep1/src/lib.rs", "")
         .file(
-            "dep2/Cargo.toml",
+            "dep2/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -718,7 +718,7 @@ fn update_with_shared_deps() {
         .build();
 
     // First time around we should compile both foo and bar
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{git}`
@@ -742,11 +742,11 @@ fn update_with_shared_deps() {
 
     // By default, not transitive updates
     println!("dep1 update");
-    p.cargo("update -p dep1").with_stdout("").run();
+    p.crabgo("update -p dep1").with_stdout("").run();
 
     // Don't do anything bad on a weird --precise argument
     println!("bar bad precise update");
-    p.cargo("update -p bar --precise 0.1.2")
+    p.crabgo("update -p bar --precise 0.1.2")
         .with_status(101)
         .with_stderr(
             "\
@@ -764,14 +764,14 @@ Caused by:
     // Specifying a precise rev to the old rev shouldn't actually update
     // anything because we already have the rev in the db.
     println!("bar precise update");
-    p.cargo("update -p bar --precise")
+    p.crabgo("update -p bar --precise")
         .arg(&old_head.to_string())
         .with_stdout("")
         .run();
 
     // Updating aggressively should, however, update the repo.
     println!("dep1 aggressive update");
-    p.cargo("update -p dep1 --aggressive")
+    p.crabgo("update -p dep1 --aggressive")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [UPDATING] bar v0.5.0 ([..]) -> #[..]\n\
@@ -782,7 +782,7 @@ Caused by:
 
     // Make sure we still only compile one version of the git repo
     println!("build");
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [CHECKING] bar v0.5.0 ({git}#[..])
@@ -795,7 +795,7 @@ Caused by:
         .run();
 
     // We should be able to update transitive deps
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`",
             git_project.url()
@@ -803,11 +803,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_submodule() {
     let project = project();
     let git_project = git::new("dep1", |project| {
-        project.file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+        project.file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
     });
     let git_project2 = git::new("dep2", |project| project.file("lib.rs", "pub fn dep() {}"));
 
@@ -818,7 +818,7 @@ fn dep_with_submodule() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -841,7 +841,7 @@ fn dep_with_submodule() {
         .build();
 
     project
-        .cargo("check")
+        .crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository [..]
@@ -853,13 +853,13 @@ fn dep_with_submodule() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_relative_submodule() {
     let foo = project();
     let base = git::new("base", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
             [package]
             name = "base"
@@ -881,7 +881,7 @@ fn dep_with_relative_submodule() {
     let _deployment = git::new("deployment", |project| {
         project
             .file("src/lib.rs", "pub fn deployment_func() {}")
-            .file("Cargo.toml", &basic_lib_manifest("deployment"))
+            .file("Crabgo.toml", &basic_lib_manifest("deployment"))
     });
 
     let base_repo = git2::Repository::open(&base.root()).unwrap();
@@ -890,7 +890,7 @@ fn dep_with_relative_submodule() {
 
     let project = foo
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -907,7 +907,7 @@ fn dep_with_relative_submodule() {
         .build();
 
     project
-        .cargo("check")
+        .crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository [..]
@@ -920,11 +920,11 @@ fn dep_with_relative_submodule() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_bad_submodule() {
     let project = project();
     let git_project = git::new("dep1", |project| {
-        project.file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+        project.file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
     });
     let git_project2 = git::new("dep2", |project| project.file("lib.rs", "pub fn dep() {}"));
 
@@ -951,7 +951,7 @@ fn dep_with_bad_submodule() {
 
     let p = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -994,13 +994,13 @@ Caused by:
         path2url(git_project.root())
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(expected)
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_skipped_submodule() {
     // Ensure we skip dependency submodules if their update strategy is `none`.
     let qux = git::new("qux", |project| {
@@ -1009,7 +1009,7 @@ fn dep_with_skipped_submodule() {
 
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.0.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -1025,7 +1025,7 @@ fn dep_with_skipped_submodule() {
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1042,7 +1042,7 @@ fn dep_with_skipped_submodule() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]/bar`
@@ -1054,13 +1054,13 @@ fn dep_with_skipped_submodule() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ambiguous_published_deps() {
     let project = project();
     let git_project = git::new("dep", |project| {
         project
             .file(
-                "aaa/Cargo.toml",
+                "aaa/Crabgo.toml",
                 &format!(
                     r#"
                     [package]
@@ -1072,7 +1072,7 @@ fn ambiguous_published_deps() {
             )
             .file("aaa/src/lib.rs", "")
             .file(
-                "bbb/Cargo.toml",
+                "bbb/Crabgo.toml",
                 &format!(
                     r#"
                     [package]
@@ -1087,7 +1087,7 @@ fn ambiguous_published_deps() {
 
     let p = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1105,8 +1105,8 @@ fn ambiguous_published_deps() {
         .file("src/main.rs", "fn main() {  }")
         .build();
 
-    p.cargo("build").run();
-    p.cargo("run")
+    p.crabgo("build").run();
+    p.crabgo("run")
         .with_stderr(
             "\
 [WARNING] skipping duplicate package `bar` found at `[..]`
@@ -1117,23 +1117,23 @@ fn ambiguous_published_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_deps_only_update_one() {
     let project = project();
     let git1 = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let git2 = git::new("dep2", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep2", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep2", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let p = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1166,7 +1166,7 @@ fn two_deps_only_update_one() {
     println!("dep1 head sha: {}", git_repo_head_sha(&git1));
     println!("dep2 head sha: {}", git_repo_head_sha(&git2));
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[UPDATING] git repository `[..]`\n\
              [UPDATING] git repository `[..]`\n\
@@ -1183,7 +1183,7 @@ fn two_deps_only_update_one() {
     let oid = git::commit(&repo);
     println!("dep1 head sha: {}", oid_to_short_sha(oid));
 
-    p.cargo("update -p dep1")
+    p.crabgo("update -p dep1")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [UPDATING] dep1 v0.5.0 ([..]) -> #[..]\n\
@@ -1193,11 +1193,11 @@ fn two_deps_only_update_one() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn stale_cached_version() {
     let bar = git::new("meta-dep", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.0.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.0.0"))
             .file("src/lib.rs", "pub fn bar() -> i32 { 1 }")
     });
 
@@ -1205,7 +1205,7 @@ fn stale_cached_version() {
     // repo
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1229,7 +1229,7 @@ fn stale_cached_version() {
         )
         .build();
 
-    foo.cargo("build").run();
+    foo.crabgo("build").run();
     foo.process(&foo.bin("foo")).run();
 
     // Update the repo, and simulate someone else updating the lock file and then
@@ -1244,7 +1244,7 @@ fn stale_cached_version() {
     let rev = repo.revparse_single("HEAD").unwrap().id();
 
     foo.change_file(
-        "Cargo.lock",
+        "Crabgo.lock",
         &format!(
             r#"
                 [[package]]
@@ -1265,7 +1265,7 @@ fn stale_cached_version() {
     );
 
     // Now build!
-    foo.cargo("build")
+    foo.crabgo("build")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{bar}`
@@ -1279,11 +1279,11 @@ fn stale_cached_version() {
     foo.process(&foo.bin("foo")).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dep_with_changed_submodule() {
     let project = project();
     let git_project = git::new("dep1", |project| {
-        project.file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+        project.file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
     });
 
     let git_project2 = git::new("dep2", |project| {
@@ -1300,7 +1300,7 @@ fn dep_with_changed_submodule() {
 
     let p = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1323,7 +1323,7 @@ fn dep_with_changed_submodule() {
         .build();
 
     println!("first run");
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "[UPDATING] git repository `[..]`\n\
              [UPDATING] git submodule `file://[..]/dep2`\n\
@@ -1367,7 +1367,7 @@ fn dep_with_changed_submodule() {
     sleep_ms(1000);
     // Update the dependency and carry on!
     println!("update");
-    p.cargo("update -v")
+    p.crabgo("update -v")
         .with_stderr("")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
@@ -1379,7 +1379,7 @@ fn dep_with_changed_submodule() {
         .run();
 
     println!("last run");
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "[COMPILING] dep1 v0.5.0 ([..])\n\
              [COMPILING] foo v0.5.0 ([..])\n\
@@ -1391,11 +1391,11 @@ fn dep_with_changed_submodule() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_deps_with_testing() {
     let p2 = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file(
                 "src/lib.rs",
                 r#"
@@ -1406,7 +1406,7 @@ fn dev_deps_with_testing() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1438,7 +1438,7 @@ fn dev_deps_with_testing() {
 
     // Generate a lock file which did not use `bar` to compile, but had to update
     // `bar` to generate the lock file
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{bar}`
@@ -1451,7 +1451,7 @@ fn dev_deps_with_testing() {
 
     // Make sure we use the previous resolution of `bar` instead of updating it
     // a second time.
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] [..] v0.5.0 ([..])
@@ -1463,12 +1463,12 @@ fn dev_deps_with_testing() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_build_cmd_freshness() {
     let foo = git::new("foo", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                     [package]
                     name = "foo"
@@ -1485,7 +1485,7 @@ fn git_build_cmd_freshness() {
 
     sleep_ms(1000);
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.0 ([CWD])
@@ -1496,19 +1496,19 @@ fn git_build_cmd_freshness() {
 
     // Smoke test to make sure it doesn't compile again
     println!("first pass");
-    foo.cargo("check").with_stdout("").run();
+    foo.crabgo("check").with_stdout("").run();
 
     // Modify an ignored file and make sure we don't rebuild
     println!("second pass");
     foo.change_file("src/bar.rs", "");
-    foo.cargo("check").with_stdout("").run();
+    foo.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_name_not_always_needed() {
     let p2 = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file(
                 "src/lib.rs",
                 r#"
@@ -1524,7 +1524,7 @@ fn git_name_not_always_needed() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1543,7 +1543,7 @@ fn git_name_not_always_needed() {
 
     // Generate a lock file which did not use `bar` to compile, but had to update
     // `bar` to generate the lock file
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{bar}`
@@ -1555,11 +1555,11 @@ fn git_name_not_always_needed() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_repo_changing_no_rebuild() {
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "pub fn bar() -> i32 { 1 }")
     });
 
@@ -1567,7 +1567,7 @@ fn git_repo_changing_no_rebuild() {
     let p1 = project()
         .at("p1")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1585,7 +1585,7 @@ fn git_repo_changing_no_rebuild() {
         .file("build.rs", "fn main() {}")
         .build();
     p1.root().move_into_the_past();
-    p1.cargo("check")
+    p1.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{bar}`
@@ -1607,7 +1607,7 @@ fn git_repo_changing_no_rebuild() {
     let p2 = project()
         .at("p2")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1622,7 +1622,7 @@ fn git_repo_changing_no_rebuild() {
         )
         .file("src/main.rs", "fn main() {}")
         .build();
-    p2.cargo("check")
+    p2.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{bar}`
@@ -1636,15 +1636,15 @@ fn git_repo_changing_no_rebuild() {
 
     // And now for the real test! Make sure that p1 doesn't get rebuilt
     // even though the git repo has changed.
-    p1.cargo("check").with_stdout("").run();
+    p1.crabgo("check").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_dep_build_cmd() {
     let p = git::new("foo", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                     [package]
 
@@ -1664,7 +1664,7 @@ fn git_dep_build_cmd() {
             )
             .file("src/foo.rs", &main_file(r#""{}", bar::gimme()"#, &["bar"]))
             .file(
-                "bar/Cargo.toml",
+                "bar/Crabgo.toml",
                 r#"
                     [package]
 
@@ -1697,29 +1697,29 @@ fn git_dep_build_cmd() {
 
     p.root().join("bar").move_into_the_past();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     p.process(&p.bin("foo")).with_stdout("0\n").run();
 
     // Touching bar.rs.in should cause the `build` command to run again.
     p.change_file("bar/src/bar.rs.in", "pub fn gimme() -> i32 { 1 }");
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     p.process(&p.bin("foo")).with_stdout("1\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_downloads() {
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "pub fn bar() -> i32 { 1 }")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1734,24 +1734,24 @@ fn fetch_downloads() {
         )
         .file("src/main.rs", "fn main() {}")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .with_stderr(&format!(
             "[UPDATING] git repository `{url}`",
             url = bar.url()
         ))
         .run();
 
-    p.cargo("fetch").with_stdout("").run();
+    p.crabgo("fetch").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa() {
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "pub fn bar() -> i32 { 1 }")
     });
-    let feature_configuration = if cargo_uses_gitoxide() {
+    let feature_configuration = if crabgo_uses_gitoxide() {
         // When we are always using `gitoxide` by default, create the registry with git2 as well as the download…
         "-Zgitoxide=internal-use-git2"
     } else {
@@ -1761,7 +1761,7 @@ fn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1776,9 +1776,9 @@ fn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa() {
         )
         .file("src/main.rs", "fn main() {}")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .arg(feature_configuration)
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .with_stderr(&format!(
             "[UPDATING] git repository `{url}`",
             url = bar.url()
@@ -1786,20 +1786,20 @@ fn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa() {
         .run();
 
     Package::new("bar", "1.0.0").publish(); // trigger a crates-index change.
-    p.cargo("fetch").with_stdout("").run();
+    p.crabgo("fetch").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warnings_in_git_dep() {
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "fn unused() {}")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1815,7 +1815,7 @@ fn warnings_in_git_dep() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "[UPDATING] git repository `{}`\n\
              [CHECKING] bar v0.5.0 ({}#[..])\n\
@@ -1827,22 +1827,22 @@ fn warnings_in_git_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_ambiguous() {
     let bar1 = git::new("bar1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let bar2 = git::new("bar2", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.6.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.6.0"))
             .file("src/lib.rs", "")
     });
     let baz = git::new("baz", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                         [package]
@@ -1861,7 +1861,7 @@ fn update_ambiguous() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1880,8 +1880,8 @@ fn update_ambiguous() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("update -p bar")
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("update -p bar")
         .with_status(101)
         .with_stderr(
             "\
@@ -1896,19 +1896,19 @@ following:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_one_dep_in_repo_with_many_deps() {
     let bar = git::new("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
             .file("src/lib.rs", "")
-            .file("a/Cargo.toml", &basic_manifest("a", "0.5.0"))
+            .file("a/Crabgo.toml", &basic_manifest("a", "0.5.0"))
             .file("a/src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1927,23 +1927,23 @@ fn update_one_dep_in_repo_with_many_deps() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("update -p bar")
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("update -p bar")
         .with_stderr(&format!("[UPDATING] git repository `{}`", bar.url()))
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn switch_deps_does_not_update_transitive() {
     let transitive = git::new("transitive", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("transitive", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("transitive", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let dep1 = git::new("dep1", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                         [package]
@@ -1962,7 +1962,7 @@ fn switch_deps_does_not_update_transitive() {
     let dep2 = git::new("dep2", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                         [package]
@@ -1981,7 +1981,7 @@ fn switch_deps_does_not_update_transitive() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1997,7 +1997,7 @@ fn switch_deps_does_not_update_transitive() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{}`
@@ -2015,7 +2015,7 @@ fn switch_deps_does_not_update_transitive() {
     // Update the dependency to point to the second repository, but this
     // shouldn't update the transitive dependency which is the same.
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         &format!(
             r#"
                 [package]
@@ -2029,7 +2029,7 @@ fn switch_deps_does_not_update_transitive() {
         ),
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{}`
@@ -2042,12 +2042,12 @@ fn switch_deps_does_not_update_transitive() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_one_source_updates_all_packages_in_that_git_source() {
     let dep = git::new("dep", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                     [package]
                     name = "dep"
@@ -2059,13 +2059,13 @@ fn update_one_source_updates_all_packages_in_that_git_source() {
                 "#,
             )
             .file("src/lib.rs", "")
-            .file("a/Cargo.toml", &basic_manifest("a", "0.5.0"))
+            .file("a/Crabgo.toml", &basic_manifest("a", "0.5.0"))
             .file("a/src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2081,7 +2081,7 @@ fn update_one_source_updates_all_packages_in_that_git_source() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     let repo = git2::Repository::open(&dep.root()).unwrap();
     let rev1 = repo.revparse_single("HEAD").unwrap().id();
@@ -2091,7 +2091,7 @@ fn update_one_source_updates_all_packages_in_that_git_source() {
     git::add(&repo);
     git::commit(&repo);
 
-    p.cargo("update -p dep").run();
+    p.crabgo("update -p dep").run();
     let lockfile = p.read_lockfile();
     assert!(
         !lockfile.contains(&rev1.to_string()),
@@ -2101,22 +2101,22 @@ fn update_one_source_updates_all_packages_in_that_git_source() {
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn switch_sources() {
     let a1 = git::new("a1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("a", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("a", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let a2 = git::new("a2", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("a", "0.5.1"))
+            .file("Crabgo.toml", &basic_manifest("a", "0.5.1"))
             .file("src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2128,7 +2128,7 @@ fn switch_sources() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2144,7 +2144,7 @@ fn switch_sources() {
         .file("b/src/lib.rs", "pub fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]a1`
@@ -2157,7 +2157,7 @@ fn switch_sources() {
         .run();
 
     p.change_file(
-        "b/Cargo.toml",
+        "b/Crabgo.toml",
         &format!(
             r#"
                 [package]
@@ -2171,7 +2171,7 @@ fn switch_sources() {
         ),
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]a2`
@@ -2184,12 +2184,12 @@ fn switch_sources() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dont_require_submodules_are_checked_out() {
     let p = project().build();
     let git1 = git::new("dep1", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2214,19 +2214,19 @@ fn dont_require_submodules_are_checked_out() {
     let dst = paths::home().join("foo");
     git2::Repository::clone(&url, &dst).unwrap();
 
-    git1.cargo("check -v").cwd(&dst).run();
+    git1.crabgo("check -v").cwd(&dst).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doctest_same_name() {
     let a2 = git::new("a2", |p| {
-        p.file("Cargo.toml", &basic_manifest("a", "0.5.0"))
+        p.file("Crabgo.toml", &basic_manifest("a", "0.5.0"))
             .file("src/lib.rs", "pub fn a2() {}")
     });
 
     let a1 = git::new("a1", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2244,7 +2244,7 @@ fn doctest_same_name() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2267,13 +2267,13 @@ fn doctest_same_name() {
         )
         .build();
 
-    p.cargo("test -v").run();
+    p.crabgo("test -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lints_are_suppressed() {
     let a = git::new("a", |p| {
-        p.file("Cargo.toml", &basic_manifest("a", "0.5.0")).file(
+        p.file("Crabgo.toml", &basic_manifest("a", "0.5.0")).file(
             "src/lib.rs",
             "
             use std::option;
@@ -2283,7 +2283,7 @@ fn lints_are_suppressed() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2300,7 +2300,7 @@ fn lints_are_suppressed() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `[..]`
@@ -2312,10 +2312,10 @@ fn lints_are_suppressed() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn denied_lints_are_allowed() {
     let a = git::new("a", |p| {
-        p.file("Cargo.toml", &basic_manifest("a", "0.5.0")).file(
+        p.file("Crabgo.toml", &basic_manifest("a", "0.5.0")).file(
             "src/lib.rs",
             "
             #![deny(warnings)]
@@ -2326,7 +2326,7 @@ fn denied_lints_are_allowed() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2343,7 +2343,7 @@ fn denied_lints_are_allowed() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `[..]`
@@ -2355,16 +2355,16 @@ fn denied_lints_are_allowed() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_a_git_dep() {
     let git = git::new("git", |p| {
-        p.file("Cargo.toml", &basic_manifest("git", "0.5.0"))
+        p.file("Crabgo.toml", &basic_manifest("git", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2380,16 +2380,16 @@ fn add_a_git_dep() {
             ),
         )
         .file("src/lib.rs", "")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
-    assert!(paths::home().join(".cargo/git/CACHEDIR.TAG").is_file());
+    assert!(paths::home().join(".crabgo/git/CACHEDIR.TAG").is_file());
 
     p.change_file(
-        "a/Cargo.toml",
+        "a/Crabgo.toml",
         &format!(
             r#"
                 [package]
@@ -2404,15 +2404,15 @@ fn add_a_git_dep() {
         ),
     );
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_at_rev_instead_of_tag() {
     let git = git::new("git", |p| {
-        p.file("Cargo.toml", &basic_manifest("git1", "0.5.0"))
+        p.file("Crabgo.toml", &basic_manifest("git1", "0.5.0"))
             .file("src/lib.rs", "")
-            .file("a/Cargo.toml", &basic_manifest("git2", "0.5.0"))
+            .file("a/Crabgo.toml", &basic_manifest("git2", "0.5.0"))
             .file("a/src/lib.rs", "")
     });
 
@@ -2430,7 +2430,7 @@ fn two_at_rev_instead_of_tag() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2448,28 +2448,28 @@ fn two_at_rev_instead_of_tag() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile").run();
-    p.cargo("check -v").run();
+    p.crabgo("generate-lockfile").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn include_overrides_gitignore() {
     // Make sure that `package.include` takes precedence over .gitignore.
     let p = git::new("foo", |repo| {
         repo.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
                 version = "0.5.0"
-                include = ["src/lib.rs", "ignored.txt", "Cargo.toml"]
+                include = ["src/lib.rs", "ignored.txt", "Crabgo.toml"]
             "#,
         )
         .file(
             ".gitignore",
             r#"
                 /target
-                Cargo.lock
+                Crabgo.lock
                 ignored.txt
             "#,
         )
@@ -2478,9 +2478,9 @@ fn include_overrides_gitignore() {
         .file("build.rs", "fn main() {}")
     });
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     p.change_file("ignored.txt", "Trigger rebuild.");
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr(
             "\
 [DIRTY] foo v0.5.0 ([..]): the precalculated components changed
@@ -2491,11 +2491,11 @@ fn include_overrides_gitignore() {
 ",
         )
         .run();
-    p.cargo("package --list --allow-dirty")
+    p.crabgo("package --list --allow-dirty")
         .with_stdout(
             "\
-Cargo.toml
-Cargo.toml.orig
+Crabgo.toml
+Crabgo.toml.orig
 ignored.txt
 src/lib.rs
 ",
@@ -2503,13 +2503,13 @@ src/lib.rs
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_git_dependency_manifest() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                     [package]
 
@@ -2536,7 +2536,7 @@ fn invalid_git_dependency_manifest() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2561,7 +2561,7 @@ fn invalid_git_dependency_manifest() {
     let git_root = git_project.root();
 
     project
-        .cargo("check")
+        .crabgo("check")
         .with_status(101)
         .with_stderr(&format!(
             "\
@@ -2593,11 +2593,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn failed_submodule_checkout() {
     let project = project();
     let git_project = git::new("dep1", |project| {
-        project.file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+        project.file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
     });
 
     let git_project2 = git::new("dep2", |project| project.file("lib.rs", ""));
@@ -2637,7 +2637,7 @@ fn failed_submodule_checkout() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2655,13 +2655,13 @@ fn failed_submodule_checkout() {
         .build();
 
     project
-        .cargo("check")
+        .crabgo("check")
         .with_status(101)
         .with_stderr_contains("  failed to update submodule `src`")
         .with_stderr_contains("  failed to update submodule `bar`")
         .run();
     project
-        .cargo("check")
+        .crabgo("check")
         .with_status(101)
         .with_stderr_contains("  failed to update submodule `src`")
         .with_stderr_contains("  failed to update submodule `bar`")
@@ -2672,18 +2672,18 @@ fn failed_submodule_checkout() {
     t.join().unwrap();
 }
 
-#[cargo_test(requires_git)]
+#[crabgo_test(requires_git)]
 fn use_the_cli() {
     let project = project();
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2699,7 +2699,7 @@ fn use_the_cli() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "
                 [net]
                 git-fetch-with-cli = true
@@ -2719,25 +2719,25 @@ From [..]
 [FINISHED] [..]
 ";
 
-    project.cargo("check -v").with_stderr(stderr).run();
-    assert!(paths::home().join(".cargo/git/CACHEDIR.TAG").is_file());
+    project.crabgo("check -v").with_stderr(stderr).run();
+    assert!(paths::home().join(".crabgo/git/CACHEDIR.TAG").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn templatedir_doesnt_cause_problems() {
     let git_project2 = git::new("dep2", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep2", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep2", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2772,20 +2772,20 @@ fn templatedir_doesnt_cause_problems() {
     )
     .unwrap();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test(requires_git)]
+#[crabgo_test(requires_git)]
 fn git_with_cli_force() {
     // Supports a force-pushed repo.
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", r#"pub fn f() { println!("one"); }"#)
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -2801,14 +2801,14 @@ fn git_with_cli_force() {
         )
         .file("src/main.rs", "fn main() { dep1::f(); }")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "
             [net]
             git-fetch-with-cli = true
             ",
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
     p.rename_run("foo", "foo1").with_stdout("one").run();
 
     // commit --amend a change that will require a force fetch.
@@ -2827,25 +2827,25 @@ fn git_with_cli_force() {
         Some(&t!(repo.find_tree(tree_id)))
     ));
     // Perform the fetch.
-    p.cargo("update").run();
-    p.cargo("build").run();
+    p.crabgo("update").run();
+    p.crabgo("build").run();
     p.rename_run("foo", "foo2").with_stdout("two").run();
 }
 
-#[cargo_test(requires_git)]
+#[crabgo_test(requires_git)]
 fn git_fetch_cli_env_clean() {
     // This tests that git-fetch-with-cli works when GIT_DIR environment
     // variable is set (for whatever reason).
     let git_dep = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let git_proj = git::new("foo", |project| {
         project
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                     [package]
@@ -2859,7 +2859,7 @@ fn git_fetch_cli_env_clean() {
             )
             .file("src/lib.rs", "pub extern crate dep1;")
             .file(
-                ".cargo/config",
+                ".crabgo/config",
                 "
                 [net]
                 git-fetch-with-cli = true
@@ -2871,17 +2871,17 @@ fn git_fetch_cli_env_clean() {
     // directory causes git to be confused and fail. Can also point to an
     // empty directory, or a nonexistent one.
     git_proj
-        .cargo("fetch")
+        .crabgo("fetch")
         .env("GIT_DIR", git_proj.root().join(".git"))
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dirty_submodule() {
-    // `cargo package` warns for dirty file in submodule.
+    // `crabgo package` warns for dirty file in submodule.
     let (git_project, repo) = git::new_repo("foo", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("foo", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("foo", "0.5.0"))
             // This is necessary because `git::add` is too eager.
             .file(".gitignore", "/target")
     });
@@ -2894,7 +2894,7 @@ fn dirty_submodule() {
 
     // Submodule added, but not committed.
     git_project
-        .cargo("package --no-verify")
+        .crabgo("package --no-verify")
         .with_status(101)
         .with_stderr(
             "\
@@ -2910,12 +2910,12 @@ to proceed despite [..]
         .run();
 
     git::commit(&repo);
-    git_project.cargo("package --no-verify").run();
+    git_project.crabgo("package --no-verify").run();
 
     // Modify file, check for warning.
     git_project.change_file("src/lib.rs", "");
     git_project
-        .cargo("package --no-verify")
+        .crabgo("package --no-verify")
         .with_status(101)
         .with_stderr(
             "\
@@ -2935,14 +2935,14 @@ to proceed despite [..]
     git::commit(&sub_repo);
     git::add(&repo);
     git::commit(&repo);
-    git_project.cargo("package --no-verify").run();
+    git_project.crabgo("package --no-verify").run();
 
     // Try with a nested submodule.
     let git_project3 = git::new("bar", |project| project.no_manifest().file("mod.rs", ""));
     let url = path2url(git_project3.root()).to_string();
     git::add_submodule(&sub_repo, &url, Path::new("bar"));
     git_project
-        .cargo("package --no-verify")
+        .crabgo("package --no-verify")
         .with_status(101)
         .with_stderr(
             "\
@@ -2961,11 +2961,11 @@ to proceed despite [..]
     git::commit(&sub_repo);
     git::add(&repo);
     git::commit(&repo);
-    git_project.cargo("package --no-verify").run();
+    git_project.crabgo("package --no-verify").run();
     // Modify within nested submodule.
     git_project.change_file("src/bar/new_file.rs", "//test");
     git_project
-        .cargo("package --no-verify")
+        .crabgo("package --no-verify")
         .with_status(101)
         .with_stderr(
             "\
@@ -2987,10 +2987,10 @@ to proceed despite [..]
     git::commit(&sub_repo);
     git::add(&repo);
     git::commit(&repo);
-    git_project.cargo("package --no-verify").run();
+    git_project.crabgo("package --no-verify").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_not_master() {
     let project = project();
 
@@ -2998,7 +2998,7 @@ fn default_not_master() {
     // branch called `main` at the same time.
     let (git_project, repo) = git::new_repo("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", "pub fn foo() {}")
     });
     let head_id = repo.head().unwrap().target().unwrap();
@@ -3014,7 +3014,7 @@ fn default_not_master() {
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3030,7 +3030,7 @@ fn default_not_master() {
         .build();
 
     project
-        .cargo("check")
+        .crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `[..]`
@@ -3041,20 +3041,20 @@ fn default_not_master() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn historical_lockfile_works() {
     let project = project();
 
     let (git_project, repo) = git::new_repo("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", "")
     });
     let head_id = repo.head().unwrap().target().unwrap();
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3070,11 +3070,11 @@ fn historical_lockfile_works() {
         .file("src/lib.rs", "")
         .build();
 
-    project.cargo("check").run();
+    project.crabgo("check").run();
     project.change_file(
-        "Cargo.lock",
+        "Crabgo.lock",
         &format!(
-            r#"# This file is automatically @generated by Cargo.
+            r#"# This file is automatically @generated by Crabgo.
 # It is not intended for manual editing.
 [[package]]
 name = "dep1"
@@ -3093,25 +3093,25 @@ dependencies = [
         ),
     );
     project
-        .cargo("check")
+        .crabgo("check")
         .with_stderr("[FINISHED] [..]\n")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn historical_lockfile_works_with_vendor() {
     let project = project();
 
     let (git_project, repo) = git::new_repo("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", "")
     });
     let head_id = repo.head().unwrap().target().unwrap();
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3127,12 +3127,12 @@ fn historical_lockfile_works_with_vendor() {
         .file("src/lib.rs", "")
         .build();
 
-    let output = project.cargo("vendor").exec_with_output().unwrap();
-    project.change_file(".cargo/config", str::from_utf8(&output.stdout).unwrap());
+    let output = project.crabgo("vendor").exec_with_output().unwrap();
+    project.change_file(".crabgo/config", str::from_utf8(&output.stdout).unwrap());
     project.change_file(
-        "Cargo.lock",
+        "Crabgo.lock",
         &format!(
-            r#"# This file is automatically @generated by Cargo.
+            r#"# This file is automatically @generated by Crabgo.
 # It is not intended for manual editing.
 [[package]]
 name = "dep1"
@@ -3150,22 +3150,22 @@ dependencies = [
             head_id
         ),
     );
-    project.cargo("check").run();
+    project.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_dep_forms() {
     let project = project();
 
     let (git_project, _repo) = git::new_repo("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", "")
     });
 
     let project = project
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3180,7 +3180,7 @@ fn two_dep_forms() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3199,7 +3199,7 @@ fn two_dep_forms() {
     // the master branch. Then it'll compile 4 crates, the 2 git deps, then
     // the two local deps.
     project
-        .cargo("check")
+        .crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -3214,13 +3214,13 @@ fn two_dep_forms() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn metadata_master_consistency() {
-    // SourceId consistency in the `cargo metadata` output when `master` is
-    // explicit or implicit, using new or old Cargo.lock.
+    // SourceId consistency in the `crabgo metadata` output when `master` is
+    // explicit or implicit, using new or old Crabgo.lock.
     let (git_project, git_repo) = git::new_repo("bar", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
     let bar_hash = git_repo.head().unwrap().target().unwrap().to_string();
@@ -3228,7 +3228,7 @@ fn metadata_master_consistency() {
     // Explicit branch="master" with a lock file created before 1.47 (does not contain ?branch=master).
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -3242,7 +3242,7 @@ fn metadata_master_consistency() {
             ),
         )
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             &format!(
                 r#"
                     [[package]]
@@ -3378,12 +3378,12 @@ fn metadata_master_consistency() {
     };
 
     let bar_source = format!("git+{}?branch=master", git_project.url());
-    p.cargo("metadata").with_json(&metadata(&bar_source)).run();
+    p.crabgo("metadata").with_json(&metadata(&bar_source)).run();
 
-    // Conversely, remove branch="master" from Cargo.toml, but use a new Cargo.lock that has ?branch=master.
+    // Conversely, remove branch="master" from Crabgo.toml, but use a new Crabgo.lock that has ?branch=master.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -3397,7 +3397,7 @@ fn metadata_master_consistency() {
             ),
         )
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             &format!(
                 r#"
                     [[package]]
@@ -3421,19 +3421,19 @@ fn metadata_master_consistency() {
 
     // No ?branch=master!
     let bar_source = format!("git+{}", git_project.url());
-    p.cargo("metadata").with_json(&metadata(&bar_source)).run();
+    p.crabgo("metadata").with_json(&metadata(&bar_source)).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_with_force_push() {
-    // Checks that cargo can handle force-pushes to git repos.
+    // Checks that crabgo can handle force-pushes to git repos.
     // This works by having a git dependency that is updated with an amend
     // commit, and tries with various forms (default branch, branch, rev,
     // tag).
     let main = |text| format!(r#"pub fn f() {{ println!("{}"); }}"#, text);
     let (git_project, repo) = git::new_repo("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("dep1"))
+            .file("Crabgo.toml", &basic_lib_manifest("dep1"))
             .file("src/lib.rs", &main("one"))
     });
     let manifest = |extra| {
@@ -3452,11 +3452,11 @@ fn git_with_force_push() {
         )
     };
     let p = project()
-        .file("Cargo.toml", &manifest(""))
+        .file("Crabgo.toml", &manifest(""))
         .file("src/main.rs", "fn main() { dep1::f(); }")
         .build();
     // Download the original and make sure it is OK.
-    p.cargo("build").run();
+    p.crabgo("build").run();
     p.rename_run("foo", "foo1").with_stdout("one").run();
 
     let find_head = || t!(t!(repo.head()).peel_to_commit());
@@ -3481,8 +3481,8 @@ fn git_with_force_push() {
 
     let mut verify = |text: &str| {
         // Perform the fetch.
-        p.cargo("update").run();
-        p.cargo("build").run();
+        p.crabgo("update").run();
+        p.crabgo("build").run();
         rename_annoyance += 1;
         p.rename_run("foo", &format!("foo{}", rename_annoyance))
             .with_stdout(text)
@@ -3495,18 +3495,18 @@ fn git_with_force_push() {
     // Try with a rev.
     let head1 = find_head().id().to_string();
     let extra = format!(", rev = \"{}\"", head1);
-    p.change_file("Cargo.toml", &manifest(&extra));
+    p.change_file("Crabgo.toml", &manifest(&extra));
     verify("two");
     amend_commit("three");
     let head2 = find_head().id().to_string();
     assert_ne!(&head1, &head2);
     let extra = format!(", rev = \"{}\"", head2);
-    p.change_file("Cargo.toml", &manifest(&extra));
+    p.change_file("Crabgo.toml", &manifest(&extra));
     verify("three");
 
     // Try with a tag.
     git::tag(&repo, "my-tag");
-    p.change_file("Cargo.toml", &manifest(", tag = \"my-tag\""));
+    p.change_file("Crabgo.toml", &manifest(", tag = \"my-tag\""));
     verify("three");
     amend_commit("tag-three");
     let head = t!(t!(repo.head()).peel(git2::ObjectType::Commit));
@@ -3520,19 +3520,19 @@ fn git_with_force_push() {
     git_project.change_file("src/lib.rs", &main("awesome-three"));
     git::add(&repo);
     git::commit(&repo);
-    p.change_file("Cargo.toml", &manifest(", branch = \"awesome-stuff\""));
+    p.change_file("Crabgo.toml", &manifest(", branch = \"awesome-stuff\""));
     verify("awesome-three");
     amend_commit("awesome-four");
     verify("awesome-four");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn corrupted_checkout() {
     // Test what happens if the checkout is corrupted somehow.
     _corrupted_checkout(false);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn corrupted_checkout_with_cli() {
     // Test what happens if the checkout is corrupted somehow with git cli.
     _corrupted_checkout(true);
@@ -3541,12 +3541,12 @@ fn corrupted_checkout_with_cli() {
 fn _corrupted_checkout(with_cli: bool) {
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "0.5.0"))
             .file("src/lib.rs", "")
     });
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -3562,37 +3562,37 @@ fn _corrupted_checkout(with_cli: bool) {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("fetch").run();
+    p.crabgo("fetch").run();
 
     let mut paths = t!(glob::glob(
         paths::home()
-            .join(".cargo/git/checkouts/dep1-*/*")
+            .join(".crabgo/git/checkouts/dep1-*/*")
             .to_str()
             .unwrap()
     ));
     let path = paths.next().unwrap().unwrap();
-    let ok = path.join(".cargo-ok");
+    let ok = path.join(".crabgo-ok");
 
     // Deleting this file simulates an interrupted checkout.
     t!(fs::remove_file(&ok));
 
     // This should refresh the checkout.
-    let mut e = p.cargo("fetch");
+    let mut e = p.crabgo("fetch");
     if with_cli {
-        e.env("CARGO_NET_GIT_FETCH_WITH_CLI", "true");
+        e.env("CRABGO_NET_GIT_FETCH_WITH_CLI", "true");
     }
     e.run();
     assert!(ok.exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cleans_temp_pack_files() {
-    // Checks that cargo removes temp files left by libgit2 when it is
+    // Checks that crabgo removes temp files left by libgit2 when it is
     // interrupted (see clean_repo_temp_files).
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -3604,7 +3604,7 @@ fn cleans_temp_pack_files() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch").run();
+    p.crabgo("fetch").run();
     // Simulate what happens when libgit2 is interrupted while indexing a pack file.
     let tmp_path = super::git_gc::find_index().join(".git/objects/pack/pack_git2_91ab40da04fdc2e7");
     fs::write(&tmp_path, "test").unwrap();
@@ -3613,6 +3613,6 @@ fn cleans_temp_pack_files() {
     fs::set_permissions(&tmp_path, perms).unwrap();
 
     // Trigger an index update.
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
     assert!(!tmp_path.exists());
 }

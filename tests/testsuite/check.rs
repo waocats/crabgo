@@ -1,19 +1,19 @@
-//! Tests for the `cargo check` command.
+//! Tests for the `crabgo check` command.
 
 use std::fmt::{self, Write};
 
 use crate::messages::raw_rustc_output;
-use cargo_test_support::install::exe;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_bin_manifest, basic_manifest, git, project};
-use cargo_test_support::{tools, wrapped_clippy_driver};
+use crabgo_test_support::install::exe;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_bin_manifest, basic_manifest, git, project};
+use crabgo_test_support::{tools, wrapped_clippy_driver};
 
-#[cargo_test]
+#[crabgo_test]
 fn check_success() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -31,18 +31,18 @@ fn check_success() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("check").run();
+    foo.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fail() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -60,21 +60,21 @@ fn check_fail() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]this function takes 0[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_derive() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -108,7 +108,7 @@ fn custom_derive() {
     let _bar = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -133,14 +133,14 @@ fn custom_derive() {
         )
         .build();
 
-    foo.cargo("check").run();
+    foo.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_build() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -159,19 +159,19 @@ fn check_build() {
 
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("check").run();
-    foo.cargo("build").run();
+    foo.crabgo("check").run();
+    foo.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_check() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -190,35 +190,35 @@ fn build_check() {
 
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("build -v").run();
-    foo.cargo("check -v").run();
+    foo.crabgo("build -v").run();
+    foo.crabgo("check -v").run();
 }
 
 // Checks that where a project has both a lib and a bin, the lib is only checked
 // not built.
-#[cargo_test]
+#[crabgo_test]
 fn issue_3418() {
     let foo = project()
         .file("src/lib.rs", "")
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    foo.cargo("check -v")
+    foo.crabgo("check -v")
         .with_stderr_contains("[..] --emit=[..]metadata [..]")
         .run();
 }
 
 // Some weirdness that seems to be caused by a crate being built as well as
 // checked, but in this case with a proc macro too.
-#[cargo_test]
+#[crabgo_test]
 fn issue_3419() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -273,15 +273,15 @@ fn issue_3419() {
         )
         .publish();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
 // Check on a dylib should have a different metadata hash than build.
-#[cargo_test]
+#[crabgo_test]
 fn dylib_check_preserves_build_cache() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -297,7 +297,7 @@ fn dylib_check_preserves_build_cache() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "\
 [..]Compiling foo v0.1.0 ([..])
@@ -306,19 +306,19 @@ fn dylib_check_preserves_build_cache() {
         )
         .run();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr("[FINISHED] dev [unoptimized + debuginfo] target(s) in [..]")
         .run();
 }
 
-// test `cargo rustc --profile check`
-#[cargo_test]
+// test `crabgo rustc --profile check`
+#[crabgo_test]
 fn rustc_check() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -336,24 +336,24 @@ fn rustc_check() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("rustc --profile check -- --emit=metadata").run();
+    foo.crabgo("rustc --profile check -- --emit=metadata").run();
 
     // Verify compatible usage of --profile with --release, issue #7488
-    foo.cargo("rustc --profile check --release -- --emit=metadata")
+    foo.crabgo("rustc --profile check --release -- --emit=metadata")
         .run();
-    foo.cargo("rustc --profile test --release -- --emit=metadata")
+    foo.crabgo("rustc --profile test --release -- --emit=metadata")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_check_err() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -371,11 +371,11 @@ fn rustc_check_err() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn baz() {}")
         .build();
 
-    foo.cargo("rustc --profile check -- --emit=metadata")
+    foo.crabgo("rustc --profile check -- --emit=metadata")
         .with_status(101)
         .with_stderr_contains("[CHECKING] bar [..]")
         .with_stderr_contains("[CHECKING] foo [..]")
@@ -383,11 +383,11 @@ fn rustc_check_err() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_all() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -403,12 +403,12 @@ fn check_all() {
         .file("examples/a.rs", "fn main() {}")
         .file("tests/a.rs", "")
         .file("src/lib.rs", "")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/main.rs", "fn main() {}")
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("check --workspace -v")
+    p.crabgo("check --workspace -v")
         .with_stderr_contains("[..] --crate-name foo src/lib.rs [..]")
         .with_stderr_contains("[..] --crate-name foo src/main.rs [..]")
         .with_stderr_contains("[..] --crate-name b b/src/lib.rs [..]")
@@ -416,23 +416,23 @@ fn check_all() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_all_exclude() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("check --workspace --exclude baz")
+    p.crabgo("check --workspace --exclude baz")
         .with_stderr_does_not_contain("[CHECKING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -443,23 +443,23 @@ fn check_all_exclude() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_all_exclude_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("check --workspace --exclude '*z'")
+    p.crabgo("check --workspace --exclude '*z'")
         .with_stderr_does_not_contain("[CHECKING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -470,45 +470,45 @@ fn check_all_exclude_glob() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_virtual_all_implied() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains("[..] --crate-name bar bar/src/lib.rs [..]")
         .with_stderr_contains("[..] --crate-name baz baz/src/lib.rs [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_virtual_manifest_one_project() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("check -p bar")
+    p.crabgo("check -p bar")
         .with_stderr_does_not_contain("[CHECKING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -519,23 +519,23 @@ fn check_virtual_manifest_one_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_virtual_manifest_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {  break_the_build(); }")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check -p '*z'")
+    p.crabgo("check -p '*z'")
         .with_stderr_does_not_contain("[CHECKING] bar v0.1.0 [..]")
         .with_stderr(
             "\
@@ -546,10 +546,10 @@ fn check_virtual_manifest_glob() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn exclude_warns_on_non_existing_package() {
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("check --workspace --exclude bar")
+    p.crabgo("check --workspace --exclude bar")
         .with_stdout("")
         .with_stderr(
             "\
@@ -561,7 +561,7 @@ fn exclude_warns_on_non_existing_package() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn targets_selected_default() {
     let foo = project()
         .file("src/main.rs", "fn main() {}")
@@ -571,7 +571,7 @@ fn targets_selected_default() {
         .file("benches/bench3.rs", "")
         .build();
 
-    foo.cargo("check -v")
+    foo.crabgo("check -v")
         .with_stderr_contains("[..] --crate-name foo src/lib.rs [..]")
         .with_stderr_contains("[..] --crate-name foo src/main.rs [..]")
         .with_stderr_does_not_contain("[..] --crate-name example1 examples/example1.rs [..]")
@@ -580,7 +580,7 @@ fn targets_selected_default() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn targets_selected_all() {
     let foo = project()
         .file("src/main.rs", "fn main() {}")
@@ -590,7 +590,7 @@ fn targets_selected_all() {
         .file("benches/bench3.rs", "")
         .build();
 
-    foo.cargo("check --all-targets -v")
+    foo.crabgo("check --all-targets -v")
         .with_stderr_contains("[..] --crate-name foo src/lib.rs [..]")
         .with_stderr_contains("[..] --crate-name foo src/main.rs [..]")
         .with_stderr_contains("[..] --crate-name example1 examples/example1.rs [..]")
@@ -599,7 +599,7 @@ fn targets_selected_all() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_unit_test_profile() {
     let foo = project()
         .file(
@@ -616,15 +616,15 @@ fn check_unit_test_profile() {
         )
         .build();
 
-    foo.cargo("check").run();
-    foo.cargo("check --profile test")
+    foo.crabgo("check").run();
+    foo.crabgo("check --profile test")
         .with_status(101)
         .with_stderr_contains("[..]badtext[..]")
         .run();
 }
 
 // Verify what is checked with various command-line filters.
-#[cargo_test]
+#[crabgo_test]
 fn check_filters() {
     let p = project()
         .file(
@@ -681,7 +681,7 @@ fn check_filters() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains("[..]unused_normal_lib[..]")
         .with_stderr_contains("[..]unused_normal_bin[..]")
         .with_stderr_does_not_contain("[..]unused_normal_t1[..]")
@@ -690,7 +690,7 @@ fn check_filters() {
         .with_stderr_does_not_contain("[..]unused_unit_[..]")
         .run();
     p.root().join("target").rm_rf();
-    p.cargo("check --tests -v")
+    p.crabgo("check --tests -v")
         .with_stderr_contains("[..] --crate-name foo src/lib.rs [..] --test [..]")
         .with_stderr_contains("[..] --crate-name foo src/lib.rs [..] --crate-type lib [..]")
         .with_stderr_contains("[..] --crate-name foo src/main.rs [..] --test [..]")
@@ -706,7 +706,7 @@ fn check_filters() {
         .with_stderr_does_not_contain("[..]--crate-type bin[..]")
         .run();
     p.root().join("target").rm_rf();
-    p.cargo("check --test t1 -v")
+    p.crabgo("check --test t1 -v")
         .with_stderr_contains("[..]unused_normal_lib[..]")
         .with_stderr_contains("[..]unused_unit_t1[..]")
         .with_stderr_does_not_contain("[..]unused_unit_lib[..]")
@@ -718,7 +718,7 @@ fn check_filters() {
         .with_stderr_does_not_contain("[..]unused_unit_b1[..]")
         .run();
     p.root().join("target").rm_rf();
-    p.cargo("check --all-targets -v")
+    p.crabgo("check --all-targets -v")
         .with_stderr_contains("[..]unused_normal_lib[..]")
         .with_stderr_contains("[..]unused_normal_bin[..]")
         .with_stderr_contains("[..]unused_normal_t1[..]")
@@ -732,7 +732,7 @@ fn check_filters() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_artifacts() {
     // Verify which artifacts are created when running check (#4059).
     let p = project()
@@ -743,28 +743,28 @@ fn check_artifacts() {
         .file("benches/b1.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p.root().join("target/debug").join(exe("foo")).is_file());
     assert_eq!(p.glob("target/debug/deps/libfoo-*.rmeta").count(), 2);
 
     p.root().join("target").rm_rf();
-    p.cargo("check --lib").run();
+    p.crabgo("check --lib").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p.root().join("target/debug").join(exe("foo")).is_file());
     assert_eq!(p.glob("target/debug/deps/libfoo-*.rmeta").count(), 1);
 
     p.root().join("target").rm_rf();
-    p.cargo("check --bin foo").run();
+    p.crabgo("check --bin foo").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p.root().join("target/debug").join(exe("foo")).is_file());
     assert_eq!(p.glob("target/debug/deps/libfoo-*.rmeta").count(), 2);
 
     p.root().join("target").rm_rf();
-    p.cargo("check --test t1").run();
+    p.crabgo("check --test t1").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p.root().join("target/debug").join(exe("foo")).is_file());
@@ -773,7 +773,7 @@ fn check_artifacts() {
     assert_eq!(p.glob("target/debug/deps/libt1-*.rmeta").count(), 1);
 
     p.root().join("target").rm_rf();
-    p.cargo("check --example ex1").run();
+    p.crabgo("check --example ex1").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p
@@ -785,7 +785,7 @@ fn check_artifacts() {
     assert_eq!(p.glob("target/debug/examples/libex1-*.rmeta").count(), 1);
 
     p.root().join("target").rm_rf();
-    p.cargo("check --bench b1").run();
+    p.crabgo("check --bench b1").run();
     assert!(!p.root().join("target/debug/libfoo.rmeta").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
     assert!(!p.root().join("target/debug").join(exe("foo")).is_file());
@@ -794,12 +794,12 @@ fn check_artifacts() {
     assert_eq!(p.glob("target/debug/deps/libb1-*.rmeta").count(), 1);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn short_message_format() {
     let foo = project()
         .file("src/lib.rs", "fn foo() { let _x: bool = 'a'; }")
         .build();
-    foo.cargo("check --message-format=short")
+    foo.crabgo("check --message-format=short")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -810,11 +810,11 @@ error: could not compile `foo` (lib) due to previous error
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "demo"
@@ -850,10 +850,10 @@ fn proc_macro() {
             "#,
         )
         .build();
-    p.cargo("check -v").env("CARGO_LOG", "cargo=trace").run();
+    p.crabgo("check -v").env("CRABGO_LOG", "crabgo=trace").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_keep_going() {
     let foo = project()
         .file("src/bin/one.rs", "compile_error!(\"ONE\"); fn main() {}")
@@ -861,38 +861,38 @@ fn check_keep_going() {
         .build();
 
     // Due to -j1, without --keep-going only one of the two bins would be built.
-    foo.cargo("check -j1 --keep-going -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["keep-going"])
+    foo.crabgo("check -j1 --keep-going -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["keep-going"])
         .with_status(101)
         .with_stderr_contains("error: ONE")
         .with_stderr_contains("error: TWO")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn does_not_use_empty_rustc_wrapper() {
     // An empty RUSTC_WRAPPER environment variable won't be used.
     // The env var will also override the config, essentially unsetting it.
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [build]
                 rustc-wrapper = "do-not-execute-me"
             "#,
         )
         .build();
-    p.cargo("check").env("RUSTC_WRAPPER", "").run();
+    p.crabgo("check").env("RUSTC_WRAPPER", "").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn does_not_use_empty_rustc_workspace_wrapper() {
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("check").env("RUSTC_WORKSPACE_WRAPPER", "").run();
+    p.crabgo("check").env("RUSTC_WORKSPACE_WRAPPER", "").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_from_deep_recursion() -> Result<(), fmt::Error> {
     let mut big_macro = String::new();
     writeln!(big_macro, "macro_rules! m {{")?;
@@ -903,7 +903,7 @@ fn error_from_deep_recursion() -> Result<(), fmt::Error> {
     writeln!(big_macro, "m!(0);")?;
 
     let p = project().file("src/lib.rs", &big_macro).build();
-    p.cargo("check --message-format=json")
+    p.crabgo("check --message-format=json")
         .with_status(101)
         .with_stdout_contains(
             "[..]\"message\":\"recursion limit reached while expanding [..]`m[..]`\"[..]",
@@ -913,34 +913,34 @@ fn error_from_deep_recursion() -> Result<(), fmt::Error> {
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_workspace_wrapper_affects_all_workspace_members() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name bar [..]")
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name baz [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_workspace_wrapper_includes_path_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -955,13 +955,13 @@ fn rustc_workspace_wrapper_includes_path_deps() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check --workspace")
+    p.crabgo("check --workspace")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name foo [..]")
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name bar [..]")
@@ -969,34 +969,34 @@ fn rustc_workspace_wrapper_includes_path_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_workspace_wrapper_respects_primary_units() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check -p bar")
+    p.crabgo("check -p bar")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name bar [..]")
         .with_stdout_does_not_contain("WRAPPER CALLED: rustc --crate-name baz [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_workspace_wrapper_excludes_published_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1011,13 +1011,13 @@ fn rustc_workspace_wrapper_excludes_published_deps() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
     Package::new("baz", "1.0.0").publish();
 
-    p.cargo("check --workspace -v")
+    p.crabgo("check --workspace -v")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name foo [..]")
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name bar [..]")
@@ -1026,11 +1026,11 @@ fn rustc_workspace_wrapper_excludes_published_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_manifest_package_and_project() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1044,7 +1044,7 @@ fn warn_manifest_package_and_project() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] manifest at `[CWD]` contains both `project` and `package`, this could become a hard error in the future
@@ -1055,12 +1055,12 @@ fn warn_manifest_package_and_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_manifest_package_and_project() {
     let p = project();
     let git_project = git::new("bar", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1076,7 +1076,7 @@ fn git_manifest_package_and_project() {
 
     let p = p
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1094,7 +1094,7 @@ fn git_manifest_package_and_project() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `[..]`
@@ -1106,11 +1106,11 @@ fn git_manifest_package_and_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_manifest_with_project() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [project]
                 name = "foo"
@@ -1120,7 +1120,7 @@ fn warn_manifest_with_project() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] manifest at `[CWD]` contains `[project]` instead of `[package]`, this could become a hard error in the future
@@ -1131,12 +1131,12 @@ fn warn_manifest_with_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_manifest_with_project() {
     let p = project();
     let git_project = git::new("bar", |p| {
         p.file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [project]
             name = "bar"
@@ -1148,7 +1148,7 @@ fn git_manifest_with_project() {
 
     let p = p
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1166,7 +1166,7 @@ fn git_manifest_with_project() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `[..]`
@@ -1178,11 +1178,11 @@ fn git_manifest_with_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_warning() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1192,16 +1192,16 @@ fn check_fixable_warning() {
         .file("src/lib.rs", "use std::io;")
         .build();
 
-    foo.cargo("check")
-        .with_stderr_contains("[..] (run `cargo fix --lib -p foo` to apply 1 suggestion)")
+    foo.crabgo("check")
+        .with_stderr_contains("[..] (run `crabgo fix --lib -p foo` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_test_warning() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1221,18 +1221,18 @@ mod tests {
         )
         .build();
 
-    foo.cargo("check --all-targets")
-        .with_stderr_contains("[..] (run `cargo fix --lib -p foo --tests` to apply 1 suggestion)")
+    foo.crabgo("check --all-targets")
+        .with_stderr_contains("[..] (run `crabgo fix --lib -p foo --tests` to apply 1 suggestion)")
         .run();
-    foo.cargo("fix --lib -p foo --tests --allow-no-vcs").run();
+    foo.crabgo("fix --lib -p foo --tests --allow-no-vcs").run();
     assert!(!foo.read_file("src/lib.rs").contains("use std::io;"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_error_no_fix() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1255,24 +1255,24 @@ fn check_fixable_error_no_fix() {
 ",
         rustc_message
     );
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_status(101)
         .with_stderr(expected_output)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_warning_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1281,7 +1281,7 @@ fn check_fixable_warning_workspace() {
         )
         .file("foo/src/lib.rs", "use std::io;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1294,16 +1294,16 @@ fn check_fixable_warning_workspace() {
         .file("bar/src/lib.rs", "use std::io;")
         .build();
 
-    p.cargo("check")
-        .with_stderr_contains("[..] (run `cargo fix --lib -p foo` to apply 1 suggestion)")
-        .with_stderr_contains("[..] (run `cargo fix --lib -p bar` to apply 1 suggestion)")
+    p.crabgo("check")
+        .with_stderr_contains("[..] (run `crabgo fix --lib -p foo` to apply 1 suggestion)")
+        .with_stderr_contains("[..] (run `crabgo fix --lib -p bar` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_example() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -1318,15 +1318,15 @@ fn check_fixable_example() {
         )
         .file("examples/ex1.rs", "use std::fmt; fn main() {}")
         .build();
-    p.cargo("check --all-targets")
-        .with_stderr_contains("[..] (run `cargo fix --example \"ex1\"` to apply 1 suggestion)")
+    p.crabgo("check --all-targets")
+        .with_stderr_contains("[..] (run `crabgo fix --example \"ex1\"` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn check_fixable_bench() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -1360,15 +1360,15 @@ fn check_fixable_bench() {
         ",
         )
         .build();
-    p.cargo("check --all-targets")
-        .with_stderr_contains("[..] (run `cargo fix --bench \"bench\"` to apply 1 suggestion)")
+    p.crabgo("check --all-targets")
+        .with_stderr_contains("[..] (run `crabgo fix --bench \"bench\"` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn check_fixable_mixed() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -1407,18 +1407,18 @@ fn check_fixable_mixed() {
         ",
         )
         .build();
-    p.cargo("check --all-targets")
-        .with_stderr_contains("[..] (run `cargo fix --bin \"foo\" --tests` to apply 2 suggestions)")
-        .with_stderr_contains("[..] (run `cargo fix --example \"ex1\"` to apply 1 suggestion)")
-        .with_stderr_contains("[..] (run `cargo fix --bench \"bench\"` to apply 1 suggestion)")
+    p.crabgo("check --all-targets")
+        .with_stderr_contains("[..] (run `crabgo fix --bin \"foo\" --tests` to apply 2 suggestions)")
+        .with_stderr_contains("[..] (run `crabgo fix --example \"ex1\"` to apply 1 suggestion)")
+        .with_stderr_contains("[..] (run `crabgo fix --bench \"bench\"` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_fixable_warning_for_clippy() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1431,21 +1431,21 @@ fn check_fixable_warning_for_clippy() {
         .file("src/lib.rs", "use std::io;")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         // We can't use `clippy` so we use a `rustc` workspace wrapper instead
         .env("RUSTC_WORKSPACE_WRAPPER", wrapped_clippy_driver())
-        .with_stderr_contains("[..] (run `cargo clippy --fix --lib -p foo` to apply 1 suggestion)")
+        .with_stderr_contains("[..] (run `crabgo clippy --fix --lib -p foo` to apply 1 suggestion)")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_unused_manifest_keys() {
     Package::new("dep", "0.1.0").publish();
     Package::new("foo", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1475,7 +1475,7 @@ fn check_unused_manifest_keys() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] unused manifest key: dependencies.dep.wxz

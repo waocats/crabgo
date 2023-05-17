@@ -1,6 +1,6 @@
 //! Tests for custom json target specifications.
 
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::{basic_manifest, project};
 use std::fs;
 
 const MINIMAL_LIB: &str = r#"
@@ -33,7 +33,7 @@ const SIMPLE_SPEC: &str = r#"
 }
 "#;
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items")]
 fn custom_target_minimal() {
     let p = project()
         .file(
@@ -50,22 +50,22 @@ fn custom_target_minimal() {
         .file("custom-target.json", SIMPLE_SPEC)
         .build();
 
-    p.cargo("build --lib --target custom-target.json -v").run();
-    p.cargo("build --lib --target src/../custom-target.json -v")
+    p.crabgo("build --lib --target custom-target.json -v").run();
+    p.crabgo("build --lib --target src/../custom-target.json -v")
         .run();
 
     // Ensure that the correct style of flag is passed to --target with doc tests.
-    p.cargo("test --doc --target src/../custom-target.json -v -Zdoctest-xcompile")
-        .masquerade_as_nightly_cargo(&["doctest-xcompile", "no_core", "lang_items"])
+    p.crabgo("test --doc --target src/../custom-target.json -v -Zdoctest-xcompile")
+        .masquerade_as_nightly_crabgo(&["doctest-xcompile", "no_core", "lang_items"])
         .with_stderr_contains("[RUNNING] `rustdoc [..]--target [..]foo/custom-target.json[..]")
         .run();
 }
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items, auto_traits")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items, auto_traits")]
 fn custom_target_dependency() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -95,7 +95,7 @@ fn custom_target_dependency() {
                 unsafe auto trait Freeze {}
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "bar/src/lib.rs",
             &"
@@ -110,10 +110,10 @@ fn custom_target_dependency() {
         .file("custom-target.json", SIMPLE_SPEC)
         .build();
 
-    p.cargo("build --lib --target custom-target.json -v").run();
+    p.crabgo("build --lib --target custom-target.json -v").run();
 }
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items")]
 fn custom_bin_target() {
     let p = project()
         .file(
@@ -127,10 +127,10 @@ fn custom_bin_target() {
         .file("custom-bin-target.json", SIMPLE_SPEC)
         .build();
 
-    p.cargo("build --target custom-bin-target.json -v").run();
+    p.crabgo("build --target custom-bin-target.json -v").run();
 }
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items")]
 fn changing_spec_rebuilds() {
     // Changing the .json file will trigger a rebuild.
     let p = project()
@@ -148,8 +148,8 @@ fn changing_spec_rebuilds() {
         .file("custom-target.json", SIMPLE_SPEC)
         .build();
 
-    p.cargo("build --lib --target custom-target.json -v").run();
-    p.cargo("build --lib --target custom-target.json -v")
+    p.crabgo("build --lib --target custom-target.json -v").run();
+    p.crabgo("build --lib --target custom-target.json -v")
         .with_stderr(
             "\
 [FRESH] foo [..]
@@ -162,7 +162,7 @@ fn changing_spec_rebuilds() {
     // Some arbitrary change that I hope is safe.
     let spec = spec.replace('{', "{\n\"vendor\": \"unknown\",\n");
     fs::write(&spec_path, spec).unwrap();
-    p.cargo("build --lib --target custom-target.json -v")
+    p.crabgo("build --lib --target custom-target.json -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 [..]
@@ -173,12 +173,12 @@ fn changing_spec_rebuilds() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items")]
 fn changing_spec_relearns_crate_types() {
     // Changing the .json file will invalidate the cache of crate types.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -192,7 +192,7 @@ fn changing_spec_relearns_crate_types() {
         .file("custom-target.json", SIMPLE_SPEC)
         .build();
 
-    p.cargo("build --lib --target custom-target.json -v")
+    p.crabgo("build --lib --target custom-target.json -v")
         .with_status(101)
         .with_stderr("error: cannot produce cdylib for `foo [..]")
         .run();
@@ -203,7 +203,7 @@ fn changing_spec_relearns_crate_types() {
     let spec = spec.replace('{', "{\n\"dynamic-linking\": true,\n");
     fs::write(&spec_path, spec).unwrap();
 
-    p.cargo("build --lib --target custom-target.json -v")
+    p.crabgo("build --lib --target custom-target.json -v")
         .with_stderr(
             "\
 [COMPILING] foo [..]
@@ -214,7 +214,7 @@ fn changing_spec_relearns_crate_types() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "requires features no_core, lang_items")]
+#[crabgo_test(nightly, reason = "requires features no_core, lang_items")]
 fn custom_target_ignores_filepath() {
     // Changing the path of the .json file will not trigger a rebuild.
     let p = project()
@@ -234,7 +234,7 @@ fn custom_target_ignores_filepath() {
         .build();
 
     // Should build the library the first time.
-    p.cargo("build --lib --target a/custom-target.json")
+    p.crabgo("build --lib --target a/custom-target.json")
         .with_stderr(
             "\
 [..]Compiling foo v0.0.1 ([..])
@@ -244,7 +244,7 @@ fn custom_target_ignores_filepath() {
         .run();
 
     // But not the second time, even though the path to the custom target is dfferent.
-    p.cargo("build --lib --target b/custom-target.json")
+    p.crabgo("build --lib --target b/custom-target.json")
         .with_stderr("[FINISHED] dev [unoptimized + debuginfo] target(s) in [..]")
         .run();
 }

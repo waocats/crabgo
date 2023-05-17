@@ -1,10 +1,10 @@
-//! Tests for the `cargo owner` command.
+//! Tests for the `crabgo owner` command.
 
 use std::fs;
 
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::project;
-use cargo_test_support::registry::{self, api_path};
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::{self, api_path};
 
 fn setup(name: &str, content: Option<&str>) {
     let dir = api_path().join(format!("api/v1/crates/{}", name));
@@ -14,7 +14,7 @@ fn setup(name: &str, content: Option<&str>) {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_list() {
     let registry = registry::init();
     let content = r#"{
@@ -34,7 +34,7 @@ fn simple_list() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -47,7 +47,7 @@ fn simple_list() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("owner -l")
+    p.crabgo("owner -l")
         .replace_crates_io(registry.index_url())
         .with_stdout(
             "\
@@ -58,14 +58,14 @@ octocat
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_add() {
     let registry = registry::init();
     setup("foo", None);
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -78,7 +78,7 @@ fn simple_add() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("owner -a username")
+    p.crabgo("owner -a username")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -91,17 +91,17 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_add_with_asymmetric() {
     let registry = registry::RegistryBuilder::new()
         .http_api()
-        .token(cargo_test_support::registry::Token::rfc_key())
+        .token(crabgo_test_support::registry::Token::rfc_key())
         .build();
     setup("foo", None);
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [project]
                 name = "foo"
@@ -116,22 +116,22 @@ fn simple_add_with_asymmetric() {
 
     // The http_api server will check that the authorization is correct.
     // If the authorization was not sent then we would get an unauthorized error.
-    p.cargo("owner -a username")
+    p.crabgo("owner -a username")
         .arg("-Zregistry-auth")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(registry.index_url())
         .with_status(0)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_remove() {
     let registry = registry::init();
     setup("foo", None);
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -144,7 +144,7 @@ fn simple_remove() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("owner -r username")
+    p.crabgo("owner -r username")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -158,17 +158,17 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_remove_with_asymmetric() {
     let registry = registry::RegistryBuilder::new()
         .http_api()
-        .token(cargo_test_support::registry::Token::rfc_key())
+        .token(crabgo_test_support::registry::Token::rfc_key())
         .build();
     setup("foo", None);
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [project]
                 name = "foo"
@@ -183,10 +183,10 @@ fn simple_remove_with_asymmetric() {
 
     // The http_api server will check that the authorization is correct.
     // If the authorization was not sent then we would get an unauthorized error.
-    p.cargo("owner -r username")
+    p.crabgo("owner -r username")
         .arg("-Zregistry-auth")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .with_status(0)
         .run();
 }

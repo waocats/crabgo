@@ -39,5 +39,5 @@ body:
     id: version
     attributes:
       label: Version
-      description: Please paste the output of running `cargo version --verbose`.
+      description: Please paste the output of running `crabgo version --verbose`.
       render: text

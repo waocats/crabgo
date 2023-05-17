@@ -223,7 +223,7 @@ impl Registry {
     fn token(&self) -> Result<&str> {
         let token = match self.token.as_ref() {
             Some(s) => s,
-            None => bail!("no upload token found, please run `cargo login`"),
+            None => bail!("no upload token found, please run `crabgo login`"),
         };
         check_token(token)?;
         Ok(token)

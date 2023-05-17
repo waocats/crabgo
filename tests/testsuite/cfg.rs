@@ -1,14 +1,14 @@
 //! Tests for cfg() expressions.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::rustc_host;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::rustc_host;
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_easy() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -22,18 +22,18 @@ fn cfg_easy() {
             "#,
         )
         .file("src/lib.rs", "extern crate b;")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dont_include() {
     let other_family = if cfg!(unix) { "windows" } else { "unix" };
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -48,10 +48,10 @@ fn dont_include() {
             ),
         )
         .file("src/lib.rs", "")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] a v0.0.1 ([..])
@@ -61,7 +61,7 @@ fn dont_include() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn works_through_the_registry() {
     Package::new("baz", "0.1.0").publish();
     Package::new("bar", "0.1.0")
@@ -71,7 +71,7 @@ fn works_through_the_registry() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -88,7 +88,7 @@ fn works_through_the_registry() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..] index
@@ -104,7 +104,7 @@ fn works_through_the_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_version_from_other_platform() {
     let this_family = if cfg!(unix) { "unix" } else { "windows" };
     let other_family = if cfg!(unix) { "windows" } else { "unix" };
@@ -113,7 +113,7 @@ fn ignore_version_from_other_platform() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -136,7 +136,7 @@ fn ignore_version_from_other_platform() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..] index
@@ -150,11 +150,11 @@ fn ignore_version_from_other_platform() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_target_spec() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -168,7 +168,7 @@ fn bad_target_spec() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -181,11 +181,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_target_spec2() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -199,7 +199,7 @@ fn bad_target_spec2() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -212,11 +212,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_match_ok() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -242,17 +242,17 @@ fn multiple_match_ok() {
             ),
         )
         .file("src/lib.rs", "extern crate b;")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn any_ok() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -264,19 +264,19 @@ fn any_ok() {
             "#,
         )
         .file("src/lib.rs", "extern crate b;")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-// https://github.com/rust-lang/cargo/issues/5313
-#[cargo_test]
+// https://github.com/rust-lang/crabgo/issues/5313
+#[crabgo_test]
 #[cfg(all(target_arch = "x86_64", target_os = "linux", target_env = "gnu"))]
 fn cfg_looks_at_rustflags_for_target() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -296,16 +296,16 @@ fn cfg_looks_at_rustflags_for_target() {
                 fn main() { b::foo(); }
             "#,
         )
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "pub fn foo() {}")
         .build();
 
-    p.cargo("check --target x86_64-unknown-linux-gnu")
+    p.crabgo("check --target x86_64-unknown-linux-gnu")
         .env("RUSTFLAGS", "--cfg with_b")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_cfg_discovery() {
     // Check error messages when `rustc -v` and `rustc --print=*` parsing fails.
     //
@@ -313,7 +313,7 @@ fn bad_cfg_discovery() {
     // environment variable.
     let p = project()
         .at("compiler")
-        .file("Cargo.toml", &basic_manifest("compiler", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("compiler", "0.1.0"))
         .file(
             "src/main.rs",
             r#"
@@ -380,12 +380,12 @@ fn bad_cfg_discovery() {
             "#,
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
     let funky_rustc = p.bin("compiler");
 
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", &funky_rustc)
         .env("FUNKY_MODE", "bad-version")
         .with_status(101)
@@ -398,7 +398,7 @@ foo
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", &funky_rustc)
         .env("FUNKY_MODE", "no-crate-types")
         .with_status(101)
@@ -411,7 +411,7 @@ command was: `[..]compiler[..] --crate-name ___ [..]`
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", &funky_rustc)
         .env("FUNKY_MODE", "no-sysroot")
         .with_status(101)
@@ -432,7 +432,7 @@ command was: `[..]compiler[..]--crate-type [..]`
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", &funky_rustc)
         .env("FUNKY_MODE", "no-split-debuginfo")
         .with_status(101)
@@ -454,7 +454,7 @@ command was: `[..]compiler[..]--crate-type [..]`
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", &funky_rustc)
         .env("FUNKY_MODE", "bad-cfg")
         .with_status(101)
@@ -481,14 +481,14 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn exclusive_dep_kinds() {
     // Checks for a bug where the same package with different cfg expressions
     // was not being filtered correctly.
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -505,9 +505,9 @@ fn exclusive_dep_kinds() {
         .file("build.rs", "extern crate bar; fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     p.change_file("src/lib.rs", "extern crate bar;");
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         // can't find crate for `bar`
         .with_stderr_contains("[..]E0463[..]")

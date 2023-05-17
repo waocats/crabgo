@@ -1,12 +1,12 @@
 //! Tests for proc-macros.
 
-use cargo_test_support::project;
+use crabgo_test_support::project;
 
-#[cargo_test]
+#[crabgo_test]
 fn probe_cfg_before_crate_type_discovery() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -33,7 +33,7 @@ fn probe_cfg_before_crate_type_discovery() {
     let _noop = project()
         .at("noop")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "noop"
@@ -58,14 +58,14 @@ fn probe_cfg_before_crate_type_discovery() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn noop() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -92,7 +92,7 @@ fn noop() {
     let _noop = project()
         .at("noop")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "noop"
@@ -117,15 +117,15 @@ fn noop() {
         )
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check").run();
+    p.crabgo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn impl_and_derive() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -160,7 +160,7 @@ fn impl_and_derive() {
     let _transmogrify = project()
         .at("transmogrify")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "transmogrify"
@@ -198,15 +198,15 @@ fn impl_and_derive() {
         )
         .build();
 
-    p.cargo("build").run();
-    p.cargo("run").with_stdout("X { success: true }").run();
+    p.crabgo("build").run();
+    p.crabgo("run").with_stdout("X { success: true }").run();
 }
 
-#[cargo_test(nightly, reason = "plugins are unstable")]
+#[crabgo_test(nightly, reason = "plugins are unstable")]
 fn plugin_and_proc_macro() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -242,17 +242,17 @@ fn plugin_and_proc_macro() {
         .build();
 
     let msg = "  `lib.plugin` and `lib.proc-macro` cannot both be `true`";
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(msg)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_doctest() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -287,19 +287,19 @@ fn proc_macro_doctest() {
         )
         .build();
 
-    foo.cargo("test")
+    foo.crabgo("test")
         .with_stdout_contains("test a ... ok")
         .with_stdout_contains_n("test [..] ... ok", 2)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_crate_type() {
     // Verify that `crate-type = ["proc-macro"]` is the same as `proc-macro = true`
     // and that everything, including rustdoc, works correctly.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -330,7 +330,7 @@ fn proc_macro_crate_type() {
             "#,
         )
         .file(
-            "pm/Cargo.toml",
+            "pm/Crabgo.toml",
             r#"
                 [package]
                 name = "pm"
@@ -353,17 +353,17 @@ fn proc_macro_crate_type() {
         )
         .build();
 
-    foo.cargo("test")
+    foo.crabgo("test")
         .with_stdout_contains("test tests::it_works ... ok")
         .with_stdout_contains_n("test [..] ... ok", 2)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_crate_type_warning() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -375,17 +375,17 @@ fn proc_macro_crate_type_warning() {
         .file("src/lib.rs", "")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr_contains(
             "[WARNING] library `foo` should only specify `proc-macro = true` instead of setting `crate-type`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_conflicting_warning() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -398,7 +398,7 @@ fn proc_macro_conflicting_warning() {
         .file("src/lib.rs", "")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr_contains(
 "[WARNING] conflicting between `proc-macro` and `proc_macro` in the `foo` library target.\n
         `proc_macro` is ignored and not recommended for use in the future",
@@ -406,11 +406,11 @@ fn proc_macro_conflicting_warning() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_crate_type_warning_plugin() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -423,7 +423,7 @@ fn proc_macro_crate_type_warning_plugin() {
         .file("src/lib.rs", "")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr_contains(
             "[WARNING] proc-macro library `foo` should not specify `plugin = true`")
         .with_stderr_contains(
@@ -431,11 +431,11 @@ fn proc_macro_crate_type_warning_plugin() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_crate_type_multiple() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -447,10 +447,10 @@ fn proc_macro_crate_type_multiple() {
         .file("src/lib.rs", "")
         .build();
 
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   cannot mix `proc-macro` crate type with others
@@ -460,12 +460,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_extern_prelude() {
     // Check that proc_macro is in the extern prelude.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -486,15 +486,15 @@ fn proc_macro_extern_prelude() {
             "#,
         )
         .build();
-    p.cargo("test").run();
-    p.cargo("doc").run();
+    p.crabgo("test").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn proc_macro_built_once() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ['a', 'b']
@@ -502,7 +502,7 @@ fn proc_macro_built_once() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -515,7 +515,7 @@ fn proc_macro_built_once() {
         .file("a/build.rs", "fn main() {}")
         .file("a/src/main.rs", "fn main() {}")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -527,7 +527,7 @@ fn proc_macro_built_once() {
         )
         .file("b/src/main.rs", "fn main() {}")
         .file(
-            "the-macro/Cargo.toml",
+            "the-macro/Crabgo.toml",
             r#"
                 [package]
                 name = "the-macro"
@@ -542,7 +542,7 @@ fn proc_macro_built_once() {
         )
         .file("the-macro/src/lib.rs", "")
         .build();
-    p.cargo("build --verbose")
+    p.crabgo("build --verbose")
         .with_stderr_unordered(
             "\
 [COMPILING] the-macro [..]

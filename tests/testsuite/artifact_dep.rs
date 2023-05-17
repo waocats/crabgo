@@ -1,19 +1,19 @@
 //! Tests specific to artifact dependencies, designated using
 //! the new `dep = { artifact = "bin", … }` syntax in manifests.
 
-use cargo_test_support::compare::match_exact;
-use cargo_test_support::registry::{Package, RegistryBuilder};
-use cargo_test_support::{
+use crabgo_test_support::compare::match_exact;
+use crabgo_test_support::registry::{Package, RegistryBuilder};
+use crabgo_test_support::{
     basic_bin_manifest, basic_manifest, cross_compile, project, publish, registry, rustc_host,
     Project,
 };
 
-#[cargo_test]
+#[crabgo_test]
 fn check_with_invalid_artifact_dependency() {
     // invalid name
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -26,14 +26,14 @@ fn check_with_invalid_artifact_dependency() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar;") // this would fail but we don't get there, artifacts are no libs
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/Crabgo.toml`
 
 Caused by:
   'unknown' is not a valid artifact specifier
@@ -42,22 +42,22 @@ Caused by:
         .with_status(101)
         .run();
 
-    fn run_cargo_with_and_without_bindeps_feature(
+    fn run_crabgo_with_and_without_bindeps_feature(
         p: &Project,
         cmd: &str,
-        assert: &dyn Fn(&mut cargo_test_support::Execs),
+        assert: &dyn Fn(&mut crabgo_test_support::Execs),
     ) {
         assert(
-            p.cargo(&format!("{} -Z bindeps", cmd))
-                .masquerade_as_nightly_cargo(&["bindeps"]),
+            p.crabgo(&format!("{} -Z bindeps", cmd))
+                .masquerade_as_nightly_crabgo(&["bindeps"]),
         );
-        assert(&mut p.cargo(cmd));
+        assert(&mut p.crabgo(cmd));
     }
 
     // lib specified without artifact
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -69,14 +69,14 @@ Caused by:
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
-    run_cargo_with_and_without_bindeps_feature(&p, "check", &|cargo| {
-        cargo
+    run_crabgo_with_and_without_bindeps_feature(&p, "check", &|crabgo| {
+        crabgo
             .with_stderr(
                 "\
-[ERROR] failed to parse manifest at `[..]/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/Crabgo.toml`
 
 Caused by:
   'lib' specifier cannot be used without an 'artifact = …' value (bar)
@@ -89,7 +89,7 @@ Caused by:
     // target specified without artifact
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -101,14 +101,14 @@ Caused by:
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
-    run_cargo_with_and_without_bindeps_feature(&p, "check", &|cargo| {
-        cargo
+    run_crabgo_with_and_without_bindeps_feature(&p, "check", &|crabgo| {
+        crabgo
             .with_stderr(
                 "\
-[ERROR] failed to parse manifest at `[..]/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/Crabgo.toml`
 
 Caused by:
   'target' specifier cannot be used without an 'artifact = …' value (bar)
@@ -119,12 +119,12 @@ Caused by:
     })
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_with_invalid_target_triple() {
     // invalid name
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -137,11 +137,11 @@ fn check_with_invalid_target_triple() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(
             r#"[..]Could not find specification for target "unknown-target-triple"[..]"#,
         )
@@ -149,11 +149,11 @@ fn check_with_invalid_target_triple() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_without_nightly_aborts_with_error() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -166,10 +166,10 @@ fn build_without_nightly_aborts_with_error() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar;")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -182,11 +182,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn disallow_artifact_and_no_artifact_dep_to_same_package_within_the_same_dep_category() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -200,11 +200,11 @@ fn disallow_artifact_and_no_artifact_dep_to_same_package_within_the_same_dep_cat
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr("\
 [WARNING] foo v0.0.0 ([CWD]) ignoring invalid dependency `bar_stable` which is missing a lib target
@@ -213,11 +213,11 @@ fn disallow_artifact_and_no_artifact_dep_to_same_package_within_the_same_dep_cat
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_are_unified_among_lib_and_bin_dep_of_same_target() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -248,7 +248,7 @@ fn features_are_unified_among_lib_and_bin_dep_of_same_target() {
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -288,7 +288,7 @@ fn features_are_unified_among_lib_and_bin_dep_of_same_target() {
         "#,
         )
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -309,8 +309,8 @@ fn features_are_unified_among_lib_and_bin_dep_of_same_target() {
         )
         .build();
 
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] d2 v0.0.1 ([CWD]/d2)
@@ -322,7 +322,7 @@ fn features_are_unified_among_lib_and_bin_dep_of_same_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
     if cross_compile::disabled() {
         return;
@@ -330,7 +330,7 @@ fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &r#"
                 [package]
                 name = "foo"
@@ -364,7 +364,7 @@ fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -395,7 +395,7 @@ fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
         "#,
         )
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -416,8 +416,8 @@ fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
         )
         .build();
 
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr_contains(
             "error[E0425]: cannot find function `f2` in crate `d2`\n --> d1/src/main.rs:6:17",
@@ -425,7 +425,7 @@ fn features_are_not_unified_among_lib_and_bin_dep_of_different_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn feature_resolution_works_for_cfg_target_specification() {
     if cross_compile::disabled() {
         return;
@@ -433,7 +433,7 @@ fn feature_resolution_works_for_cfg_target_specification() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &r#"
                 [package]
                 name = "foo"
@@ -452,12 +452,12 @@ fn feature_resolution_works_for_cfg_target_specification() {
             "src/main.rs",
             r#"
                 fn main() {
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_D1"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_D1"));
                 }
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             &r#"
                 [package]
                 name = "d1"
@@ -486,7 +486,7 @@ fn feature_resolution_works_for_cfg_target_specification() {
             .replace("$TARGET", target),
         )
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -498,16 +498,16 @@ fn feature_resolution_works_for_cfg_target_specification() {
         .file("d2/src/lib.rs", "pub fn f() {}")
         .build();
 
-    p.cargo("test -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("test -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_bin_artifacts() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -522,33 +522,33 @@ fn build_script_with_bin_artifacts() {
         .file("src/lib.rs", "")
         .file("build.rs", r#"
             fn main() {
-                let baz: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR_baz").expect("CARGO_BIN_FILE_BAR_baz").into();
+                let baz: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR_baz").expect("CRABGO_BIN_FILE_BAR_baz").into();
                 println!("{}", baz.display());
                 assert!(&baz.is_file());
 
-                let lib: std::path::PathBuf = std::env::var("CARGO_STATICLIB_FILE_BAR_bar").expect("CARGO_STATICLIB_FILE_BAR_bar").into();
+                let lib: std::path::PathBuf = std::env::var("CRABGO_STATICLIB_FILE_BAR_bar").expect("CRABGO_STATICLIB_FILE_BAR_bar").into();
                 println!("{}", lib.display());
                 assert!(&lib.is_file());
 
-                let lib: std::path::PathBuf = std::env::var("CARGO_CDYLIB_FILE_BAR_bar").expect("CARGO_CDYLIB_FILE_BAR_bar").into();
+                let lib: std::path::PathBuf = std::env::var("CRABGO_CDYLIB_FILE_BAR_bar").expect("CRABGO_CDYLIB_FILE_BAR_bar").into();
                 println!("{}", lib.display());
                 assert!(&lib.is_file());
 
-                let dir: std::path::PathBuf = std::env::var("CARGO_BIN_DIR_BAR").expect("CARGO_BIN_DIR_BAR").into();
+                let dir: std::path::PathBuf = std::env::var("CRABGO_BIN_DIR_BAR").expect("CRABGO_BIN_DIR_BAR").into();
                 println!("{}", dir.display());
                 assert!(dir.is_dir());
 
-                let bar: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR").into();
+                let bar: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR").into();
                 println!("{}", bar.display());
                 assert!(&bar.is_file());
 
-                let bar2: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR_bar").expect("CARGO_BIN_FILE_BAR_bar").into();
+                let bar2: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR_bar").expect("CRABGO_BIN_FILE_BAR_bar").into();
                 println!("{}", bar2.display());
                 assert_eq!(bar, bar2);
             }
         "#)
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -564,8 +564,8 @@ fn build_script_with_bin_artifacts() {
         .file("bar/src/bin/baz.rs", "fn main() {}")
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains("[COMPILING] foo [..]")
         .with_stderr_contains("[COMPILING] bar v0.5.0 ([CWD]/bar)")
         .with_stderr_contains("[FINISHED] dev [unoptimized + debuginfo] target(s) in [..]")
@@ -611,11 +611,11 @@ fn build_script_with_bin_artifacts() {
     assert_artifact_executable_output(&p, "debug", "bar", "bar");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_bin_artifact_and_lib_false() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -636,7 +636,7 @@ fn build_script_with_bin_artifact_and_lib_false() {
             }
         "#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() { bar::doit(); }")
         .file(
             "bar/src/lib.rs",
@@ -647,18 +647,18 @@ fn build_script_with_bin_artifact_and_lib_false() {
         "#,
         )
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr_does_not_contain("[..]sentinel[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lib_with_bin_artifact_and_lib_false() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -677,7 +677,7 @@ fn lib_with_bin_artifact_and_lib_false() {
                bar::doit()
             }"#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() { bar::doit(); }")
         .file(
             "bar/src/lib.rs",
@@ -688,18 +688,18 @@ fn lib_with_bin_artifact_and_lib_false() {
         "#,
         )
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr_does_not_contain("[..]sentinel[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -718,7 +718,7 @@ fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
             }
         "#)
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar-baz"
@@ -735,19 +735,19 @@ fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", r#"
             pub fn print_env() {
-                let dir: std::path::PathBuf = std::env::var("CARGO_BIN_DIR_BAR_BAZ").expect("CARGO_BIN_DIR_BAR_BAZ").into();
-                let bin: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR_BAZ_baz-suffix").expect("CARGO_BIN_FILE_BAR_BAZ_baz-suffix").into();
+                let dir: std::path::PathBuf = std::env::var("CRABGO_BIN_DIR_BAR_BAZ").expect("CRABGO_BIN_DIR_BAR_BAZ").into();
+                let bin: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR_BAZ_baz-suffix").expect("CRABGO_BIN_FILE_BAR_BAZ_baz-suffix").into();
                 println!("{}", dir.display());
                 println!("{}", bin.display());
                 assert!(dir.is_dir());
                 assert!(&bin.is_file());
-                assert!(std::env::var("CARGO_BIN_FILE_BAR_BAZ").is_err(), "CARGO_BIN_FILE_BAR_BAZ isn't set due to name mismatch");
-                assert!(std::env::var("CARGO_BIN_FILE_BAR_BAZ_bar").is_err(), "CARGO_BIN_FILE_BAR_BAZ_bar isn't set as binary isn't selected");
+                assert!(std::env::var("CRABGO_BIN_FILE_BAR_BAZ").is_err(), "CRABGO_BIN_FILE_BAR_BAZ isn't set due to name mismatch");
+                assert!(std::env::var("CRABGO_BIN_FILE_BAR_BAZ_bar").is_err(), "CRABGO_BIN_FILE_BAR_BAZ_bar isn't set as binary isn't selected");
             }
         "#)
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar-baz v0.5.0 ([CWD]/bar)
@@ -760,7 +760,7 @@ fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
     let msg = "we need the binary directory for this artifact and the binary itself";
 
     if cfg!(target_env = "msvc") {
-        cargo_test_support::compare::match_exact(
+        crabgo_test_support::compare::match_exact(
             &format!(
                 "[..]/artifact/bar-baz-[..]/bin\n\
                  [..]/artifact/bar-baz-[..]/bin/baz_suffix{}",
@@ -773,7 +773,7 @@ fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
         )
         .unwrap();
     } else {
-        cargo_test_support::compare::match_exact(
+        crabgo_test_support::compare::match_exact(
             "[..]/artifact/bar-baz-[..]/bin\n\
         [..]/artifact/bar-baz-[..]/bin/baz_suffix-[..]",
             &build_script_output,
@@ -791,11 +791,11 @@ fn build_script_with_selected_dashed_bin_artifact_and_lib_true() {
     assert_artifact_executable_output(&p, "debug", "bar", "baz_suffix");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lib_with_selected_dashed_bin_artifact_and_lib_true() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -813,17 +813,17 @@ fn lib_with_selected_dashed_bin_artifact_and_lib_true() {
             pub fn foo() {
                 bar_baz::exists();
 
-                env!("CARGO_BIN_DIR_BAR_BAZ");
-                let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_BAZ_baz-suffix"));
-                let _b = include_bytes!(env!("CARGO_STATICLIB_FILE_BAR_BAZ"));
-                let _b = include_bytes!(env!("CARGO_STATICLIB_FILE_BAR_BAZ_bar-baz"));
-                let _b = include_bytes!(env!("CARGO_CDYLIB_FILE_BAR_BAZ"));
-                let _b = include_bytes!(env!("CARGO_CDYLIB_FILE_BAR_BAZ_bar-baz"));
+                env!("CRABGO_BIN_DIR_BAR_BAZ");
+                let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_BAZ_baz-suffix"));
+                let _b = include_bytes!(env!("CRABGO_STATICLIB_FILE_BAR_BAZ"));
+                let _b = include_bytes!(env!("CRABGO_STATICLIB_FILE_BAR_BAZ_bar-baz"));
+                let _b = include_bytes!(env!("CRABGO_CDYLIB_FILE_BAR_BAZ"));
+                let _b = include_bytes!(env!("CRABGO_CDYLIB_FILE_BAR_BAZ_bar-baz"));
             }
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar-baz"
@@ -843,8 +843,8 @@ fn lib_with_selected_dashed_bin_artifact_and_lib_true() {
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn exists() {}")
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar-baz v0.5.0 ([CWD]/bar)
@@ -860,11 +860,11 @@ fn lib_with_selected_dashed_bin_artifact_and_lib_true() {
     assert_artifact_executable_output(&p, "debug", "bar", "baz_suffix");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn allow_artifact_and_no_artifact_dep_to_same_package_within_different_dep_categories() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -884,26 +884,26 @@ fn allow_artifact_and_no_artifact_dep_to_same_package_within_different_dep_categ
             r#"
             #[cfg(test)] extern crate bar;
             pub fn foo() {
-                env!("CARGO_BIN_DIR_BAR");
-                let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
+                env!("CRABGO_BIN_DIR_BAR");
+                let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
             }"#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("test -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("test -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains("[COMPILING] bar v0.5.0 ([CWD]/bar)")
         .with_stderr_contains("[FINISHED] test [unoptimized + debuginfo] target(s) in [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn normal_build_deps_are_picked_up_in_presence_of_an_artifact_build_dep_to_the_same_package() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -923,24 +923,24 @@ fn normal_build_deps_are_picked_up_in_presence_of_an_artifact_build_dep_to_the_s
             "src/lib.rs",
             r#"
             pub fn foo() {
-                env!("CARGO_BIN_DIR_BAR");
-                let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
+                env!("CRABGO_BIN_DIR_BAR");
+                let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
             }"#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn f() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn disallow_using_example_binaries_as_artifacts() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -953,12 +953,12 @@ fn disallow_using_example_binaries_as_artifacts() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/examples/one-example.rs", "fn main() {}")
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr(r#"[ERROR] dependency `bar` in package `foo` requires a `bin:one-example` artifact to be present."#)
         .run();
@@ -969,11 +969,11 @@ fn disallow_using_example_binaries_as_artifacts() {
 /// > You may also specify separate dependencies with different artifact values, as well as
 /// dependencies on the same crate without artifact specified; for instance, you may have a
 /// build dependency on the binary of a crate and a normal dependency on the Rust library of the same crate.
-#[cargo_test]
+#[crabgo_test]
 fn allow_artifact_and_non_artifact_dependency_to_same_crate() {
     let p = project()
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 r#"
                 [package]
                 name = "foo"
@@ -991,29 +991,29 @@ fn allow_artifact_and_non_artifact_dependency_to_same_crate() {
             .file("src/lib.rs", r#"
                     pub fn foo() {
                          bar::doit();
-                         assert!(option_env!("CARGO_BIN_FILE_BAR").is_none());
+                         assert!(option_env!("CRABGO_BIN_FILE_BAR").is_none());
                     }"#)
             .file(
                 "build.rs",
                 r#"
                 fn main() {
-                     assert!(option_env!("CARGO_BIN_FILE_BAR").is_none(), "no environment variables at build time");
-                     std::process::Command::new(std::env::var("CARGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
+                     assert!(option_env!("CRABGO_BIN_FILE_BAR").is_none(), "no environment variables at build time");
+                     std::process::Command::new(std::env::var("CRABGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
                 }"#,
             )
-            .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+            .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
             .file("bar/src/main.rs", "fn main() {}")
             .file("bar/src/lib.rs", "pub fn doit() {}")
         .build();
 
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains("[COMPILING] bar [..]")
         .with_stderr_contains("[COMPILING] foo [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_deps_adopt_specified_target_unconditionally() {
     if cross_compile::disabled() {
         return;
@@ -1022,7 +1022,7 @@ fn build_script_deps_adopt_specified_target_unconditionally() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1042,16 +1042,16 @@ fn build_script_deps_adopt_specified_target_unconditionally() {
         .file("src/lib.rs", "")
         .file("build.rs", r#"
                 fn main() {
-                    let bar: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR").into();
+                    let bar: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR").into();
                     assert!(&bar.is_file());
                 }"#)
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn doit() {}")
         .build();
 
-    p.cargo("check -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_does_not_contain(format!(
             "[RUNNING] `rustc --crate-name build_script_build build.rs [..]--target {} [..]",
             target
@@ -1074,7 +1074,7 @@ fn build_script_deps_adopt_specified_target_unconditionally() {
 }
 
 /// inverse RFC-3176
-#[cargo_test]
+#[crabgo_test]
 fn build_script_deps_adopt_do_not_allow_multiple_targets_under_different_name_and_same_version() {
     if cross_compile::disabled() {
         return;
@@ -1084,7 +1084,7 @@ fn build_script_deps_adopt_do_not_allow_multiple_targets_under_different_name_an
     let native = cross_compile::native();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1111,18 +1111,18 @@ fn build_script_deps_adopt_do_not_allow_multiple_targets_under_different_name_an
         .file("src/lib.rs", "")
         .file("build.rs", r#"
                 fn main() {
-                    let bar: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR").into();
+                    let bar: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR").into();
                     assert!(&bar.is_file());
-                    let bar_native: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR_NATIVE_bar").expect("CARGO_BIN_FILE_BAR_NATIVE_bar").into();
+                    let bar_native: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR_NATIVE_bar").expect("CRABGO_BIN_FILE_BAR_NATIVE_bar").into();
                     assert!(&bar_native.is_file());
                     assert_ne!(bar_native, bar, "should build different binaries due to different targets");
                 }"#)
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr(format!(
             "error: the crate `foo v0.0.0 ([CWD])` depends on crate `bar v0.5.0 ([CWD]/bar)` multiple times with different names",
@@ -1130,7 +1130,7 @@ fn build_script_deps_adopt_do_not_allow_multiple_targets_under_different_name_an
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_build_script_deps_adopt_specified_target_unconditionally() {
     if cross_compile::disabled() {
         return;
@@ -1139,7 +1139,7 @@ fn non_build_script_deps_adopt_specified_target_unconditionally() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1158,15 +1158,15 @@ fn non_build_script_deps_adopt_specified_target_unconditionally() {
         )
         .file(
             "src/lib.rs",
-            r#"pub fn foo() { let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR")); }"#,
+            r#"pub fn foo() { let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR")); }"#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn doit() {}")
         .build();
 
-    p.cargo("check -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(format!(
             "[RUNNING] `rustc --crate-name bar bar/src/lib.rs [..]--target {} [..]",
             target
@@ -1183,7 +1183,7 @@ fn non_build_script_deps_adopt_specified_target_unconditionally() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_cross_doctests_works_with_artifacts() {
     if cross_compile::disabled() {
         return;
@@ -1191,7 +1191,7 @@ fn no_cross_doctests_works_with_artifacts() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1207,24 +1207,24 @@ fn no_cross_doctests_works_with_artifacts() {
             "src/lib.rs",
             r#"
                 //! ```
-                //! env!("CARGO_BIN_DIR_BAR");
-                //! let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
+                //! env!("CRABGO_BIN_DIR_BAR");
+                //! let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
                 //! ```
                 pub fn foo() {
-                    env!("CARGO_BIN_DIR_BAR");
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
+                    env!("CRABGO_BIN_DIR_BAR");
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/lib.rs", r#"pub extern "C" fn c() {}"#)
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
     let target = rustc_host();
-    p.cargo("test -Z bindeps --target")
+    p.crabgo("test -Z bindeps --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["bindeps"])
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(&format!(
             "\
 [COMPILING] bar v0.5.0 ([CWD]/bar)
@@ -1242,9 +1242,9 @@ fn no_cross_doctests_works_with_artifacts() {
 
     // This will build the library, but does not build or run doc tests.
     // This should probably be a warning or error.
-    p.cargo("test -Z bindeps -v --doc --target")
+    p.crabgo("test -Z bindeps -v --doc --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["bindeps"])
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(format!(
             "[COMPILING] bar v0.5.0 ([CWD]/bar)
 [RUNNING] `rustc --crate-name bar bar/src/lib.rs [..]--target {triple} [..]
@@ -1261,9 +1261,9 @@ fn no_cross_doctests_works_with_artifacts() {
     }
 
     // This tests the library, but does not run the doc tests.
-    p.cargo("test -Z bindeps -v --target")
+    p.crabgo("test -Z bindeps -v --target")
         .arg(&target)
-        .masquerade_as_nightly_cargo(&["bindeps"])
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(&format!(
             "[FRESH] bar v0.5.0 ([CWD]/bar)
 [COMPILING] foo v0.0.1 ([CWD])
@@ -1275,7 +1275,7 @@ fn no_cross_doctests_works_with_artifacts() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_deps_adopts_target_platform_if_target_equals_target() {
     if cross_compile::disabled() {
         return;
@@ -1283,7 +1283,7 @@ fn build_script_deps_adopts_target_platform_if_target_equals_target() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1298,18 +1298,18 @@ fn build_script_deps_adopts_target_platform_if_target_equals_target() {
         .file("src/lib.rs", "")
         .file("build.rs", r#"
                 fn main() {
-                    let bar: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR").into();
+                    let bar: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR").into();
                     assert!(&bar.is_file());
                 }"#)
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn doit() {}")
         .build();
 
     let alternate_target = cross_compile::alternate();
-    p.cargo("check -v -Z bindeps --target")
+    p.crabgo("check -v -Z bindeps --target")
         .arg(alternate_target)
-        .masquerade_as_nightly_cargo(&["bindeps"])
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_does_not_contain(format!(
             "[RUNNING] `rustc --crate-name build_script_build build.rs [..]--target {} [..]",
             alternate_target
@@ -1330,13 +1330,13 @@ fn build_script_deps_adopts_target_platform_if_target_equals_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 // TODO(ST): rename bar (dependency) to something else and un-ignore this with RFC-3176
 #[cfg_attr(target_env = "msvc", ignore = "msvc not working")]
 fn profile_override_basic() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1358,13 +1358,13 @@ fn profile_override_basic() {
         )
         .file("build.rs", "fn main() {}")
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("build -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(
             "[RUNNING] `rustc --crate-name build_script_build [..] -C opt-level=1 [..]`",
         )
@@ -1384,7 +1384,7 @@ fn profile_override_basic() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dependencies_of_dependencies_work_in_artifacts() {
     Package::new("baz", "1.0.0")
         .file("src/lib.rs", "pub fn baz() {}")
@@ -1392,7 +1392,7 @@ fn dependencies_of_dependencies_work_in_artifacts() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1409,12 +1409,12 @@ fn dependencies_of_dependencies_work_in_artifacts() {
             "build.rs",
             r#"
             fn main() {
-                std::process::Command::new(std::env::var("CARGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
+                std::process::Command::new(std::env::var("CRABGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
             }
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1428,13 +1428,13 @@ fn dependencies_of_dependencies_work_in_artifacts() {
         .file("bar/src/lib.rs", r#"pub fn bar() {baz::baz()}"#)
         .file("bar/src/main.rs", r#"fn main() {bar::bar()}"#)
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 
-    // cargo tree sees artifacts as the dependency kind they are in and doesn't do anything special with it.
-    p.cargo("tree -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    // crabgo tree sees artifacts as the dependency kind they are in and doesn't do anything special with it.
+    p.crabgo("tree -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stdout(
             "\
 foo v0.0.0 ([CWD])
@@ -1448,9 +1448,9 @@ foo v0.0.0 ([CWD])
 
 // TODO: Fix this potentially by reverting 887562bfeb8c540594d7d08e6e9a4ab7eb255865 which adds artifact information to the registry
 //       followed by 0ff93733626f7cbecaf9dce9ab62b4ced0be088e which picks it up.
-//       For reference, see comments by ehuss https://github.com/rust-lang/cargo/pull/9992#discussion_r801086315 and
-//       joshtriplett https://github.com/rust-lang/cargo/pull/9992#issuecomment-1033394197 .
-#[cargo_test]
+//       For reference, see comments by ehuss https://github.com/rust-lang/crabgo/pull/9992#discussion_r801086315 and
+//       joshtriplett https://github.com/rust-lang/crabgo/pull/9992#issuecomment-1033394197 .
+#[crabgo_test]
 #[ignore = "broken, need artifact info in index"]
 fn targets_are_picked_up_from_non_workspace_artifact_deps() {
     if cross_compile::disabled() {
@@ -1466,14 +1466,14 @@ fn targets_are_picked_up_from_non_workspace_artifact_deps() {
     Package::new("uses-artifact", "1.0.0")
         .file(
             "src/lib.rs",
-            r#"pub fn uses_artifact() { let _b = include_bytes!(env!("CARGO_BIN_FILE_ARTIFACT")); }"#,
+            r#"pub fn uses_artifact() { let _b = include_bytes!(env!("CRABGO_BIN_FILE_ARTIFACT")); }"#,
         )
         .add_dep(dep.artifact("bin", Some(target.to_string())))
         .publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1490,12 +1490,12 @@ fn targets_are_picked_up_from_non_workspace_artifact_deps() {
         )
         .build();
 
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn allow_dep_renames_with_multiple_versions() {
     Package::new("bar", "1.0.0")
         .file("src/main.rs", r#"fn main() {println!("1.0.0")}"#)
@@ -1503,7 +1503,7 @@ fn allow_dep_renames_with_multiple_versions() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1521,16 +1521,16 @@ fn allow_dep_renames_with_multiple_versions() {
             "build.rs",
             r#"
             fn main() {
-                std::process::Command::new(std::env::var("CARGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
-                std::process::Command::new(std::env::var("CARGO_BIN_FILE_BAR_STABLE_bar").expect("BAR STABLE present")).status().unwrap();
+                std::process::Command::new(std::env::var("CRABGO_BIN_FILE_BAR").expect("BAR present")).status().unwrap();
+                std::process::Command::new(std::env::var("CRABGO_BIN_FILE_BAR_STABLE_bar").expect("BAR STABLE present")).status().unwrap();
             }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", r#"fn main() {println!("0.5.0")}"#)
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains("[COMPILING] bar [..]")
         .with_stderr_contains("[COMPILING] foo [..]")
         .run();
@@ -1545,11 +1545,11 @@ fn allow_dep_renames_with_multiple_versions() {
     .unwrap();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn allow_artifact_and_non_artifact_dependency_to_same_crate_if_these_are_not_the_same_dep_kind() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1567,21 +1567,21 @@ fn allow_artifact_and_non_artifact_dependency_to_same_crate_if_these_are_not_the
         .file("src/lib.rs", r#"
             pub fn foo() {
                 bar::doit();
-                assert!(option_env!("CARGO_BIN_FILE_BAR").is_none());
+                assert!(option_env!("CRABGO_BIN_FILE_BAR").is_none());
             }"#)
         .file(
             "build.rs",
             r#"fn main() {
-               println!("{}", std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR"));
-               println!("{}", std::env::var("CARGO_BIN_FILE_BAR_bar").expect("CARGO_BIN_FILE_BAR_bar"));
+               println!("{}", std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR"));
+               println!("{}", std::env::var("CRABGO_BIN_FILE_BAR_bar").expect("CRABGO_BIN_FILE_BAR_bar"));
            }"#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn doit() {}")
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar [..]
@@ -1592,11 +1592,11 @@ fn allow_artifact_and_non_artifact_dependency_to_same_crate_if_these_are_not_the
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prevent_no_lib_warning_with_artifact_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1610,13 +1610,13 @@ fn prevent_no_lib_warning_with_artifact_dependencies() {
         )
         .file(
             "src/lib.rs",
-            r#"pub fn foo() { let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR")); }"#,
+            r#"pub fn foo() { let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR")); }"#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
             [COMPILING] bar v0.5.0 ([CWD]/bar)\n\
@@ -1626,11 +1626,11 @@ fn prevent_no_lib_warning_with_artifact_dependencies() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn show_no_lib_warning_with_artifact_dependencies_that_have_no_lib_but_lib_true() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1647,11 +1647,11 @@ fn show_no_lib_warning_with_artifact_dependencies_that_have_no_lib_but_lib_true(
         )
         .file("src/lib.rs", "")
         .file("src/build.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains("[WARNING] foo v0.0.0 ([CWD]) ignoring invalid dependency `bar` which is missing a lib target")
         .with_stderr_contains("[COMPILING] bar v0.5.0 ([CWD]/bar)")
         .with_stderr_contains("[CHECKING] foo [..]")
@@ -1659,11 +1659,11 @@ fn show_no_lib_warning_with_artifact_dependencies_that_have_no_lib_but_lib_true(
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn resolver_2_build_dep_without_lib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1678,23 +1678,23 @@ fn resolver_2_build_dep_without_lib() {
         .file("src/lib.rs", "")
         .file("build.rs", r#"
                 fn main() {
-                    let bar: std::path::PathBuf = std::env::var("CARGO_BIN_FILE_BAR").expect("CARGO_BIN_FILE_BAR").into();
+                    let bar: std::path::PathBuf = std::env::var("CRABGO_BIN_FILE_BAR").expect("CRABGO_BIN_FILE_BAR").into();
                     assert!(&bar.is_file());
                 }"#)
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_missing_crate_type_in_package_fails() {
     for crate_type in &["cdylib", "staticlib", "bin"] {
         let p = project()
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                         [package]
@@ -1709,11 +1709,11 @@ fn check_missing_crate_type_in_package_fails() {
                 ),
             )
             .file("src/lib.rs", "")
-            .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1")) //no bin, just rlib
+            .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1")) //no bin, just rlib
             .file("bar/src/lib.rs", "")
             .build();
-        p.cargo("check -Z bindeps")
-            .masquerade_as_nightly_cargo(&["bindeps"])
+        p.crabgo("check -Z bindeps")
+            .masquerade_as_nightly_crabgo(&["bindeps"])
             .with_status(101)
             .with_stderr(
                 "[ERROR] dependency `bar` in package `foo` requires a `[..]` artifact to be present.",
@@ -1722,11 +1722,11 @@ fn check_missing_crate_type_in_package_fails() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_target_equals_target_in_non_build_dependency_errors() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1739,11 +1739,11 @@ fn check_target_equals_target_in_non_build_dependency_errors() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_status(101)
         .with_stderr_contains(
             "  `target = \"target\"` in normal- or dev-dependencies has no effect (bar)",
@@ -1751,11 +1751,11 @@ fn check_target_equals_target_in_non_build_dependency_errors() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_vars_and_build_products_for_various_build_targets() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1778,14 +1778,14 @@ fn env_vars_and_build_products_for_various_build_targets() {
         )
         .file("build.rs", r#"
             fn main() {
-                let file: std::path::PathBuf = std::env::var("CARGO_CDYLIB_FILE_BAR").expect("CARGO_CDYLIB_FILE_BAR").into();
+                let file: std::path::PathBuf = std::env::var("CRABGO_CDYLIB_FILE_BAR").expect("CRABGO_CDYLIB_FILE_BAR").into();
                 assert!(&file.is_file());
 
-                let file: std::path::PathBuf = std::env::var("CARGO_STATICLIB_FILE_BAR").expect("CARGO_STATICLIB_FILE_BAR").into();
+                let file: std::path::PathBuf = std::env::var("CRABGO_STATICLIB_FILE_BAR").expect("CRABGO_STATICLIB_FILE_BAR").into();
                 assert!(&file.is_file());
 
-                assert!(std::env::var("CARGO_BIN_FILE_BAR").is_err());
-                assert!(std::env::var("CARGO_BIN_FILE_BAR_baz").is_err());
+                assert!(std::env::var("CRABGO_BIN_FILE_BAR").is_err());
+                assert!(std::env::var("CRABGO_BIN_FILE_BAR_baz").is_err());
             }
         "#)
         .file(
@@ -1793,32 +1793,32 @@ fn env_vars_and_build_products_for_various_build_targets() {
             r#"
                 //! ```
                 //! bar::c();
-                //! env!("CARGO_BIN_DIR_BAR");
-                //! let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
-                //! let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_bar"));
-                //! let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_baz"));
-                //! assert!(option_env!("CARGO_STATICLIB_FILE_BAR").is_none());
-                //! assert!(option_env!("CARGO_CDYLIB_FILE_BAR").is_none());
+                //! env!("CRABGO_BIN_DIR_BAR");
+                //! let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
+                //! let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_bar"));
+                //! let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_baz"));
+                //! assert!(option_env!("CRABGO_STATICLIB_FILE_BAR").is_none());
+                //! assert!(option_env!("CRABGO_CDYLIB_FILE_BAR").is_none());
                 //! ```
                 pub fn foo() {
                     bar::c();
-                    env!("CARGO_BIN_DIR_BAR");
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_bar"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_baz"));
-                    assert!(option_env!("CARGO_STATICLIB_FILE_BAR").is_none());
-                    assert!(option_env!("CARGO_CDYLIB_FILE_BAR").is_none());
+                    env!("CRABGO_BIN_DIR_BAR");
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_bar"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_baz"));
+                    assert!(option_env!("CRABGO_STATICLIB_FILE_BAR").is_none());
+                    assert!(option_env!("CRABGO_CDYLIB_FILE_BAR").is_none());
                 }
 
                 #[cfg(test)]
                 #[test]
                 fn env_unit() {
-                    env!("CARGO_BIN_DIR_BAR");
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_bar"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_baz"));
-                    assert!(option_env!("CARGO_STATICLIB_FILE_BAR").is_none());
-                    assert!(option_env!("CARGO_CDYLIB_FILE_BAR").is_none());
+                    env!("CRABGO_BIN_DIR_BAR");
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_bar"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_baz"));
+                    assert!(option_env!("CRABGO_STATICLIB_FILE_BAR").is_none());
+                    assert!(option_env!("CRABGO_CDYLIB_FILE_BAR").is_none());
                 }
                "#,
         )
@@ -1827,15 +1827,15 @@ fn env_vars_and_build_products_for_various_build_targets() {
             r#"
                 #[test]
                 fn env_integration() {
-                    env!("CARGO_BIN_DIR_BAR");
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_bar"));
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR_baz"));
+                    env!("CRABGO_BIN_DIR_BAR");
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_bar"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR_baz"));
                 }"#,
         )
         .file("build.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1855,8 +1855,8 @@ fn env_vars_and_build_products_for_various_build_targets() {
         .file("bar/src/lib.rs", r#"pub extern "C" fn c() {}"#)
         .file("bar/src/main.rs", "fn main() {}")
         .build();
-    p.cargo("test -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("test -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar [..]
@@ -1870,7 +1870,7 @@ fn env_vars_and_build_products_for_various_build_targets() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_artifact_dep() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -1879,7 +1879,7 @@ fn publish_artifact_dep() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1902,9 +1902,9 @@ fn publish_artifact_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish -Z bindeps --no-verify")
+    p.crabgo("publish -Z bindeps --no-verify")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["bindeps"])
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -1961,9 +1961,9 @@ You may press ctrl-c [..]
         }
         "#,
         "foo-0.1.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "src/lib.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "src/lib.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -1990,17 +1990,17 @@ artifact = [
     "staticlib",
 ]
 target = "target""#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_true() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2015,13 +2015,13 @@ fn doc_lib_true() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar; pub fn foo() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("doc -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("doc -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -2040,9 +2040,9 @@ fn doc_lib_true() {
     assert_eq!(p.glob("target/debug/artifact/*.rlib").count(), 0);
     assert_eq!(p.glob("target/debug/deps/libbar-*.rmeta").count(), 2);
 
-    p.cargo("doc -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
-        .env("CARGO_LOG", "cargo::ops::cargo_rustc::fingerprint")
+    p.crabgo("doc -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
+        .env("CRABGO_LOG", "crabgo::ops::crabgo_rustc::fingerprint")
         .with_stdout("")
         .run();
 
@@ -2051,11 +2051,11 @@ fn doc_lib_true() {
     assert!(p.root().join("target/doc/bar/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc_works_on_libs_with_artifacts_and_lib_false() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2072,16 +2072,16 @@ fn rustdoc_works_on_libs_with_artifacts_and_lib_false() {
             "src/lib.rs",
             r#"
             pub fn foo() {
-                env!("CARGO_BIN_DIR_BAR");
-                let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
-                let _b = include_bytes!(env!("CARGO_CDYLIB_FILE_BAR"));
-                let _b = include_bytes!(env!("CARGO_CDYLIB_FILE_BAR_bar"));
-                let _b = include_bytes!(env!("CARGO_STATICLIB_FILE_BAR"));
-                let _b = include_bytes!(env!("CARGO_STATICLIB_FILE_BAR_bar"));
+                env!("CRABGO_BIN_DIR_BAR");
+                let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
+                let _b = include_bytes!(env!("CRABGO_CDYLIB_FILE_BAR"));
+                let _b = include_bytes!(env!("CRABGO_CDYLIB_FILE_BAR_bar"));
+                let _b = include_bytes!(env!("CRABGO_STATICLIB_FILE_BAR"));
+                let _b = include_bytes!(env!("CRABGO_STATICLIB_FILE_BAR_bar"));
             }"#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2096,8 +2096,8 @@ fn rustdoc_works_on_libs_with_artifacts_and_lib_false() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("doc -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("doc -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar v0.5.0 ([CWD]/bar)
@@ -2161,7 +2161,7 @@ fn build_script_output_string(p: &Project, package_name: &str) -> String {
     std::fs::read_to_string(&paths[0]).unwrap()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script_features_for_shared_dependency() {
     // When a build script is built and run, its features should match. Here:
     //
@@ -2185,7 +2185,7 @@ fn build_script_features_for_shared_dependency() {
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &r#"
                 [package]
                 name = "foo"
@@ -2202,13 +2202,13 @@ fn build_script_features_for_shared_dependency() {
             "src/main.rs",
             r#"
                 fn main() {
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_D1"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_D1"));
                     common::f1();
                 }
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -2225,7 +2225,7 @@ fn build_script_features_for_shared_dependency() {
             }"#,
         )
         .file(
-            "common/Cargo.toml",
+            "common/Crabgo.toml",
             r#"
                 [package]
                 name = "common"
@@ -2251,14 +2251,14 @@ fn build_script_features_for_shared_dependency() {
             &r#"
                 use std::env::var_os;
                 fn main() {
-                    assert_eq!(var_os("CARGO_FEATURE_F1").is_some(), cfg!(feature="f1"));
-                    assert_eq!(var_os("CARGO_FEATURE_F2").is_some(), cfg!(feature="f2"));
+                    assert_eq!(var_os("CRABGO_FEATURE_F1").is_some(), cfg!(feature="f1"));
+                    assert_eq!(var_os("CRABGO_FEATURE_F2").is_some(), cfg!(feature="f2"));
                     if std::env::var("TARGET").unwrap() == "$TARGET" {
-                        assert!(var_os("CARGO_FEATURE_F1").is_none());
-                        assert!(var_os("CARGO_FEATURE_F2").is_some());
+                        assert!(var_os("CRABGO_FEATURE_F1").is_none());
+                        assert!(var_os("CRABGO_FEATURE_F2").is_some());
                     } else {
-                        assert!(var_os("CARGO_FEATURE_F1").is_some());
-                        assert!(var_os("CARGO_FEATURE_F2").is_none());
+                        assert!(var_os("CRABGO_FEATURE_F1").is_some());
+                        assert!(var_os("CRABGO_FEATURE_F2").is_none());
                     }
                 }
             "#
@@ -2266,17 +2266,17 @@ fn build_script_features_for_shared_dependency() {
         )
         .build();
 
-    p.cargo("build -Z bindeps -v")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps -v")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn calc_bin_artifact_fingerprint() {
-    // See rust-lang/cargo#10527
+    // See rust-lang/crabgo#10527
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2291,15 +2291,15 @@ fn calc_bin_artifact_fingerprint() {
             "src/main.rs",
             r#"
                 fn main() {
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_BAR"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_BAR"));
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_bin_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_bin_manifest("bar"))
         .file("bar/src/main.rs", r#"fn main() { println!("foo") }"#)
         .build();
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] bar v0.5.0 ([CWD]/bar)
@@ -2311,8 +2311,8 @@ fn calc_bin_artifact_fingerprint() {
 
     p.change_file("bar/src/main.rs", r#"fn main() { println!("bar") }"#);
     // Change in artifact bin dep `bar` propagates to `foo`, triggering recompile.
-    p.cargo("check -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [DIRTY] bar v0.5.0 ([CWD]/bar): the file `bar/src/main.rs` has changed ([..])
@@ -2327,8 +2327,8 @@ fn calc_bin_artifact_fingerprint() {
         .run();
 
     // All units are fresh. No recompile.
-    p.cargo("check -v -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -v -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [FRESH] bar v0.5.0 ([CWD]/bar)
@@ -2339,16 +2339,16 @@ fn calc_bin_artifact_fingerprint() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn with_target_and_optional() {
-    // See rust-lang/cargo#10526
+    // See rust-lang/crabgo#10526
     if cross_compile::disabled() {
         return;
     }
     let target = cross_compile::alternate();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &r#"
                 [package]
                 name = "foo"
@@ -2363,12 +2363,12 @@ fn with_target_and_optional() {
             "src/main.rs",
             r#"
                 fn main() {
-                    let _b = include_bytes!(env!("CARGO_BIN_FILE_D1"));
+                    let _b = include_bytes!(env!("CRABGO_BIN_FILE_D1"));
                 }
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -2379,8 +2379,8 @@ fn with_target_and_optional() {
         .file("d1/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -Z bindeps -F d1 -v")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps -F d1 -v")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] d1 v0.0.1 [..]
@@ -2393,11 +2393,11 @@ fn with_target_and_optional() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn with_assumed_host_target_and_optional_build_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2412,12 +2412,12 @@ fn with_assumed_host_target_and_optional_build_dep() {
             "build.rs",
             r#"
                 fn main() {
-                    std::env::var("CARGO_BIN_FILE_D1").unwrap();
+                    std::env::var("CRABGO_BIN_FILE_D1").unwrap();
                 }
             "#,
         )
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -2428,8 +2428,8 @@ fn with_assumed_host_target_and_optional_build_dep() {
         .file("d1/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -Z bindeps -F d1 -v")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps -F d1 -v")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_unordered(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -2444,13 +2444,13 @@ fn with_assumed_host_target_and_optional_build_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_same_target_transitive_dep_from_artifact_dep() {
-    // See https://github.com/rust-lang/cargo/issues/11463
+    // See https://github.com/rust-lang/crabgo/issues/11463
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -2471,7 +2471,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2488,7 +2488,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2514,7 +2514,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2535,7 +2535,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
             "#,
         )
         .file(
-            "c/Cargo.toml",
+            "c/Crabgo.toml",
             r#"
                 [package]
                 name = "c"
@@ -2552,8 +2552,8 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
             "#,
         )
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] c v0.1.0 ([CWD]/c)
@@ -2567,13 +2567,13 @@ fn decouple_same_target_transitive_dep_from_artifact_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
-    // See https://github.com/rust-lang/cargo/issues/10837
+    // See https://github.com/rust-lang/crabgo/issues/10837
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -2590,7 +2590,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2614,7 +2614,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2634,7 +2634,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
             "#,
         )
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -2653,8 +2653,8 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
             "#,
         )
         .build();
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] b v0.1.0 ([CWD]/b)
@@ -2667,12 +2667,12 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_lib() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -2688,7 +2688,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -2700,7 +2700,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
         )
         .file("bar/src/main.rs", "fn main() {}")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -2716,7 +2716,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
         )
         .file("b/src/lib.rs", "")
         .file(
-            "c/Cargo.toml",
+            "c/Crabgo.toml",
             r#"
             [package]
             name = "c"
@@ -2742,7 +2742,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -2763,7 +2763,7 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
             "#,
         )
         .file(
-            "d/Cargo.toml",
+            "d/Crabgo.toml",
             r#"
             [package]
             name = "d"
@@ -2776,8 +2776,8 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
         .file("d/src/lib.rs", "pub struct D;")
         .build();
 
-    p.cargo("build -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("build -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_unordered(
             "\
 [COMPILING] d v0.1.0 ([CWD]/d)
@@ -2792,12 +2792,12 @@ fn decouple_same_target_transitive_dep_from_artifact_dep_and_proc_macro() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn same_target_artifact_dep_sharing() {
     let target = rustc_host();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -2812,7 +2812,7 @@ fn same_target_artifact_dep_sharing() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2829,7 +2829,7 @@ fn same_target_artifact_dep_sharing() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -2838,8 +2838,8 @@ fn same_target_artifact_dep_sharing() {
         )
         .file("a/src/lib.rs", "")
         .build();
-    p.cargo(&format!("build -Z bindeps --target {target}"))
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo(&format!("build -Z bindeps --target {target}"))
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr(
             "\
 [COMPILING] a v0.1.0 ([CWD]/a)
@@ -2851,11 +2851,11 @@ fn same_target_artifact_dep_sharing() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_transitive_artifact_dependency_with_different_target() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2867,7 +2867,7 @@ fn check_transitive_artifact_dependency_with_different_target() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2879,7 +2879,7 @@ fn check_transitive_artifact_dependency_with_different_target() {
         )
         .file("bar/src/lib.rs", "")
         .file(
-            "bar/baz/Cargo.toml",
+            "bar/baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -2891,8 +2891,8 @@ fn check_transitive_artifact_dependency_with_different_target() {
         .file("bar/baz/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check -Z bindeps")
-        .masquerade_as_nightly_cargo(&["bindeps"])
+    p.crabgo("check -Z bindeps")
+        .masquerade_as_nightly_crabgo(&["bindeps"])
         .with_stderr_contains(
             "error: could not find specification for target `custom-target`.\n  \
             Dependency `baz v0.0.0 [..]` requires to build for target `custom-target`.",

@@ -1,10 +1,10 @@
-use cargo_test_support::compare::assert_ui;
-use cargo_test_support::prelude::*;
-use cargo_test_support::{t, Project};
+use crabgo_test_support::compare::assert_ui;
+use crabgo_test_support::prelude::*;
+use crabgo_test_support::{t, Project};
 
-use cargo_test_support::curr_dir;
+use crabgo_test_support::curr_dir;
 
-#[cargo_test]
+#[crabgo_test]
 fn case() {
     let project = Project::from_template(curr_dir!().join("in"));
     let project_root = &project.root().join("test:ing");
@@ -13,7 +13,7 @@ fn case() {
         t!(std::fs::create_dir(&project_root));
     }
 
-    snapbox::cmd::Command::cargo_ui()
+    snapbox::cmd::Command::crabgo_ui()
         .arg_line("init --bin --vcs none --edition 2015 --name testing")
         .current_dir(project_root)
         .assert()

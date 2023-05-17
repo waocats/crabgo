@@ -7,7 +7,7 @@ use std::fs;
 #[test]
 fn check_forbidden_code() {
     // Do not use certain macros, functions, etc.
-    if !cargo_util::is_ci() {
+    if !crabgo_util::is_ci() {
         // Only check these on CI, otherwise it could be annoying.
         use std::io::Write;
         writeln!(
@@ -17,7 +17,7 @@ fn check_forbidden_code() {
         .unwrap();
         return;
     }
-    let root_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let root_path = std::path::Path::new(env!("CRABGO_MANIFEST_DIR")).join("src");
     for entry in walkdir::WalkDir::new(&root_path)
         .into_iter()
         .filter_entry(|e| e.path() != root_path.join("doc"))
@@ -39,13 +39,13 @@ fn check_forbidden_code() {
                 continue;
             }
             if line_has_print(line) {
-                if entry.file_name().to_str().unwrap() == "cargo_new.rs" && line.contains("Hello") {
+                if entry.file_name().to_str().unwrap() == "crabgo_new.rs" && line.contains("Hello") {
                     // An exception.
                     continue;
                 }
                 panic!(
                     "found print macro in {}:{}\n\n{}\n\n\
-                    print! macros should not be used in Cargo because they can panic.\n\
+                    print! macros should not be used in Crabgo because they can panic.\n\
                     Use one of the drop_print macros instead.\n\
                     ",
                     path.display(),

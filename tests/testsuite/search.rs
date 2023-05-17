@@ -1,8 +1,8 @@
-//! Tests for the `cargo search` command.
+//! Tests for the `crabgo search` command.
 
-use cargo_test_support::cargo_process;
-use cargo_test_support::paths;
-use cargo_test_support::registry::{RegistryBuilder, Response};
+use crabgo_test_support::crabgo_process;
+use crabgo_test_support::paths;
+use crabgo_test_support::registry::{RegistryBuilder, Response};
 use std::collections::HashSet;
 
 const SEARCH_API_RESPONSE: &[u8] = br#"
@@ -85,19 +85,19 @@ fn setup() -> RegistryBuilder {
         })
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn not_update() {
     let registry = setup().build();
 
-    use cargo::core::{Shell, Source, SourceId};
-    use cargo::sources::RegistrySource;
-    use cargo::util::Config;
+    use crabgo::core::{Shell, Source, SourceId};
+    use crabgo::sources::RegistrySource;
+    use crabgo::util::Config;
 
     let sid = SourceId::for_registry(registry.index_url()).unwrap();
     let cfg = Config::new(
         Shell::from_write(Box::new(Vec::new())),
         paths::root(),
-        paths::home().join(".cargo"),
+        paths::home().join(".crabgo"),
     );
     let lock = cfg.acquire_package_cache_lock().unwrap();
     let mut regsrc = RegistrySource::remote(sid, &HashSet::new(), &cfg).unwrap();
@@ -105,87 +105,87 @@ fn not_update() {
     regsrc.block_until_ready().unwrap();
     drop(lock);
 
-    cargo_process("search postgres")
+    crabgo_process("search postgres")
         .replace_crates_io(registry.index_url())
         .with_stdout_contains(SEARCH_RESULTS)
         .with_stderr("") // without "Updating ... index"
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replace_default() {
     let registry = setup().build();
 
-    cargo_process("search postgres")
+    crabgo_process("search postgres")
         .replace_crates_io(registry.index_url())
         .with_stdout_contains(SEARCH_RESULTS)
         .with_stderr_contains("[..]Updating [..] index")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     let registry = setup().build();
 
-    cargo_process("search postgres --index")
+    crabgo_process("search postgres --index")
         .arg(registry.index_url().as_str())
         .with_stdout_contains(SEARCH_RESULTS)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multiple_query_params() {
     let registry = setup().build();
 
-    cargo_process("search postgres sql --index")
+    crabgo_process("search postgres sql --index")
         .arg(registry.index_url().as_str())
         .with_stdout_contains(SEARCH_RESULTS)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_quiet() {
     let registry = setup().build();
 
-    cargo_process("search -q postgres")
+    crabgo_process("search -q postgres")
         .replace_crates_io(registry.index_url())
         .with_stdout_contains(SEARCH_RESULTS)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn colored_results() {
     let registry = setup().build();
 
-    cargo_process("search --color=never postgres")
+    crabgo_process("search --color=never postgres")
         .replace_crates_io(registry.index_url())
         .with_stdout_does_not_contain("[..]\x1b[[..]")
         .run();
 
-    cargo_process("search --color=always postgres")
+    crabgo_process("search --color=always postgres")
         .replace_crates_io(registry.index_url())
         .with_stdout_contains("[..]\x1b[[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn auth_required_failure() {
     let server = setup().auth_required().no_configure_token().build();
 
-    cargo_process("-Zregistry-auth search postgres")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("-Zregistry-auth search postgres")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(server.index_url())
         .with_status(101)
-        .with_stderr_contains("[ERROR] no token found, please run `cargo login`")
+        .with_stderr_contains("[ERROR] no token found, please run `crabgo login`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn auth_required() {
     let server = setup().auth_required().build();
 
-    cargo_process("-Zregistry-auth search postgres")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    crabgo_process("-Zregistry-auth search postgres")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .replace_crates_io(server.index_url())
         .with_stdout_contains(SEARCH_RESULTS)
         .run();

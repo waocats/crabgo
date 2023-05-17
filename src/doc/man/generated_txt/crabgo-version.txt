@@ -1,0 +1,32 @@
+CARGO-VERSION(1)
+
+NAME
+       crabgo-version — Show version information
+
+SYNOPSIS
+       crabgo version [options]
+
+DESCRIPTION
+       Displays the version of Crabgo.
+
+OPTIONS
+       -v, --verbose
+           Display additional version information.
+
+EXAMPLES
+       1. Display the version:
+
+              crabgo version
+
+       2. The version is also available via flags:
+
+              crabgo --version
+              crabgo -V
+
+       3. Display extra version information:
+
+              crabgo -Vv
+
+SEE ALSO
+       crabgo(1)
+

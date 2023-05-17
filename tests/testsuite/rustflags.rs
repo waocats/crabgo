@@ -1,12 +1,12 @@
 //! Tests for setting custom rustc flags.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{
     basic_lib_manifest, basic_manifest, paths, project, project_in_home, rustc_host,
 };
 use std::fs;
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_normal_source() {
     let p = project()
         .file("src/lib.rs", "")
@@ -24,40 +24,40 @@ fn env_rustflags_normal_source() {
         .build();
 
     // Use RUSTFLAGS to pass an argument that will generate an error
-    p.cargo("check --lib")
+    p.crabgo("check --lib")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a")
+    p.crabgo("check --bin=a")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b")
+    p.crabgo("check --example=b")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test")
+    p.crabgo("test")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench")
+    p.crabgo("bench")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_build_script() {
     // RUSTFLAGS should be passed to rustc for build scripts
     // when --target is not specified.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -74,17 +74,17 @@ fn env_rustflags_build_script() {
         )
         .build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_build_script_dep() {
     // RUSTFLAGS should be passed to rustc for build scripts
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -100,7 +100,7 @@ fn env_rustflags_build_script_dep() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "src/lib.rs",
             r#"
@@ -111,17 +111,17 @@ fn env_rustflags_build_script_dep() {
         )
         .build();
 
-    foo.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    foo.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_plugin() {
     // RUSTFLAGS should be passed to rustc for plugins
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -142,17 +142,17 @@ fn env_rustflags_plugin() {
         )
         .build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_plugin_dep() {
     // RUSTFLAGS should be passed to rustc for plugins
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -170,7 +170,7 @@ fn env_rustflags_plugin_dep() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_lib_manifest("bar"))
+        .file("Crabgo.toml", &basic_lib_manifest("bar"))
         .file(
             "src/lib.rs",
             r#"
@@ -181,10 +181,10 @@ fn env_rustflags_plugin_dep() {
         )
         .build();
 
-    foo.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    foo.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_normal_source_with_target() {
     let p = project()
         .file("src/lib.rs", "")
@@ -204,31 +204,31 @@ fn env_rustflags_normal_source_with_target() {
     let host = &rustc_host();
 
     // Use RUSTFLAGS to pass an argument that will generate an error
-    p.cargo("check --lib --target")
+    p.crabgo("check --lib --target")
         .arg(host)
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a --target")
+    p.crabgo("check --bin=a --target")
         .arg(host)
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b --target")
+    p.crabgo("check --example=b --target")
         .arg(host)
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test --target")
+    p.crabgo("test --target")
         .arg(host)
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench --target")
+    p.crabgo("bench --target")
         .arg(host)
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
@@ -236,13 +236,13 @@ fn env_rustflags_normal_source_with_target() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_build_script_with_target() {
     // RUSTFLAGS should not be passed to rustc for build scripts
     // when --target is specified.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -260,19 +260,19 @@ fn env_rustflags_build_script_with_target() {
         .build();
 
     let host = rustc_host();
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
         .env("RUSTFLAGS", "--cfg foo")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_build_script_with_target_doesnt_apply_to_host_kind() {
     // RUSTFLAGS should *not* be passed to rustc for build scripts when --target is specified as the
-    // host triple even if target-applies-to-host-kind is enabled, to match legacy Cargo behavior.
+    // host triple even if target-applies-to-host-kind is enabled, to match legacy Crabgo behavior.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -288,7 +288,7 @@ fn env_rustflags_build_script_with_target_doesnt_apply_to_host_kind() {
             "#,
         )
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 target-applies-to-host = true
             "#,
@@ -296,22 +296,22 @@ fn env_rustflags_build_script_with_target_doesnt_apply_to_host_kind() {
         .build();
 
     let host = rustc_host();
-    p.cargo("check --target")
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+    p.crabgo("check --target")
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg(host)
         .arg("-Ztarget-applies-to-host")
         .env("RUSTFLAGS", "--cfg foo")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_build_script_dep_with_target() {
     // RUSTFLAGS should not be passed to rustc for build scripts
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -327,7 +327,7 @@ fn env_rustflags_build_script_dep_with_target() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "src/lib.rs",
             r#"
@@ -339,20 +339,20 @@ fn env_rustflags_build_script_dep_with_target() {
         .build();
 
     let host = rustc_host();
-    foo.cargo("check --target")
+    foo.crabgo("check --target")
         .arg(host)
         .env("RUSTFLAGS", "--cfg foo")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_plugin_with_target() {
     // RUSTFLAGS should not be passed to rustc for plugins
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -374,20 +374,20 @@ fn env_rustflags_plugin_with_target() {
         .build();
 
     let host = rustc_host();
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
         .env("RUSTFLAGS", "--cfg foo")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_plugin_dep_with_target() {
     // RUSTFLAGS should not be passed to rustc for plugins
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -405,7 +405,7 @@ fn env_rustflags_plugin_dep_with_target() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_lib_manifest("bar"))
+        .file("Crabgo.toml", &basic_lib_manifest("bar"))
         .file(
             "src/lib.rs",
             r#"
@@ -417,50 +417,50 @@ fn env_rustflags_plugin_dep_with_target() {
         .build();
 
     let host = rustc_host();
-    foo.cargo("check --target")
+    foo.crabgo("check --target")
         .arg(host)
         .env("RUSTFLAGS", "--cfg foo")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_recompile() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     // Setting RUSTFLAGS forces a recompile
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_recompile2() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
     // Setting RUSTFLAGS forces a recompile
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTFLAGS", "-Z bogus")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_no_recompile() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
-    p.cargo("check")
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check")
         .env("RUSTFLAGS", "--cfg foo")
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_normal_source() {
     let p = project()
         .file("src/lib.rs", "")
@@ -476,7 +476,7 @@ fn build_rustflags_normal_source() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["-Z", "bogus"]
@@ -484,35 +484,35 @@ fn build_rustflags_normal_source() {
         )
         .build();
 
-    p.cargo("check --lib")
+    p.crabgo("check --lib")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a")
+    p.crabgo("check --bin=a")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b")
+    p.crabgo("check --example=b")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test")
+    p.crabgo("test")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_build_script() {
     // RUSTFLAGS should be passed to rustc for build scripts
     // when --target is not specified.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -528,7 +528,7 @@ fn build_rustflags_build_script() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -536,17 +536,17 @@ fn build_rustflags_build_script() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_build_script_dep() {
     // RUSTFLAGS should be passed to rustc for build scripts
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -560,7 +560,7 @@ fn build_rustflags_build_script_dep() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -569,7 +569,7 @@ fn build_rustflags_build_script_dep() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "src/lib.rs",
             r#"
@@ -580,17 +580,17 @@ fn build_rustflags_build_script_dep() {
         )
         .build();
 
-    foo.cargo("check").run();
+    foo.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_plugin() {
     // RUSTFLAGS should be passed to rustc for plugins
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -610,7 +610,7 @@ fn build_rustflags_plugin() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -618,17 +618,17 @@ fn build_rustflags_plugin() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_plugin_dep() {
     // RUSTFLAGS should be passed to rustc for plugins
     // when --target is not specified.
     // In this test if --cfg foo is not passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -644,7 +644,7 @@ fn build_rustflags_plugin_dep() {
         )
         .file("src/lib.rs", "fn foo() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -653,7 +653,7 @@ fn build_rustflags_plugin_dep() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_lib_manifest("bar"))
+        .file("Crabgo.toml", &basic_lib_manifest("bar"))
         .file(
             "src/lib.rs",
             r#"
@@ -664,10 +664,10 @@ fn build_rustflags_plugin_dep() {
         )
         .build();
 
-    foo.cargo("check").run();
+    foo.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_normal_source_with_target() {
     let p = project()
         .file("src/lib.rs", "")
@@ -683,7 +683,7 @@ fn build_rustflags_normal_source_with_target() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["-Z", "bogus"]
@@ -694,40 +694,40 @@ fn build_rustflags_normal_source_with_target() {
     let host = &rustc_host();
 
     // Use build.rustflags to pass an argument that will generate an error
-    p.cargo("check --lib --target")
+    p.crabgo("check --lib --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a --target")
+    p.crabgo("check --bin=a --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b --target")
+    p.crabgo("check --example=b --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test --target")
+    p.crabgo("test --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench --target")
+    p.crabgo("bench --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_build_script_with_target() {
     // RUSTFLAGS should not be passed to rustc for build scripts
     // when --target is specified.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -743,7 +743,7 @@ fn build_rustflags_build_script_with_target() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -752,17 +752,17 @@ fn build_rustflags_build_script_with_target() {
         .build();
 
     let host = rustc_host();
-    p.cargo("check --target").arg(host).run();
+    p.crabgo("check --target").arg(host).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_build_script_dep_with_target() {
     // RUSTFLAGS should not be passed to rustc for build scripts
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -776,7 +776,7 @@ fn build_rustflags_build_script_dep_with_target() {
         .file("src/lib.rs", "")
         .file("build.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -785,7 +785,7 @@ fn build_rustflags_build_script_dep_with_target() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "src/lib.rs",
             r#"
@@ -797,17 +797,17 @@ fn build_rustflags_build_script_dep_with_target() {
         .build();
 
     let host = rustc_host();
-    foo.cargo("check --target").arg(host).run();
+    foo.crabgo("check --target").arg(host).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_plugin_with_target() {
     // RUSTFLAGS should not be passed to rustc for plugins
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -827,7 +827,7 @@ fn build_rustflags_plugin_with_target() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -836,17 +836,17 @@ fn build_rustflags_plugin_with_target() {
         .build();
 
     let host = rustc_host();
-    p.cargo("check --target").arg(host).run();
+    p.crabgo("check --target").arg(host).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_plugin_dep_with_target() {
     // RUSTFLAGS should not be passed to rustc for plugins
     // when --target is specified.
     // In this test if --cfg foo is passed the build will fail.
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -862,7 +862,7 @@ fn build_rustflags_plugin_dep_with_target() {
         )
         .file("src/lib.rs", "fn foo() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -871,7 +871,7 @@ fn build_rustflags_plugin_dep_with_target() {
         .build();
     let _bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_lib_manifest("bar"))
+        .file("Crabgo.toml", &basic_lib_manifest("bar"))
         .file(
             "src/lib.rs",
             r#"
@@ -883,57 +883,57 @@ fn build_rustflags_plugin_dep_with_target() {
         .build();
 
     let host = rustc_host();
-    foo.cargo("check --target").arg(host).run();
+    foo.crabgo("check --target").arg(host).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_recompile() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Setting RUSTFLAGS forces a recompile
     let config = r#"
         [build]
         rustflags = ["-Z", "bogus"]
         "#;
-    let config_file = paths::root().join("foo/.cargo/config");
+    let config_file = paths::root().join("foo/.crabgo/config");
     fs::create_dir_all(config_file.parent().unwrap()).unwrap();
     fs::write(config_file, config).unwrap();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_recompile2() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
 
     // Setting RUSTFLAGS forces a recompile
     let config = r#"
         [build]
         rustflags = ["-Z", "bogus"]
         "#;
-    let config_file = paths::root().join("foo/.cargo/config");
+    let config_file = paths::root().join("foo/.crabgo/config");
     fs::create_dir_all(config_file.parent().unwrap()).unwrap();
     fs::write(config_file, config).unwrap();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_no_recompile() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -941,18 +941,18 @@ fn build_rustflags_no_recompile() {
         )
         .build();
 
-    p.cargo("check").env("RUSTFLAGS", "--cfg foo").run();
-    p.cargo("check")
+    p.crabgo("check").env("RUSTFLAGS", "--cfg foo").run();
+    p.crabgo("check")
         .env("RUSTFLAGS", "--cfg foo")
         .with_stdout("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_with_home_config() {
     // We need a config file inside the home directory
     let home = paths::home();
-    let home_config = home.join(".cargo");
+    let home_config = home.join(".crabgo");
     fs::create_dir(&home_config).unwrap();
     fs::write(
         &home_config.join("config"),
@@ -967,10 +967,10 @@ fn build_rustflags_with_home_config() {
     // so the walking process finds the home project twice.
     let p = project_in_home("foo").file("src/lib.rs", "").build();
 
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_normal_source() {
     let p = project()
         .file("src/lib.rs", "")
@@ -986,7 +986,7 @@ fn target_rustflags_normal_source() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}]
@@ -997,29 +997,29 @@ fn target_rustflags_normal_source() {
         )
         .build();
 
-    p.cargo("check --lib")
+    p.crabgo("check --lib")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a")
+    p.crabgo("check --bin=a")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b")
+    p.crabgo("check --example=b")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test")
+    p.crabgo("test")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_also_for_build_scripts() {
     let p = project()
         .file("src/lib.rs", "")
@@ -1030,7 +1030,7 @@ fn target_rustflags_also_for_build_scripts() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}]
@@ -1041,10 +1041,10 @@ fn target_rustflags_also_for_build_scripts() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_not_for_build_scripts_with_target() {
     let host = rustc_host();
     let p = project()
@@ -1056,7 +1056,7 @@ fn target_rustflags_not_for_build_scripts_with_target() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [target.{}]
@@ -1067,19 +1067,19 @@ fn target_rustflags_not_for_build_scripts_with_target() {
         )
         .build();
 
-    p.cargo("check --target").arg(host).run();
+    p.crabgo("check --target").arg(host).run();
 
     // Enabling -Ztarget-applies-to-host should not make a difference without the config setting
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .run();
 
     // Even with the setting, the rustflags from `target.` should not apply, to match the legacy
-    // Cargo behavior.
+    // Crabgo behavior.
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         &format!(
             "
         target-applies-to-host = true
@@ -1090,14 +1090,14 @@ fn target_rustflags_not_for_build_scripts_with_target() {
             host
         ),
     );
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_rustflags_for_build_scripts() {
     let host = rustc_host();
     let p = project()
@@ -1109,7 +1109,7 @@ fn build_rustflags_for_build_scripts() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "
             [build]
             rustflags = [\"--cfg=foo\"]
@@ -1118,23 +1118,23 @@ fn build_rustflags_for_build_scripts() {
         .build();
 
     // With "legacy" behavior, build.rustflags should apply to build scripts without --target
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // But should _not_ apply _with_ --target
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
         .with_status(101)
         .with_stderr_contains("[..]assertion failed[..]")
         .run();
 
     // Enabling -Ztarget-applies-to-host should not make a difference without the config setting
-    p.cargo("check")
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+    p.crabgo("check")
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .run();
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .with_status(101)
         .with_stderr_contains("[..]assertion failed[..]")
@@ -1143,7 +1143,7 @@ fn build_rustflags_for_build_scripts() {
     // When set to false though, the "proper" behavior where host artifacts _only_ pick up on
     // [host] should be applied.
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         "
         target-applies-to-host = false
 
@@ -1151,22 +1151,22 @@ fn build_rustflags_for_build_scripts() {
         rustflags = [\"--cfg=foo\"]
         ",
     );
-    p.cargo("check")
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+    p.crabgo("check")
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .with_status(101)
         .with_stderr_contains("[..]assertion failed[..]")
         .run();
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host"])
         .arg("-Ztarget-applies-to-host")
         .with_status(101)
         .with_stderr_contains("[..]assertion failed[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn host_rustflags_for_build_scripts() {
     let host = rustc_host();
     let p = project()
@@ -1179,7 +1179,7 @@ fn host_rustflags_for_build_scripts() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
                 target-applies-to-host = false
@@ -1192,16 +1192,16 @@ fn host_rustflags_for_build_scripts() {
         )
         .build();
 
-    p.cargo("check --target")
+    p.crabgo("check --target")
         .arg(host)
-        .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
         .arg("-Ztarget-applies-to-host")
         .arg("-Zhost-config")
         .run();
 }
 
 // target.{}.rustflags takes precedence over build.rustflags
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_precedence() {
     let p = project()
         .file("src/lib.rs", "")
@@ -1209,7 +1209,7 @@ fn target_rustflags_precedence() {
         .file("examples/b.rs", "fn main() {}")
         .file("tests/c.rs", "#[test] fn f() { }")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "
             [build]
@@ -1223,29 +1223,29 @@ fn target_rustflags_precedence() {
         )
         .build();
 
-    p.cargo("check --lib")
+    p.crabgo("check --lib")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --bin=a")
+    p.crabgo("check --bin=a")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("check --example=b")
+    p.crabgo("check --example=b")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("test")
+    p.crabgo("test")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_status(101)
         .with_stderr_contains("[..]bogus[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_rustflags_normal_source() {
     let p = project()
         .file("src/lib.rs", "pub fn t() {}")
@@ -1253,7 +1253,7 @@ fn cfg_rustflags_normal_source() {
         .file("examples/b.rs", "fn main() {}")
         .file("tests/c.rs", "#[test] fn f() { }")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.'cfg({})']
@@ -1268,7 +1268,7 @@ fn cfg_rustflags_normal_source() {
         )
         .build();
 
-    p.cargo("build --lib -v")
+    p.crabgo("build --lib -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1278,7 +1278,7 @@ fn cfg_rustflags_normal_source() {
         )
         .run();
 
-    p.cargo("build --bin=a -v")
+    p.crabgo("build --bin=a -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1288,7 +1288,7 @@ fn cfg_rustflags_normal_source() {
         )
         .run();
 
-    p.cargo("build --example=b -v")
+    p.crabgo("build --example=b -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1298,7 +1298,7 @@ fn cfg_rustflags_normal_source() {
         )
         .run();
 
-    p.cargo("test --no-run -v")
+    p.crabgo("test --no-run -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1313,7 +1313,7 @@ fn cfg_rustflags_normal_source() {
         )
         .run();
 
-    p.cargo("bench --no-run -v")
+    p.crabgo("bench --no-run -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1329,7 +1329,7 @@ fn cfg_rustflags_normal_source() {
 }
 
 // target.'cfg(...)'.rustflags takes precedence over build.rustflags
-#[cargo_test]
+#[crabgo_test]
 fn cfg_rustflags_precedence() {
     let p = project()
         .file("src/lib.rs", "pub fn t() {}")
@@ -1337,7 +1337,7 @@ fn cfg_rustflags_precedence() {
         .file("examples/b.rs", "fn main() {}")
         .file("tests/c.rs", "#[test] fn f() { }")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [build]
@@ -1355,7 +1355,7 @@ fn cfg_rustflags_precedence() {
         )
         .build();
 
-    p.cargo("build --lib -v")
+    p.crabgo("build --lib -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1365,7 +1365,7 @@ fn cfg_rustflags_precedence() {
         )
         .run();
 
-    p.cargo("build --bin=a -v")
+    p.crabgo("build --bin=a -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1375,7 +1375,7 @@ fn cfg_rustflags_precedence() {
         )
         .run();
 
-    p.cargo("build --example=b -v")
+    p.crabgo("build --example=b -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1385,7 +1385,7 @@ fn cfg_rustflags_precedence() {
         )
         .run();
 
-    p.cargo("test --no-run -v")
+    p.crabgo("test --no-run -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1400,7 +1400,7 @@ fn cfg_rustflags_precedence() {
         )
         .run();
 
-    p.cargo("bench --no-run -v")
+    p.crabgo("bench --no-run -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1415,12 +1415,12 @@ fn cfg_rustflags_precedence() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_string_and_array_form1() {
     let p1 = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = ["--cfg", "foo"]
@@ -1428,7 +1428,7 @@ fn target_rustflags_string_and_array_form1() {
         )
         .build();
 
-    p1.cargo("check -v")
+    p1.crabgo("check -v")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([..])
@@ -1441,7 +1441,7 @@ fn target_rustflags_string_and_array_form1() {
     let p2 = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [build]
             rustflags = "--cfg foo"
@@ -1449,7 +1449,7 @@ fn target_rustflags_string_and_array_form1() {
         )
         .build();
 
-    p2.cargo("check -v")
+    p2.crabgo("check -v")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([..])
@@ -1460,11 +1460,11 @@ fn target_rustflags_string_and_array_form1() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_rustflags_string_and_array_form2() {
     let p1 = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -1476,7 +1476,7 @@ fn target_rustflags_string_and_array_form2() {
         .file("src/lib.rs", "")
         .build();
 
-    p1.cargo("check -v")
+    p1.crabgo("check -v")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([..])
@@ -1488,7 +1488,7 @@ fn target_rustflags_string_and_array_form2() {
 
     let p2 = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -1500,7 +1500,7 @@ fn target_rustflags_string_and_array_form2() {
         .file("src/lib.rs", "")
         .build();
 
-    p2.cargo("check -v")
+    p2.crabgo("check -v")
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([..])
@@ -1511,11 +1511,11 @@ fn target_rustflags_string_and_array_form2() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_matching_in_config() {
     let p1 = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [target.'cfg(unix)']
                 rustflags = ["--cfg", 'foo="a"']
@@ -1543,27 +1543,27 @@ fn two_matching_in_config() {
         )
         .build();
 
-    p1.cargo("run").run();
-    p1.cargo("build").with_stderr("[FINISHED] [..]").run();
+    p1.crabgo("run").run();
+    p1.crabgo("build").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_misspelled() {
     let p = project().file("src/main.rs", "fn main() { }").build();
 
     for cmd in &["check", "build", "run", "test", "bench"] {
-        p.cargo(cmd)
+        p.crabgo(cmd)
             .env("RUST_FLAGS", "foo")
-            .with_stderr_contains("[WARNING] Cargo does not read `RUST_FLAGS` environment variable. Did you mean `RUSTFLAGS`?")
+            .with_stderr_contains("[WARNING] Crabgo does not read `RUST_FLAGS` environment variable. Did you mean `RUSTFLAGS`?")
             .run();
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn env_rustflags_misspelled_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1575,23 +1575,23 @@ fn env_rustflags_misspelled_build_script() {
         .file("build.rs", "fn main() { }")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUST_FLAGS", "foo")
-        .with_stderr_contains("[WARNING] Cargo does not read `RUST_FLAGS` environment variable. Did you mean `RUSTFLAGS`?")
+        .with_stderr_contains("[WARNING] Crabgo does not read `RUST_FLAGS` environment variable. Did you mean `RUSTFLAGS`?")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn remap_path_prefix_ignored() {
     // Ensure that --remap-path-prefix does not affect metadata hash.
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
     let rlibs = p
         .glob("target/debug/deps/*.rlib")
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
     assert_eq!(rlibs.len(), 1);
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
     let check_metadata_same = || {
         let rlibs2 = p
@@ -1601,7 +1601,7 @@ fn remap_path_prefix_ignored() {
         assert_eq!(rlibs, rlibs2);
     };
 
-    p.cargo("build")
+    p.crabgo("build")
         .env(
             "RUSTFLAGS",
             "--remap-path-prefix=/abc=/zoo --remap-path-prefix /spaced=/zoo",
@@ -1609,13 +1609,13 @@ fn remap_path_prefix_ignored() {
         .run();
     check_metadata_same();
 
-    p.cargo("clean").run();
-    p.cargo("rustc -- --remap-path-prefix=/abc=/zoo --remap-path-prefix /spaced=/zoo")
+    p.crabgo("clean").run();
+    p.crabgo("rustc -- --remap-path-prefix=/abc=/zoo --remap-path-prefix /spaced=/zoo")
         .run();
     check_metadata_same();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn remap_path_prefix_works() {
     // Check that remap-path-prefix works.
     Package::new("bar", "0.1.0")
@@ -1624,7 +1624,7 @@ fn remap_path_prefix_works() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1644,26 +1644,26 @@ fn remap_path_prefix_works() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .env(
             "RUSTFLAGS",
             format!("--remap-path-prefix={}=/foo", paths::root().display()),
         )
-        .with_stdout("/foo/home/.cargo/registry/src/[..]/bar-0.1.0/src/lib.rs")
+        .with_stdout("/foo/home/.crabgo/registry/src/[..]/bar-0.1.0/src/lib.rs")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn host_config_rustflags_with_target() {
-    // regression test for https://github.com/rust-lang/cargo/issues/10206
+    // regression test for https://github.com/rust-lang/crabgo/issues/10206
     let p = project()
         .file("src/lib.rs", "")
         .file("build.rs.rs", "fn main() { assert!(cfg!(foo)); }")
-        .file(".cargo/config.toml", "target-applies-to-host = false")
+        .file(".crabgo/config.toml", "target-applies-to-host = false")
         .build();
 
-    p.cargo("check")
-        .masquerade_as_nightly_cargo(&["target-applies-to-host", "host-config"])
+    p.crabgo("check")
+        .masquerade_as_nightly_crabgo(&["target-applies-to-host", "host-config"])
         .arg("-Zhost-config")
         .arg("-Ztarget-applies-to-host")
         .arg("-Zunstable-options")

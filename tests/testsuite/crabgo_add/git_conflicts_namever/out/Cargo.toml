@@ -1,0 +1,5 @@
+[workspace]
+
+[package]
+name = "crabgo-list-test-fixture"
+version = "0.0.0"

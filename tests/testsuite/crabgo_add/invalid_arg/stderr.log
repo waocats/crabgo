@@ -1,0 +1,9 @@
+error: unexpected argument '--flag' found
+
+  tip: a similar argument exists: '--tag'
+
+Usage: crabgo add [OPTIONS] <DEP>[@<VERSION>] ...
+       crabgo add [OPTIONS] --path <PATH> ...
+       crabgo add [OPTIONS] --git <URL> ...
+
+For more information, try '--help'.

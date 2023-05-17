@@ -1,12 +1,12 @@
-use cargo_test_support::paths;
-use cargo_test_support::prelude::*;
+use crabgo_test_support::paths;
+use crabgo_test_support::prelude::*;
 
-use cargo_test_support::curr_dir;
+use crabgo_test_support::curr_dir;
 
 #[cfg(not(windows))]
-#[cargo_test]
+#[crabgo_test]
 fn case() {
-    snapbox::cmd::Command::cargo_ui()
+    snapbox::cmd::Command::crabgo_ui()
         .arg_line("init /")
         .current_dir(paths::root())
         .assert()

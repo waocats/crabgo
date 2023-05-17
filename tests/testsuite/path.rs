@@ -1,19 +1,19 @@
 //! Tests for `path` dependencies.
 
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_lib_manifest, basic_manifest, main_file, project};
-use cargo_test_support::{sleep_ms, t};
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_lib_manifest, basic_manifest, main_file, project};
+use crabgo_test_support::{sleep_ms, t};
 use std::fs;
 
-#[cargo_test]
+#[crabgo_test]
 // I have no idea why this is failing spuriously on Windows;
 // for more info, see #3466.
 #[cfg(not(windows))]
-fn cargo_compile_with_nested_deps_shorthand() {
+fn crabgo_compile_with_nested_deps_shorthand() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -29,7 +29,7 @@ fn cargo_compile_with_nested_deps_shorthand() {
         )
         .file("src/main.rs", &main_file(r#""{}", bar::gimme()"#, &["bar"]))
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -57,7 +57,7 @@ fn cargo_compile_with_nested_deps_shorthand() {
                 }
             "#,
         )
-        .file("bar/baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("bar/baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file(
             "bar/baz/src/baz.rs",
             r#"
@@ -68,7 +68,7 @@ fn cargo_compile_with_nested_deps_shorthand() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "[COMPILING] baz v0.5.0 ([CWD]/bar/baz)\n\
              [COMPILING] bar v0.5.0 ([CWD]/bar)\n\
@@ -83,9 +83,9 @@ fn cargo_compile_with_nested_deps_shorthand() {
     p.process(&p.bin("foo")).with_stdout("test passed\n").run();
 
     println!("cleaning");
-    p.cargo("clean -v").with_stdout("").run();
+    p.crabgo("clean -v").with_stdout("").run();
     println!("building baz");
-    p.cargo("build -p baz")
+    p.crabgo("build -p baz")
         .with_stderr(
             "[COMPILING] baz v0.5.0 ([CWD]/bar/baz)\n\
              [FINISHED] dev [unoptimized + debuginfo] target(s) \
@@ -93,7 +93,7 @@ fn cargo_compile_with_nested_deps_shorthand() {
         )
         .run();
     println!("building foo");
-    p.cargo("build -p foo")
+    p.crabgo("build -p foo")
         .with_stderr(
             "[COMPILING] bar v0.5.0 ([CWD]/bar)\n\
              [COMPILING] foo v0.5.0 ([CWD])\n\
@@ -103,11 +103,11 @@ fn cargo_compile_with_nested_deps_shorthand() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_root_dev_deps() {
+#[crabgo_test]
+fn crabgo_compile_with_root_dev_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -128,7 +128,7 @@ fn cargo_compile_with_root_dev_deps() {
         .build();
     let _p2 = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file(
             "src/lib.rs",
             r#"
@@ -139,17 +139,17 @@ fn cargo_compile_with_root_dev_deps() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains("[..]can't find crate for `bar`")
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_root_dev_deps_with_testing() {
+#[crabgo_test]
+fn crabgo_compile_with_root_dev_deps_with_testing() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -170,7 +170,7 @@ fn cargo_compile_with_root_dev_deps_with_testing() {
         .build();
     let _p2 = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file(
             "src/lib.rs",
             r#"
@@ -181,7 +181,7 @@ fn cargo_compile_with_root_dev_deps_with_testing() {
         )
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] [..] v0.5.0 ([..])
@@ -193,11 +193,11 @@ fn cargo_compile_with_root_dev_deps_with_testing() {
         .run();
 }
 
-#[cargo_test]
-fn cargo_compile_with_transitive_dev_deps() {
+#[crabgo_test]
+fn crabgo_compile_with_transitive_dev_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -213,7 +213,7 @@ fn cargo_compile_with_transitive_dev_deps() {
         )
         .file("src/main.rs", &main_file(r#""{}", bar::gimme()"#, &["bar"]))
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -240,7 +240,7 @@ fn cargo_compile_with_transitive_dev_deps() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "[COMPILING] bar v0.5.0 ([CWD]/bar)\n\
              [COMPILING] foo v0.5.0 ([CWD])\n\
@@ -254,11 +254,11 @@ fn cargo_compile_with_transitive_dev_deps() {
     p.process(&p.bin("foo")).with_stdout("zoidberg\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_rebuild_dependency() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -271,11 +271,11 @@ fn no_rebuild_dependency() {
             "#,
         )
         .file("src/main.rs", "extern crate bar; fn main() { bar::bar() }")
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/bar.rs", "pub fn bar() {}")
         .build();
     // First time around we should compile both foo and bar
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] bar v0.5.0 ([CWD]/bar)\n\
              [CHECKING] foo v0.5.0 ([CWD])\n\
@@ -293,7 +293,7 @@ fn no_rebuild_dependency() {
         "#,
     );
     // Don't compile bar, but do recompile foo.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] foo v0.5.0 ([..])\n\
              [FINISHED] dev [unoptimized + debuginfo] target(s) \
@@ -302,11 +302,11 @@ fn no_rebuild_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deep_dependencies_trigger_rebuild() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -320,7 +320,7 @@ fn deep_dependencies_trigger_rebuild() {
         )
         .file("src/main.rs", "extern crate bar; fn main() { bar::bar() }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -338,10 +338,10 @@ fn deep_dependencies_trigger_rebuild() {
             "bar/src/bar.rs",
             "extern crate baz; pub fn bar() { baz::baz() }",
         )
-        .file("baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file("baz/src/baz.rs", "pub fn baz() {}")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] baz v0.5.0 ([CWD]/baz)\n\
              [CHECKING] bar v0.5.0 ([CWD]/bar)\n\
@@ -350,7 +350,7 @@ fn deep_dependencies_trigger_rebuild() {
              in [..]\n",
         )
         .run();
-    p.cargo("check").with_stdout("").run();
+    p.crabgo("check").with_stdout("").run();
 
     // Make sure an update to baz triggers a rebuild of bar
     //
@@ -359,7 +359,7 @@ fn deep_dependencies_trigger_rebuild() {
     sleep_ms(1000);
     p.change_file("baz/src/baz.rs", r#"pub fn baz() { println!("hello!"); }"#);
     sleep_ms(1000);
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] baz v0.5.0 ([CWD]/baz)\n\
              [CHECKING] bar v0.5.0 ([CWD]/bar)\n\
@@ -379,7 +379,7 @@ fn deep_dependencies_trigger_rebuild() {
         "#,
     );
     sleep_ms(1000);
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] bar v0.5.0 ([CWD]/bar)\n\
              [CHECKING] foo v0.5.0 ([CWD])\n\
@@ -389,11 +389,11 @@ fn deep_dependencies_trigger_rebuild() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_rebuild_two_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -409,7 +409,7 @@ fn no_rebuild_two_deps() {
         )
         .file("src/main.rs", "extern crate bar; fn main() { bar::bar() }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -424,10 +424,10 @@ fn no_rebuild_two_deps() {
             "#,
         )
         .file("bar/src/bar.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_lib_manifest("baz"))
+        .file("baz/Crabgo.toml", &basic_lib_manifest("baz"))
         .file("baz/src/baz.rs", "pub fn baz() {}")
         .build();
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "[COMPILING] baz v0.5.0 ([CWD]/baz)\n\
              [COMPILING] bar v0.5.0 ([CWD]/bar)\n\
@@ -437,15 +437,15 @@ fn no_rebuild_two_deps() {
         )
         .run();
     assert!(p.bin("foo").is_file());
-    p.cargo("build").with_stdout("").run();
+    p.crabgo("build").with_stdout("").run();
     assert!(p.bin("foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn nested_deps_recompile() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -460,11 +460,11 @@ fn nested_deps_recompile() {
             "#,
         )
         .file("src/main.rs", &main_file(r#""{}", bar::gimme()"#, &["bar"]))
-        .file("src/bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("src/bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("src/bar/src/bar.rs", "pub fn gimme() -> i32 { 92 }")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] bar v0.5.0 ([CWD]/src/bar)\n\
              [CHECKING] foo v0.5.0 ([CWD])\n\
@@ -477,7 +477,7 @@ fn nested_deps_recompile() {
     p.change_file("src/main.rs", r#"fn main() {}"#);
 
     // This shouldn't recompile `bar`
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "[CHECKING] foo v0.5.0 ([CWD])\n\
              [FINISHED] dev [unoptimized + debuginfo] target(s) \
@@ -486,11 +486,11 @@ fn nested_deps_recompile() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_message_for_missing_manifest() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -507,7 +507,7 @@ fn error_message_for_missing_manifest() {
         .file("src/bar/not-a-manifest", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -520,7 +520,7 @@ Caused by:
   Unable to update [CWD]/src/bar
 
 Caused by:
-  failed to read `[..]bar/Cargo.toml`
+  failed to read `[..]bar/Crabgo.toml`
 
 Caused by:
   [..] (os error [..])
@@ -529,20 +529,20 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_relative() {
     let bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file("src/lib.rs", "")
         .build();
 
-    fs::create_dir(&paths::root().join(".cargo")).unwrap();
-    fs::write(&paths::root().join(".cargo/config"), r#"paths = ["bar"]"#).unwrap();
+    fs::create_dir(&paths::root().join(".crabgo")).unwrap();
+    fs::write(&paths::root().join(".crabgo/config"), r#"paths = ["bar"]"#).unwrap();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -559,23 +559,23 @@ fn override_relative() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_self() {
     let bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file("src/lib.rs", "")
         .build();
 
     let p = project();
     let root = p.root();
     let p = p
-        .file(".cargo/config", &format!("paths = ['{}']", root.display()))
+        .file(".crabgo/config", &format!("paths = ['{}']", root.display()))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -595,15 +595,15 @@ fn override_self() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_path_dep() {
     let bar = project()
         .at("bar")
         .file(
-            "p1/Cargo.toml",
+            "p1/Crabgo.toml",
             r#"
                  [package]
                  name = "p1"
@@ -615,13 +615,13 @@ fn override_path_dep() {
             "#,
         )
         .file("p1/src/lib.rs", "")
-        .file("p2/Cargo.toml", &basic_manifest("p2", "0.5.0"))
+        .file("p2/Crabgo.toml", &basic_manifest("p2", "0.5.0"))
         .file("p2/src/lib.rs", "")
         .build();
 
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 "paths = ['{}', '{}']",
                 bar.root().join("p1").display(),
@@ -629,7 +629,7 @@ fn override_path_dep() {
             ),
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -648,14 +648,14 @@ fn override_path_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn path_dep_build_cmd() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -671,7 +671,7 @@ fn path_dep_build_cmd() {
         )
         .file("src/main.rs", &main_file(r#""{}", bar::gimme()"#, &["bar"]))
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
 
@@ -698,7 +698,7 @@ fn path_dep_build_cmd() {
         .build();
     p.root().join("bar").move_into_the_past();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "[COMPILING] bar v0.5.0 ([CWD]/bar)\n\
              [COMPILING] foo v0.5.0 ([CWD])\n\
@@ -714,7 +714,7 @@ fn path_dep_build_cmd() {
     // Touching bar.rs.in should cause the `build` command to run again.
     p.change_file("bar/src/bar.rs.in", "pub fn gimme() -> i32 { 1 }");
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr(
             "[COMPILING] bar v0.5.0 ([CWD]/bar)\n\
              [COMPILING] foo v0.5.0 ([CWD])\n\
@@ -726,11 +726,11 @@ fn path_dep_build_cmd() {
     p.process(&p.bin("foo")).with_stdout("1\n").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dev_deps_no_rebuild_lib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                     name = "foo"
@@ -752,10 +752,10 @@ fn dev_deps_no_rebuild_lib() {
                 #[cfg(not(test))] pub fn foo() { env!("FOO"); }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.5.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.5.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
-    p.cargo("build")
+    p.crabgo("build")
         .env("FOO", "bar")
         .with_stderr(
             "[COMPILING] foo v0.5.0 ([CWD])\n\
@@ -764,7 +764,7 @@ fn dev_deps_no_rebuild_lib() {
         )
         .run();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] [..] v0.5.0 ([CWD][..])
@@ -776,11 +776,11 @@ fn dev_deps_no_rebuild_lib() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_target_no_rebuild() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -793,10 +793,10 @@ fn custom_target_no_rebuild() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.5.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.5.0"))
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -808,7 +808,7 @@ fn custom_target_no_rebuild() {
         )
         .file("b/src/lib.rs", "")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] a v0.5.0 ([..])
@@ -822,8 +822,8 @@ fn custom_target_no_rebuild() {
         p.root().join("target"),
         p.root().join("target_moved")
     ));
-    p.cargo("check --manifest-path=b/Cargo.toml")
-        .env("CARGO_TARGET_DIR", "target_moved")
+    p.crabgo("check --manifest-path=b/Crabgo.toml")
+        .env("CRABGO_TARGET_DIR", "target_moved")
         .with_stderr(
             "\
 [CHECKING] b v0.5.0 ([..])
@@ -833,12 +833,12 @@ fn custom_target_no_rebuild() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn override_and_depend() {
     let p = project()
         .no_manifest()
         .file(
-            "a/a1/Cargo.toml",
+            "a/a1/Crabgo.toml",
             r#"
                 [package]
                 name = "a1"
@@ -849,10 +849,10 @@ fn override_and_depend() {
             "#,
         )
         .file("a/a1/src/lib.rs", "")
-        .file("a/a2/Cargo.toml", &basic_manifest("a2", "0.5.0"))
+        .file("a/a2/Crabgo.toml", &basic_manifest("a2", "0.5.0"))
         .file("a/a2/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -864,9 +864,9 @@ fn override_and_depend() {
             "#,
         )
         .file("b/src/lib.rs", "")
-        .file("b/.cargo/config", r#"paths = ["../a"]"#)
+        .file("b/.crabgo/config", r#"paths = ["../a"]"#)
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("b")
         .with_stderr(
             "\
@@ -880,17 +880,17 @@ fn override_and_depend() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn missing_path_dependency() {
     let p = project()
-        .file("Cargo.toml", &basic_manifest("a", "0.5.0"))
+        .file("Crabgo.toml", &basic_manifest("a", "0.5.0"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"paths = ["../whoa-this-does-not-exist"]"#,
         )
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -907,13 +907,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_path_dep_in_workspace_with_lockfile() {
     Package::new("bar", "1.0.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "top"
@@ -928,7 +928,7 @@ fn invalid_path_dep_in_workspace_with_lockfile() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -943,11 +943,11 @@ fn invalid_path_dep_in_workspace_with_lockfile() {
         .build();
 
     // Generate a lock file
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Change the dependency on `bar` to an invalid path
     p.change_file(
-        "foo/Cargo.toml",
+        "foo/Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -961,7 +961,7 @@ fn invalid_path_dep_in_workspace_with_lockfile() {
 
     // Make sure we get a nice error. In the past this actually stack
     // overflowed!
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -975,11 +975,11 @@ required by package `foo v0.5.0 ([..])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_produces_rlib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "top"
@@ -993,22 +993,22 @@ fn workspace_produces_rlib() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.5.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.5.0"))
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     assert!(p.root().join("target/debug/libtop.rlib").is_file());
     assert!(!p.root().join("target/debug/libfoo.rlib").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deep_path_error() {
     // Test for an error loading a path deep in the dependency graph.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1019,7 +1019,7 @@ fn deep_path_error() {
         )
         .file("src/lib.rs", "")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
              [package]
              name = "a"
@@ -1030,7 +1030,7 @@ fn deep_path_error() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
              [package]
              name = "b"
@@ -1042,7 +1042,7 @@ fn deep_path_error() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1057,7 +1057,7 @@ Caused by:
   Unable to update [..]/foo/c
 
 Caused by:
-  failed to read `[..]/foo/c/Cargo.toml`
+  failed to read `[..]/foo/c/Crabgo.toml`
 
 Caused by:
   [..]
@@ -1066,11 +1066,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn catch_tricky_cycle() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "message"
@@ -1082,7 +1082,7 @@ fn catch_tricky_cycle() {
         )
         .file("src/lib.rs", "")
         .file(
-            "tangle/Cargo.toml",
+            "tangle/Crabgo.toml",
             r#"
                 [package]
                 name = "tangle"
@@ -1095,7 +1095,7 @@ fn catch_tricky_cycle() {
         )
         .file("tangle/src/lib.rs", "")
         .file(
-            "snapshot/Cargo.toml",
+            "snapshot/Crabgo.toml",
             r#"
                 [package]
                 name = "snapshot"
@@ -1107,7 +1107,7 @@ fn catch_tricky_cycle() {
         )
         .file("snapshot/src/lib.rs", "")
         .file(
-            "ledger/Cargo.toml",
+            "ledger/Crabgo.toml",
             r#"
                 [package]
                 name = "ledger"
@@ -1119,7 +1119,7 @@ fn catch_tricky_cycle() {
         )
         .file("ledger/src/lib.rs", "")
         .file(
-            "test/Cargo.toml",
+            "test/Crabgo.toml",
             r#"
                 [package]
                 name = "test"
@@ -1132,7 +1132,7 @@ fn catch_tricky_cycle() {
         .file("test/src/lib.rs", "")
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr_contains("[..]cyclic package dependency[..]")
         .with_status(101)
         .run();

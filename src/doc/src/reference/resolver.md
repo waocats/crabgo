@@ -1,9 +1,9 @@
 # Dependency Resolution
 
-One of Cargo's primary tasks is to determine the versions of dependencies to
+One of Crabgo's primary tasks is to determine the versions of dependencies to
 use based on the version requirements specified in each package. This process
 is called "dependency resolution" and is performed by the "resolver". The
-result of the resolution is stored in the `Cargo.lock` file which "locks" the
+result of the resolution is stored in the `Crabgo.lock` file which "locks" the
 dependencies to specific versions, and keeps them fixed over time.
 
 The resolver attempts to unify common dependencies while considering possibly
@@ -15,18 +15,18 @@ requirements are handled, and how to work with the resolver.
 See the chapter [Specifying Dependencies] for more details about how
 dependency requirements are specified.
 
-The [`cargo tree`] command can be used to visualize the result of the
+The [`crabgo tree`] command can be used to visualize the result of the
 resolver.
 
 [Specifying Dependencies]: specifying-dependencies.md
-[`cargo tree`]: ../commands/cargo-tree.md
+[`crabgo tree`]: ../commands/crabgo-tree.md
 
 ## SemVer compatibility
 
-Cargo uses [SemVer] for specifying version numbers. This establishes a common
+Crabgo uses [SemVer] for specifying version numbers. This establishes a common
 convention for what is compatible between different versions of a package. See
 the [SemVer Compatibility] chapter for guidance on what is considered a
-"compatible" change. This notion of "compatibility" is important because Cargo
+"compatible" change. This notion of "compatibility" is important because Crabgo
 assumes it should be safe to update a dependency within a compatibility range
 without breaking the build.
 
@@ -40,7 +40,7 @@ with leading zeros. For example, `0.1.0` and `0.1.2` are compatible, but
 compatible.
 
 As a quick refresher, the
-[*version requirement* syntax][Specifying Dependencies] Cargo uses for
+[*version requirement* syntax][Specifying Dependencies] Crabgo uses for
 dependencies is:
 
 Requirement | Example | Equivalence | Description
@@ -69,13 +69,13 @@ bitflags = "1.0"
 bitflags = "1.1"
 ```
 
-If at the time the `Cargo.lock` file is generated, the greatest version of
+If at the time the `Crabgo.lock` file is generated, the greatest version of
 `bitflags` is `1.2.1`, then both packages will use `1.2.1` because it is the
 greatest within the compatibility range. If `2.0.0` is published, it will
 still use `1.2.1` because `2.0.0` is considered incompatible.
 
 If multiple packages have a common dependency with semver-incompatible
-versions, then Cargo will allow this, but will build two separate copies of
+versions, then Crabgo will allow this, but will build two separate copies of
 the dependency. For example:
 
 ```toml
@@ -142,8 +142,8 @@ will fail at runtime.
 
 It is important to make sure that if you have multiple versions of a library
 that you are properly using them, especially if it is ever possible for the
-types from different versions to be used together. The [`cargo tree
--d`][`cargo tree`] command can be used to identify duplicate versions and
+types from different versions to be used together. The [`crabgo tree
+-d`][`crabgo tree`] command can be used to identify duplicate versions and
 where they come from. Similarly, it is important to consider the impact on the
 ecosystem if you publish a SemVer-incompatible version of a popular library.
 
@@ -153,21 +153,21 @@ ecosystem if you publish a SemVer-incompatible version of a popular library.
 ### Pre-releases
 
 SemVer has the concept of "pre-releases" with a dash in the version, such as
-`1.0.0-alpha`, or `1.0.0-beta`. Cargo will avoid automatically using
+`1.0.0-alpha`, or `1.0.0-beta`. Crabgo will avoid automatically using
 pre-releases unless explicitly asked. For example, if `1.0.0-alpha` of package
 `foo` is published, then a requirement of `foo = "1.0"` will *not* match, and
 will return an error. The pre-release must be specified, such as `foo =
-"1.0.0-alpha"`. Similarly [`cargo install`] will avoid pre-releases unless
+"1.0.0-alpha"`. Similarly [`crabgo install`] will avoid pre-releases unless
 explicitly asked to install one.
 
-Cargo allows "newer" pre-releases to be used automatically. For example, if
+Crabgo allows "newer" pre-releases to be used automatically. For example, if
 `1.0.0-beta` is published, then a requirement `foo = "1.0.0-alpha"` will allow
 updating to the `beta` version. Beware that pre-release versions can be
 unstable, and as such care should be taken when using them. Some projects may
 choose to publish breaking changes between pre-release versions. It is
 recommended to not use pre-release dependencies in a library if your library
 is not also a pre-release. Care should also be taken when updating your
-`Cargo.lock`, and be prepared if a pre-release update causes issues.
+`Crabgo.lock`, and be prepared if a pre-release update causes issues.
 
 The pre-release tag may be separated with periods to distinguish separate
 components. Numeric components will use numeric comparison. For example,
@@ -175,7 +175,7 @@ components. Numeric components will use numeric comparison. For example,
 that if `1.0.0-alpha.11` is published, that will be chosen as the greatest
 release. Non-numeric components are compared lexicographically.
 
-[`cargo install`]: ../commands/cargo-install.md
+[`crabgo install`]: ../commands/crabgo-install.md
 
 ### Version metadata
 
@@ -196,7 +196,7 @@ the other constraints that can affect resolution.
 
 ### Features
 
-For the purpose of generating `Cargo.lock`, the resolver builds the dependency
+For the purpose of generating `Crabgo.lock`, the resolver builds the dependency
 graph as-if all [features] of all [workspace] members are enabled. This
 ensures that any optional dependencies are available and properly resolved
 with the rest of the graph when features are added or removed with the
@@ -216,7 +216,7 @@ When building multiple packages in a workspace (such as with `--workspace` or
 multiple `-p` flags), the features of the dependencies of all of those
 packages are unified. If you have a circumstance where you want to avoid that
 unification for different workspace members, you will need to build them via
-separate `cargo` invocations.
+separate `crabgo` invocations.
 
 The resolver will skip over versions of packages that are missing required
 features. For example, if a package depends on version `^1` of [`regex`] with
@@ -230,17 +230,17 @@ dependency or making it non-optional can cause problems, see [removing an
 optional dependency].
 
 [`im`]: https://crates.io/crates/im
-[`perf` feature]: https://github.com/rust-lang/regex/blob/1.3.0/Cargo.toml#L56
-[`rayon` dependency]: https://github.com/bodil/im-rs/blob/v15.0.0/Cargo.toml#L47
+[`perf` feature]: https://github.com/rust-lang/regex/blob/1.3.0/Crabgo.toml#L56
+[`rayon` dependency]: https://github.com/bodil/im-rs/blob/v15.0.0/Crabgo.toml#L47
 [`regex`]: https://crates.io/crates/regex
-[`serde` dependency]: https://github.com/bodil/im-rs/blob/v15.0.0/Cargo.toml#L46
+[`serde` dependency]: https://github.com/bodil/im-rs/blob/v15.0.0/Crabgo.toml#L46
 [features]: features.md
-[removing an optional dependency]: semver.md#cargo-remove-opt-dep
+[removing an optional dependency]: semver.md#crabgo-remove-opt-dep
 [workspace]: workspaces.md
 
 #### Feature resolver version 2
 
-When `resolver = "2"` is specified in `Cargo.toml` (see [resolver
+When `resolver = "2"` is specified in `Crabgo.toml` (see [resolver
 versions](#resolver-versions) below), a different feature resolver is used
 which uses a different algorithm for unifying features. The version `"1"`
 resolver will unify features for a package no matter where it is specified.
@@ -292,7 +292,7 @@ situations:
 
   In this example, the library will normally link against `serde` without the
   `std` feature. However, when built as a test or example, it will include the
-  `std` feature. For example, `cargo test` or `cargo build --all-targets` will
+  `std` feature. For example, `crabgo test` or `crabgo build --all-targets` will
   unify these features. Note that dev-dependencies in dependencies are always
   ignored, this is only relevant for the top-level package or workspace
   members.
@@ -309,7 +309,7 @@ only one instance of each `links` name. If it is unable to find a graph that
 satisfies that constraint, it will return an error.
 
 For example, it is an error if one package depends on [`libgit2-sys`] version
-`0.11` and another depends on `0.12`, because Cargo is unable to unify those,
+`0.11` and another depends on `0.12`, because Crabgo is unable to unify those,
 but they both link to the `git2` native library. Due to this requirement, it
 is encouraged to be very careful when making SemVer-incompatible releases with
 the `links` field if your library is in common use.
@@ -321,40 +321,40 @@ the `links` field if your library is in common use.
 
 [Yanked releases][yank] are those that are marked that they should not be
 used. When the resolver is building the graph, it will ignore all yanked
-releases unless they already exist in the `Cargo.lock` file.
+releases unless they already exist in the `Crabgo.lock` file.
 
-[yank]: publishing.md#cargo-yank
+[yank]: publishing.md#crabgo-yank
 
 ## Dependency updates
 
-Dependency resolution is automatically performed by all Cargo commands that
-need to know about the dependency graph. For example, [`cargo build`] will run
+Dependency resolution is automatically performed by all Crabgo commands that
+need to know about the dependency graph. For example, [`crabgo build`] will run
 the resolver to discover all the dependencies to build. After the first time
-it runs, the result is stored in the `Cargo.lock` file. Subsequent commands
+it runs, the result is stored in the `Crabgo.lock` file. Subsequent commands
 will run the resolver, keeping dependencies locked to the versions in
-`Cargo.lock` *if it can*.
+`Crabgo.lock` *if it can*.
 
-If the dependency list in `Cargo.toml` has been modified, for example changing
+If the dependency list in `Crabgo.toml` has been modified, for example changing
 the version of a dependency from `1.0` to `2.0`, then the resolver will select
 a new version for that dependency that matches the new requirements. If that
 new dependency introduces new requirements, those new requirements may also
-trigger additional updates. The `Cargo.lock` file will be updated with the new
+trigger additional updates. The `Crabgo.lock` file will be updated with the new
 result. The `--locked` or `--frozen` flags can be used to change this behavior
 to prevent automatic updates when requirements change, and return an error
 instead.
 
-[`cargo update`] can be used to update the entries in `Cargo.lock` when new
+[`crabgo update`] can be used to update the entries in `Crabgo.lock` when new
 versions are published. Without any options, it will attempt to update all
 packages in the lock file. The `-p` flag can be used to target the update for
 a specific package, and other flags such as `--aggressive` or `--precise` can
 be used to control how versions are selected.
 
-[`cargo build`]: ../commands/cargo-build.md
-[`cargo update`]: ../commands/cargo-update.md
+[`crabgo build`]: ../commands/crabgo-build.md
+[`crabgo update`]: ../commands/crabgo-update.md
 
 ## Overrides
 
-Cargo has several mechanisms to override dependencies within the graph. The
+Crabgo has several mechanisms to override dependencies within the graph. The
 [Overriding Dependencies] chapter goes into detail on how to use overrides.
 The overrides appear as an overlay to a registry, replacing the patched
 version with the new entry. Otherwise, resolution is performed like normal.
@@ -402,7 +402,7 @@ it so that it remains strictly acyclic.
 ## Resolver versions
 
 A different feature resolver algorithm can be used by specifying the resolver
-version in `Cargo.toml` like this:
+version in `Crabgo.toml` like this:
 
 ```toml
 [package]
@@ -411,7 +411,7 @@ version = "1.0.0"
 resolver = "2"
 ```
 
-The version `"1"` resolver is the original resolver that shipped with Cargo up to version 1.50.
+The version `"1"` resolver is the original resolver that shipped with Crabgo up to version 1.50.
 The default is `"2"` if the root package specifies [`edition = "2021"`](manifest.md#the-edition-field) or a newer edition.
 Otherwise the default is `"1"`.
 
@@ -451,7 +451,7 @@ situations may require specifying unusual requirements.
     other users won't end up with an older version of the dependency that
     might be missing something that your package requires.
   * Avoid `*` requirements, as they are not allowed on [crates.io], and they
-    can pull in SemVer-breaking changes during a normal `cargo update`.
+    can pull in SemVer-breaking changes during a normal `crabgo update`.
   * Avoid overly broad version requirements. For example, `>=2.0.0` can pull
     in any SemVer-incompatible version, like version `5.0.0`, which can result
     in broken builds in the future.
@@ -465,13 +465,13 @@ situations may require specifying unusual requirements.
   added in the `1.1.0` release of "bar", update your dependency requirement to
   `bar="1.1.0"`.
 
-  If you fail to do this, it may not be immediately obvious because Cargo can
-  opportunistically choose the newest version when you run a blanket `cargo
-  update`. However, if another user depends on your library, and runs `cargo
+  If you fail to do this, it may not be immediately obvious because Crabgo can
+  opportunistically choose the newest version when you run a blanket `crabgo
+  update`. However, if another user depends on your library, and runs `crabgo
   update -p your-library`, it will *not* automatically update "bar" if it is
-  locked in their `Cargo.lock`. It will only update "bar" in that situation if
+  locked in their `Crabgo.lock`. It will only update "bar" in that situation if
   the dependency declaration is also updated. Failure to do so can cause
-  confusing build errors for the user using `cargo update -p`.
+  confusing build errors for the user using `crabgo update -p`.
 * If two packages are tightly coupled, then an `=` dependency requirement may
   help ensure that they stay in sync. For example, a library with a companion
   proc-macro library will sometimes make assumptions between the two libraries
@@ -507,24 +507,24 @@ rand = "0.7"
 rand = ">=0.6"  # note: open requirements such as this are discouraged
 ```
 
-In this example, Cargo may build two copies of the `rand` crate, even though a
+In this example, Crabgo may build two copies of the `rand` crate, even though a
 single copy at version `0.7.3` would meet all requirements. This is because the
 resolver's algorithm favors building the latest available version of `rand` for
 Package B, which is `0.8.5` at the time of this writing, and that is
 incompatible with Package A's specification. The resolver's algorithm does not
 currently attempt to "deduplicate" in this situation.
 
-The use of open-ended version requirements like `>=0.6` is discouraged in Cargo.
-But, if you run into this situation, the [`cargo update`] command with the
+The use of open-ended version requirements like `>=0.6` is discouraged in Crabgo.
+But, if you run into this situation, the [`crabgo update`] command with the
 `--precise` flag can be used to manually remove such duplications.
 
-[`cargo update`]: ../commands/cargo-update.md
+[`crabgo update`]: ../commands/crabgo-update.md
 
 
 ### SemVer-breaking patch release breaks the build
 
 Sometimes a project may inadvertently publish a point release with a
-SemVer-breaking change. When users update with `cargo update`, they will pick
+SemVer-breaking change. When users update with `crabgo update`, they will pick
 up this new release, and then their build may break. In this situation, it is
 recommended that the project should [yank] the release, and either remove the
 SemVer-breaking change, or publish it as a new SemVer-major version increase.
@@ -536,12 +536,12 @@ While waiting for the release to be yanked, some workarounds depend on the
 circumstances:
 
 * If your project is the end product (such as a binary executable), just avoid
-  updating the offending package in `Cargo.lock`. This can be done with the
-  `--precise` flag in [`cargo update`].
+  updating the offending package in `Crabgo.lock`. This can be done with the
+  `--precise` flag in [`crabgo update`].
 * If you publish a binary on [crates.io], then you can temporarily add an `=`
   requirement to force the dependency to a specific good version.
   * Binary projects can alternatively recommend users to use the `--locked`
-    flag with [`cargo install`] to use the original `Cargo.lock` that contains
+    flag with [`crabgo install`] to use the original `Crabgo.lock` that contains
     the known good version.
 * Libraries may also consider publishing a temporary new release with stricter
   requirements that avoid the troublesome dependency. You may want to consider

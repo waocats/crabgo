@@ -1,11 +1,11 @@
 # Design Principles
 
-The purpose of Cargo is to formalize a canonical Rust workflow, by automating
-the standard tasks associated with distributing software. Cargo simplifies
+The purpose of Crabgo is to formalize a canonical Rust workflow, by automating
+the standard tasks associated with distributing software. Crabgo simplifies
 structuring a new project, adding dependencies, writing and running unit
 tests, and more.
 
-Cargo is not intended to be a general-purpose build tool. Ideally, it should
+Crabgo is not intended to be a general-purpose build tool. Ideally, it should
 be easy to integrate it within another build tool, though admittedly that is
 not as seamless as desired.
 
@@ -13,7 +13,7 @@ not as seamless as desired.
 
 ### Backwards compatibility
 
-Cargo strives to remain backwards compatible with projects created in previous
+Crabgo strives to remain backwards compatible with projects created in previous
 versions. The CLI interface also strives to remain backwards compatible, such
 that the commands and options behave the same. That being said, changes in
 behavior, and even outright breakage are sometimes done in limited situations.
@@ -21,7 +21,7 @@ The following outlines some situations where backwards-incompatible changes are
 made:
 
 * Anything that addresses a security concern.
-* Dropping support for older platforms and tooling. Cargo follows the Rust
+* Dropping support for older platforms and tooling. Crabgo follows the Rust
   [tiered platform support].
 * Changes to resolve possibly unsafe or unreliable behavior.
 
@@ -49,45 +49,45 @@ to cause breakage. A warning can be issued to alert the user that something
 will change, and provide them with an alternative to resolve the issue
 (preferably in a way that is compatible across versions if possible).
 
-Cargo is only expected to work with the version of the related Rust tools
+Crabgo is only expected to work with the version of the related Rust tools
 (`rustc`, `rustdoc`, etc.) that it is released with. As a matter of choice,
 the latest nightly works with the most recent stable release, but that is
-mostly to accommodate development of Cargo itself, and should not be expected
+mostly to accommodate development of Crabgo itself, and should not be expected
 by users.
 
 ### Forwards compatibility
 
-Additionally, Cargo strives a limited degree of *forwards compatibility*.
+Additionally, Crabgo strives a limited degree of *forwards compatibility*.
 Changes should not egregiously prevent older versions from working. This is
 mostly relevant for persistent data, such as on-disk files and the registry
 interface and index. It also applies to a lesser degree to the registry API.
 
-Changes to `Cargo.lock` require a transition time, where the new format is not
+Changes to `Crabgo.lock` require a transition time, where the new format is not
 automatically written when the lock file is updated. The transition time
 should not be less than 6 months, though preferably longer. New projects may
 use the new format in a shorter time frame.
 
-Changes to `Cargo.toml` can be made in any release. This is because the user
+Changes to `Crabgo.toml` can be made in any release. This is because the user
 must manually modify the file, and opt-in to any new changes. Additionally,
-Cargo will usually only issue a warning about new fields it doesn't
+Crabgo will usually only issue a warning about new fields it doesn't
 understand, but otherwise continue to function.
 
 Changes to cache files (such as artifacts in the `target` directory, or cached
-data in Cargo's home directory) should not *prevent* older versions from
+data in Crabgo's home directory) should not *prevent* older versions from
 running, but they may cause older versions to recreate the cache, which may
 result in a performance impact.
 
 Changes to the registry index should not prevent older versions from working.
 Generally, older versions ignore new fields, so the format should be easily
 extensible. Changes to the format or interpretation of existing fields should
-be done very carefully to avoid preventing older versions of Cargo from
-working. In some cases, this may mean that older versions of Cargo will not be
+be done very carefully to avoid preventing older versions of Crabgo from
+working. In some cases, this may mean that older versions of Crabgo will not be
 able to *select* a newly published crate, but it shouldn't prevent them from
 working at all. This level of compatibility may not last forever, but the
 exact time frame for such a change has not yet been decided.
 
 The registry API may be changed in such a way to prevent older versions of
-Cargo from working. Generally, compatibility should be retained for as long as
+Crabgo from working. Generally, compatibility should be retained for as long as
 possible, but the exact length of time is not specified.
 
 ## Simplicity and layers

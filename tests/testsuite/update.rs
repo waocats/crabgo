@@ -1,14 +1,14 @@
-//! Tests for the `cargo update` command.
+//! Tests for the `crabgo update` command.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn minor_update_two_places() {
     Package::new("log", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -22,7 +22,7 @@ fn minor_update_two_places() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -36,11 +36,11 @@ fn minor_update_two_places() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     Package::new("log", "0.1.1").publish();
 
     p.change_file(
-        "foo/Cargo.toml",
+        "foo/Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -52,17 +52,17 @@ fn minor_update_two_places() {
         "#,
     );
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn transitive_minor_update() {
     Package::new("log", "0.1.0").publish();
     Package::new("serde", "0.1.0").dep("log", "0.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -77,7 +77,7 @@ fn transitive_minor_update() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -91,7 +91,7 @@ fn transitive_minor_update() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("serde", "0.1.1").dep("log", "0.1.1").publish();
@@ -105,7 +105,7 @@ fn transitive_minor_update() {
     //
     // Also note that this is probably counterintuitive and weird. We may wish
     // to change this one day.
-    p.cargo("update -p serde")
+    p.crabgo("update -p serde")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -114,14 +114,14 @@ fn transitive_minor_update() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn conservative() {
     Package::new("log", "0.1.0").publish();
     Package::new("serde", "0.1.0").dep("log", "0.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -136,7 +136,7 @@ fn conservative() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -150,12 +150,12 @@ fn conservative() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("serde", "0.1.1").dep("log", "0.1").publish();
 
-    p.cargo("update -p serde")
+    p.crabgo("update -p serde")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -165,12 +165,12 @@ fn conservative() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_via_new_dep() {
     Package::new("log", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -184,7 +184,7 @@ fn update_via_new_dep() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -198,19 +198,19 @@ fn update_via_new_dep() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     Package::new("log", "0.1.1").publish();
 
     p.uncomment_root_manifest();
-    p.cargo("check").env("CARGO_LOG", "cargo=trace").run();
+    p.crabgo("check").env("CRABGO_LOG", "crabgo=trace").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_via_new_member() {
     Package::new("log", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -226,7 +226,7 @@ fn update_via_new_member() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -240,19 +240,19 @@ fn update_via_new_member() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     Package::new("log", "0.1.1").publish();
 
     p.uncomment_root_manifest();
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_dep_deep_new_requirement() {
     Package::new("log", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -267,22 +267,22 @@ fn add_dep_deep_new_requirement() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("bar", "0.1.0").dep("log", "0.1.1").publish();
 
     p.uncomment_root_manifest();
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn everything_real_deep() {
     Package::new("log", "0.1.0").publish();
     Package::new("foo", "0.1.0").dep("log", "0.1").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -297,20 +297,20 @@ fn everything_real_deep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("bar", "0.1.0").dep("log", "0.1.1").publish();
 
     p.uncomment_root_manifest();
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn change_package_version() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a-foo"
@@ -322,10 +322,10 @@ fn change_package_version() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.2.0-alpha"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.2.0-alpha"))
         .file("bar/src/lib.rs", "")
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             r#"
                 [[package]]
                 name = "foo"
@@ -339,17 +339,17 @@ fn change_package_version() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_precise() {
     Package::new("serde", "0.1.0").publish();
     Package::new("serde", "0.2.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -363,7 +363,7 @@ fn update_precise() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -377,11 +377,11 @@ fn update_precise() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("serde", "0.2.0").publish();
 
-    p.cargo("update -p serde:0.2.1 --precise 0.2.0")
+    p.crabgo("update -p serde:0.2.1 --precise 0.2.0")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -391,14 +391,14 @@ fn update_precise() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_precise_do_not_force_update_deps() {
     Package::new("log", "0.1.0").publish();
     Package::new("serde", "0.2.1").dep("log", "0.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -412,12 +412,12 @@ fn update_precise_do_not_force_update_deps() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("serde", "0.2.2").dep("log", "0.1").publish();
 
-    p.cargo("update -p serde:0.2.1 --precise 0.2.2")
+    p.crabgo("update -p serde:0.2.1 --precise 0.2.2")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -427,14 +427,14 @@ fn update_precise_do_not_force_update_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_aggressive() {
     Package::new("log", "0.1.0").publish();
     Package::new("serde", "0.2.1").dep("log", "0.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -448,12 +448,12 @@ fn update_aggressive() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     Package::new("log", "0.1.1").publish();
     Package::new("serde", "0.2.2").dep("log", "0.1").publish();
 
-    p.cargo("update -p serde:0.2.1 --aggressive")
+    p.crabgo("update -p serde:0.2.1 --aggressive")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -464,10 +464,10 @@ fn update_aggressive() {
         .run();
 }
 
-// cargo update should respect its arguments even without a lockfile.
-// See issue "Running cargo update without a Cargo.lock ignores arguments"
-// at <https://github.com/rust-lang/cargo/issues/6872>.
-#[cargo_test]
+// crabgo update should respect its arguments even without a lockfile.
+// See issue "Running crabgo update without a Crabgo.lock ignores arguments"
+// at <https://github.com/rust-lang/crabgo/issues/6872>.
+#[crabgo_test]
 fn update_precise_first_run() {
     Package::new("serde", "0.1.0").publish();
     Package::new("serde", "0.2.0").publish();
@@ -475,7 +475,7 @@ fn update_precise_first_run() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -488,7 +488,7 @@ fn update_precise_first_run() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("update -p serde --precise 0.2.0")
+    p.crabgo("update -p serde --precise 0.2.0")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -497,8 +497,8 @@ fn update_precise_first_run() {
         )
         .run();
 
-    // Assert `cargo metadata` shows serde 0.2.0
-    p.cargo("metadata")
+    // Assert `crabgo metadata` shows serde 0.2.0
+    p.crabgo("metadata")
         .with_json(
             r#"{
   "packages": [
@@ -530,7 +530,7 @@ fn update_precise_first_run() {
       "license": null,
       "license_file": null,
       "links": null,
-      "manifest_path": "[..]/foo/Cargo.toml",
+      "manifest_path": "[..]/foo/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "name": "bar",
@@ -571,7 +571,7 @@ fn update_precise_first_run() {
       "license": null,
       "license_file": null,
       "links": null,
-      "manifest_path": "[..]/home/.cargo/registry/src/-[..]/serde-0.2.0/Cargo.toml",
+      "manifest_path": "[..]/home/.crabgo/registry/src/-[..]/serde-0.2.0/Crabgo.toml",
       "metadata": null,
       "publish": null,
       "name": "serde",
@@ -591,7 +591,7 @@ fn update_precise_first_run() {
             "lib"
           ],
           "name": "serde",
-          "src_path": "[..]/home/.cargo/registry/src/-[..]/serde-0.2.0/src/lib.rs",
+          "src_path": "[..]/home/.crabgo/registry/src/-[..]/serde-0.2.0/src/lib.rs",
           "test": true
         }
       ],
@@ -639,7 +639,7 @@ fn update_precise_first_run() {
         )
         .run();
 
-    p.cargo("update -p serde --precise 0.2.0")
+    p.crabgo("update -p serde --precise 0.2.0")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -648,39 +648,39 @@ fn update_precise_first_run() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn preserve_top_comment() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("update").run();
+    p.crabgo("update").run();
 
     let lockfile = p.read_lockfile();
-    assert!(lockfile.starts_with("# This file is automatically @generated by Cargo.\n# It is not intended for manual editing.\n"));
+    assert!(lockfile.starts_with("# This file is automatically @generated by Crabgo.\n# It is not intended for manual editing.\n"));
 
     let mut lines = lockfile.lines().collect::<Vec<_>>();
     lines.insert(2, "# some other comment");
     let mut lockfile = lines.join("\n");
     lockfile.push('\n'); // .lines/.join loses the last newline
-    println!("saving Cargo.lock contents:\n{}", lockfile);
+    println!("saving Crabgo.lock contents:\n{}", lockfile);
 
-    p.change_file("Cargo.lock", &lockfile);
+    p.change_file("Crabgo.lock", &lockfile);
 
-    p.cargo("update").run();
+    p.crabgo("update").run();
 
     let lockfile2 = p.read_lockfile();
-    println!("loaded Cargo.lock contents:\n{}", lockfile2);
+    println!("loaded Crabgo.lock contents:\n{}", lockfile2);
 
     assert_eq!(lockfile, lockfile2);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dry_run_update() {
     Package::new("log", "0.1.0").publish();
     Package::new("serde", "0.1.0").dep("log", "0.1").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -695,7 +695,7 @@ fn dry_run_update() {
         )
         .file("src/lib.rs", "")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -709,13 +709,13 @@ fn dry_run_update() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let old_lockfile = p.read_lockfile();
 
     Package::new("log", "0.1.1").publish();
     Package::new("serde", "0.1.1").dep("log", "0.1").publish();
 
-    p.cargo("update -p serde --dry-run")
+    p.crabgo("update -p serde --dry-run")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -728,14 +728,14 @@ fn dry_run_update() {
     assert_eq!(old_lockfile, new_lockfile)
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn workspace_only() {
     let p = project().file("src/main.rs", "fn main() {}").build();
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
     let lock1 = p.read_lockfile();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -743,7 +743,7 @@ fn workspace_only() {
             version = "0.0.2"
         "#,
     );
-    p.cargo("update --workspace").run();
+    p.crabgo("update --workspace").run();
     let lock2 = p.read_lockfile();
 
     assert_ne!(lock1, lock2);
@@ -753,13 +753,13 @@ fn workspace_only() {
     assert!(!lock2.contains("0.0.1"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn precise_with_build_metadata() {
     // +foo syntax shouldn't be necessary with --precise
     Package::new("bar", "0.1.0+extra-stuff.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -771,11 +771,11 @@ fn precise_with_build_metadata() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
     Package::new("bar", "0.1.1+extra-stuff.1").publish();
     Package::new("bar", "0.1.2+extra-stuff.2").publish();
 
-    p.cargo("update -p bar --precise 0.1")
+    p.crabgo("update -p bar --precise 0.1")
         .with_status(101)
         .with_stderr(
             "\
@@ -787,7 +787,7 @@ Caused by:
         )
         .run();
 
-    p.cargo("update -p bar --precise 0.1.1+does-not-match")
+    p.crabgo("update -p bar --precise 0.1.1+does-not-match")
         .with_status(101)
         .with_stderr(
             "\
@@ -799,7 +799,7 @@ required by package `foo v0.1.0 ([ROOT]/foo)`
         )
         .run();
 
-    p.cargo("update -p bar --precise 0.1.1")
+    p.crabgo("update -p bar --precise 0.1.1")
         .with_stderr(
             "\
 [UPDATING] [..] index
@@ -809,7 +809,7 @@ required by package `foo v0.1.0 ([ROOT]/foo)`
         .run();
 
     Package::new("bar", "0.1.3").publish();
-    p.cargo("update -p bar --precise 0.1.3+foo")
+    p.crabgo("update -p bar --precise 0.1.3+foo")
         .with_status(101)
         .with_stderr(
             "\
@@ -821,7 +821,7 @@ required by package `foo v0.1.0 ([ROOT]/foo)`
         )
         .run();
 
-    p.cargo("update -p bar --precise 0.1.3")
+    p.crabgo("update -p bar --precise 0.1.3")
         .with_stderr(
             "\
 [UPDATING] [..] index

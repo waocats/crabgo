@@ -1,9 +1,9 @@
-//! Tests for the `cargo publish` command.
+//! Tests for the `crabgo publish` command.
 
-use cargo_test_support::git::{self, repo};
-use cargo_test_support::paths;
-use cargo_test_support::registry::{self, Package, RegistryBuilder, Response};
-use cargo_test_support::{basic_manifest, no_such_file_err_msg, project, publish};
+use crabgo_test_support::git::{self, repo};
+use crabgo_test_support::paths;
+use crabgo_test_support::registry::{self, Package, RegistryBuilder, Response};
+use crabgo_test_support::{basic_manifest, no_such_file_err_msg, project, publish};
 use std::fs;
 use std::sync::{Arc, Mutex};
 
@@ -55,7 +55,7 @@ fn validate_upload_foo() {
           }
         "#,
         "foo-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
@@ -84,17 +84,17 @@ fn validate_upload_li() {
           }
         "#,
         "li-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -107,7 +107,7 @@ fn simple() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -130,7 +130,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
 
 // Check that the `token` key works at the root instead of under a
 // `[registry]` table.
-#[cargo_test]
+#[crabgo_test]
 fn simple_publish_with_http() {
     let _reg = registry::RegistryBuilder::new()
         .http_api()
@@ -139,7 +139,7 @@ fn simple_publish_with_http() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -152,7 +152,7 @@ fn simple_publish_with_http() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify --token sekrit --registry dummy-registry")
+    p.crabgo("publish --no-verify --token sekrit --registry dummy-registry")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -170,7 +170,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_publish_with_asymmetric() {
     let _reg = registry::RegistryBuilder::new()
         .http_api()
@@ -181,7 +181,7 @@ fn simple_publish_with_asymmetric() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -194,8 +194,8 @@ fn simple_publish_with_asymmetric() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify -Zregistry-auth --registry dummy-registry")
-        .masquerade_as_nightly_cargo(&["registry-auth"])
+    p.crabgo("publish --no-verify -Zregistry-auth --registry dummy-registry")
+        .masquerade_as_nightly_crabgo(&["registry-auth"])
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -213,14 +213,14 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn old_token_location() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -233,22 +233,22 @@ fn old_token_location() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    let credentials = paths::home().join(".cargo/credentials.toml");
+    let credentials = paths::home().join(".crabgo/credentials.toml");
     fs::remove_file(&credentials).unwrap();
 
     // Verify can't publish without a token.
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains(
             "[ERROR] no token found, \
-            please run `cargo login`",
+            please run `crabgo login`",
         )
         .run();
 
     fs::write(&credentials, format!(r#"token = "{}""#, registry.token())).unwrap();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -270,14 +270,14 @@ You may press ctrl-c [..]
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_with_index() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -290,7 +290,7 @@ fn simple_with_index() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .arg("--token")
         .arg(registry.token())
         .arg("--index")
@@ -315,14 +315,14 @@ You may press ctrl-c [..]
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn git_deps() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -338,7 +338,7 @@ fn git_deps() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -v --no-verify")
+    p.crabgo("publish -v --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -353,14 +353,14 @@ the `git` specification will be removed from the dependency declaration.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn path_dependency_no_version() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -374,11 +374,11 @@ fn path_dependency_no_version() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -393,14 +393,14 @@ the `path` specification will be removed from the dependency declaration.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unpublishable_crate() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -414,19 +414,19 @@ fn unpublishable_crate() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --index")
+    p.crabgo("publish --index")
         .arg(registry.index_url().as_str())
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-`package.publish` is set to `false` or an empty list in Cargo.toml and prevents publishing.
+`package.publish` is set to `false` or an empty list in Crabgo.toml and prevents publishing.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dont_publish_dirty() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
@@ -435,7 +435,7 @@ fn dont_publish_dirty() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -451,7 +451,7 @@ fn dont_publish_dirty() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -468,7 +468,7 @@ to proceed despite this and include the uncommitted changes, pass the `--allow-d
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_clean() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
@@ -477,7 +477,7 @@ fn publish_clean() {
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -493,7 +493,7 @@ fn publish_clean() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -516,7 +516,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_in_sub_repo() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
@@ -525,7 +525,7 @@ fn publish_in_sub_repo() {
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -541,7 +541,7 @@ fn publish_in_sub_repo() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .cwd("bar")
         .with_stderr(
@@ -565,7 +565,7 @@ You may press ctrl-c [..]
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_when_ignored() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
@@ -574,7 +574,7 @@ fn publish_when_ignored() {
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -591,7 +591,7 @@ fn publish_when_ignored() {
         .file(".gitignore", "baz")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -614,7 +614,7 @@ You may press ctrl-c [..]
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignore_when_crate_ignored() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
@@ -624,7 +624,7 @@ fn ignore_when_crate_ignored() {
     let _ = repo(&paths::root().join("foo"))
         .file(".gitignore", "bar")
         .nocommit_file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -638,7 +638,7 @@ fn ignore_when_crate_ignored() {
             "#,
         )
         .nocommit_file("bar/src/main.rs", "fn main() {}");
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .cwd("bar")
         .with_stderr(
@@ -662,7 +662,7 @@ You may press ctrl-c [..]
     // Other tests will verify the endpoint gets the right payload.
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn new_crate_rejected() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
@@ -671,7 +671,7 @@ fn new_crate_rejected() {
 
     let _ = repo(&paths::root().join("foo"))
         .nocommit_file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -685,7 +685,7 @@ fn new_crate_rejected() {
             "#,
         )
         .nocommit_file("src/main.rs", "fn main() {}");
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains(
@@ -695,14 +695,14 @@ fn new_crate_rejected() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dry_run() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -715,7 +715,7 @@ fn dry_run() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --dry-run --index")
+    p.crabgo("publish --dry-run --index")
         .arg(registry.index_url().as_str())
         .with_stderr(
             "\
@@ -738,11 +738,11 @@ See [..]
     assert!(!registry::api_path().join("api/v1/crates/new").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_not_in_publish_list() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -758,24 +758,24 @@ fn registry_not_in_publish_list() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .arg("--registry")
         .arg("alternative")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-The registry `alternative` is not listed in the `package.publish` value in Cargo.toml.
+The registry `alternative` is not listed in the `package.publish` value in Crabgo.toml.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_empty_list() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -789,18 +789,18 @@ fn publish_empty_list() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-`package.publish` is set to `false` or an empty list in Cargo.toml and prevents publishing.
+`package.publish` is set to `false` or an empty list in Crabgo.toml and prevents publishing.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_allowed_registry() {
     let _registry = RegistryBuilder::new()
         .http_api()
@@ -812,7 +812,7 @@ fn publish_allowed_registry() {
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -829,7 +829,7 @@ fn publish_allowed_registry() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_stderr(
             "\
 [..]
@@ -851,16 +851,16 @@ You may press ctrl-c [..]
         CLEAN_FOO_JSON,
         "foo-0.0.1.crate",
         &[
-            "Cargo.lock",
-            "Cargo.toml",
-            "Cargo.toml.orig",
+            "Crabgo.lock",
+            "Crabgo.toml",
+            "Crabgo.toml.orig",
             "src/main.rs",
-            ".cargo_vcs_info.json",
+            ".crabgo_vcs_info.json",
         ],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_implicitly_to_only_allowed_registry() {
     let _registry = RegistryBuilder::new()
         .http_api()
@@ -872,7 +872,7 @@ fn publish_implicitly_to_only_allowed_registry() {
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -889,7 +889,7 @@ fn publish_implicitly_to_only_allowed_registry() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .with_stderr(
             "\
 [NOTE] Found `alternative` as only allowed registry. Publishing to it automatically.
@@ -912,22 +912,22 @@ You may press ctrl-c [..]
         CLEAN_FOO_JSON,
         "foo-0.0.1.crate",
         &[
-            "Cargo.lock",
-            "Cargo.toml",
-            "Cargo.toml.orig",
+            "Crabgo.lock",
+            "Crabgo.toml",
+            "Crabgo.toml.orig",
             "src/main.rs",
-            ".cargo_vcs_info.json",
+            ".crabgo_vcs_info.json",
         ],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_fail_with_no_registry_specified() {
     let p = project().build();
 
     let _ = repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -944,22 +944,22 @@ fn publish_fail_with_no_registry_specified() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-The registry `crates-io` is not listed in the `package.publish` value in Cargo.toml.
+The registry `crates-io` is not listed in the `package.publish` value in Crabgo.toml.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn block_publish_no_registry() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -973,26 +973,26 @@ fn block_publish_no_registry() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-`package.publish` is set to `false` or an empty list in Cargo.toml and prevents publishing.
+`package.publish` is set to `false` or an empty list in Crabgo.toml and prevents publishing.
 ",
         )
         .run();
 }
 
 // Explicitly setting `crates-io` in the publish list.
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_crates_io_explicit() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1006,17 +1006,17 @@ fn publish_with_crates_io_explicit() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] `foo` cannot be published.
-The registry `alternative` is not listed in the `package.publish` value in Cargo.toml.
+The registry `alternative` is not listed in the `package.publish` value in Crabgo.toml.
 ",
         )
         .run();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1038,14 +1038,14 @@ You may press ctrl-c [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_select_features() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1067,7 +1067,7 @@ fn publish_with_select_features() {
         )
         .build();
 
-    p.cargo("publish --features required")
+    p.crabgo("publish --features required")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1089,14 +1089,14 @@ You may press ctrl-c [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_all_features() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1118,7 +1118,7 @@ fn publish_with_all_features() {
         )
         .build();
 
-    p.cargo("publish --all-features")
+    p.crabgo("publish --all-features")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1140,14 +1140,14 @@ You may press ctrl-c [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_no_default_features() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1169,21 +1169,21 @@ fn publish_with_no_default_features() {
         )
         .build();
 
-    p.cargo("publish --no-default-features")
+    p.crabgo("publish --no-default-features")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("error: This crate requires `required` feature!")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_patch() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
     Package::new("bar", "1.0.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1204,15 +1204,15 @@ fn publish_with_patch() {
                  bar::newfunc();
              }",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "1.0.0"))
         .file("bar/src/lib.rs", "pub fn newfunc() {}")
         .build();
 
     // Check that it works with the patched crate.
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     // Check that verify fails with patched crate which has new functionality.
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[..]newfunc[..]")
@@ -1221,7 +1221,7 @@ fn publish_with_patch() {
     // Remove the usage of new functionality and try again.
     p.change_file("src/main.rs", "extern crate bar; pub fn main() {}");
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1278,11 +1278,11 @@ You may press ctrl-c [..]
           }
         "#,
         "foo-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_checks_for_token_before_verify() {
     let registry = registry::RegistryBuilder::new()
         .no_configure_token()
@@ -1290,7 +1290,7 @@ fn publish_checks_for_token_before_verify() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1304,15 +1304,15 @@ fn publish_checks_for_token_before_verify() {
         .build();
 
     // Assert upload token error before the package is verified
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_status(101)
-        .with_stderr_contains("[ERROR] no token found, please run `cargo login`")
+        .with_stderr_contains("[ERROR] no token found, please run `crabgo login`")
         .with_stderr_does_not_contain("[VERIFYING] foo v0.0.1 ([CWD])")
         .run();
 
     // Assert package verified successfully on dry run
-    p.cargo("publish --dry-run")
+    p.crabgo("publish --dry-run")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1331,11 +1331,11 @@ fn publish_checks_for_token_before_verify() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_bad_source() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [source.crates-io]
             replace-with = 'local-registry'
@@ -1347,7 +1347,7 @@ fn publish_with_bad_source() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .with_status(101)
         .with_stderr(
             "\
@@ -1358,7 +1358,7 @@ include `--registry crates-io` to use crates.io
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
         [source.crates-io]
         replace-with = "vendored-sources"
@@ -1368,7 +1368,7 @@ include `--registry crates-io` to use crates.io
         "#,
     );
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .with_status(101)
         .with_stderr(
             "\
@@ -1380,7 +1380,7 @@ include `--registry crates-io` to use crates.io
 }
 
 // A dependency with both `git` and `version`.
-#[cargo_test]
+#[crabgo_test]
 fn publish_git_with_version() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -1390,13 +1390,13 @@ fn publish_git_with_version() {
 
     let git_project = git::new("dep1", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep1", "1.0.0"))
+            .file("Crabgo.toml", &basic_manifest("dep1", "1.0.0"))
             .file("src/lib.rs", "pub fn f() -> i32 {2}")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -1423,9 +1423,9 @@ fn publish_git_with_version() {
         )
         .build();
 
-    p.cargo("run").with_stdout("2").run();
+    p.crabgo("run").with_stdout("2").run();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1478,11 +1478,11 @@ You may press ctrl-c [..]
           }
         "#,
         "foo-0.1.0.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
         &[
             (
-                "Cargo.toml",
-                // Check that only `version` is included in Cargo.toml.
+                "Crabgo.toml",
+                // Check that only `version` is included in Crabgo.toml.
                 &format!(
                     "{}\n\
                      [package]\n\
@@ -1496,13 +1496,13 @@ You may press ctrl-c [..]
                      [dependencies.dep1]\n\
                      version = \"1.0\"\n\
                     ",
-                    cargo::core::package::MANIFEST_PREAMBLE
+                    crabgo::core::package::MANIFEST_PREAMBLE
                 ),
             ),
             (
-                "Cargo.lock",
+                "Crabgo.lock",
                 // The important check here is that it is 1.0.1 in the registry.
-                "# This file is automatically @generated by Cargo.\n\
+                "# This file is automatically @generated by Crabgo.\n\
                  # It is not intended for manual editing.\n\
                  version = 3\n\
                  \n\
@@ -1524,13 +1524,13 @@ You may press ctrl-c [..]
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_dev_dep_no_version() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1547,11 +1547,11 @@ fn publish_dev_dep_no_version() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1591,9 +1591,9 @@ You may press ctrl-c [..]
         }
         "#,
         "foo-0.1.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "src/lib.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "src/lib.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -1608,24 +1608,24 @@ repository = "foo"
 
 [dev-dependencies]
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn credentials_ambiguous_filename() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     // Make token in `credentials.toml` incorrect to ensure it is not read.
-    let credentials_toml = paths::home().join(".cargo/credentials.toml");
+    let credentials_toml = paths::home().join(".crabgo/credentials.toml");
     fs::write(credentials_toml, r#"token = "wrong-token""#).unwrap();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1638,17 +1638,17 @@ fn credentials_ambiguous_filename() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr_contains("[..]Unauthorized message from server[..]")
         .run();
 
     // Favor `credentials` if exists.
-    let credentials = paths::home().join(".cargo/credentials");
+    let credentials = paths::home().join(".crabgo/credentials");
     fs::write(credentials, r#"token = "sekrit""#).unwrap();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1670,17 +1670,17 @@ You may press ctrl-c [..]
 
 // --index will not load registry.token to avoid possibly leaking
 // crates.io token to another server.
-#[cargo_test]
+#[crabgo_test]
 fn index_requires_token() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
-    let credentials = paths::home().join(".cargo/credentials.toml");
+    let credentials = paths::home().join(".crabgo/credentials.toml");
     fs::remove_file(&credentials).unwrap();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1693,7 +1693,7 @@ fn index_requires_token() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --index")
+    p.crabgo("publish --no-verify --index")
         .arg(registry.index_url().as_str())
         .with_status(101)
         .with_stderr(
@@ -1705,12 +1705,12 @@ fn index_requires_token() {
 }
 
 // publish with source replacement without --registry
-#[cargo_test]
+#[crabgo_test]
 fn cratesio_source_replacement() {
     registry::init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1723,7 +1723,7 @@ fn cratesio_source_replacement() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .with_status(101)
         .with_stderr(
             "\
@@ -1734,14 +1734,14 @@ include `--registry dummy-registry` or `--registry crates-io`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_missing_readme() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1756,14 +1756,14 @@ fn publish_with_missing_readme() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(&format!(
             "\
 [UPDATING] [..]
 [WARNING] readme `foo.md` does not appear to exist (relative to `[..]/foo`).
-Please update the readme setting in the manifest at `[..]/foo/Cargo.toml`
+Please update the readme setting in the manifest at `[..]/foo/Crabgo.toml`
 This may become a hard error in the future.
 [PACKAGING] foo v0.1.0 [..]
 [PACKAGED] [..] files, [..] ([..] compressed)
@@ -1782,7 +1782,7 @@ Caused by:
 }
 
 // Registry returns an API error.
-#[cargo_test]
+#[crabgo_test]
 fn api_error_json() {
     let _registry = registry::RegistryBuilder::new()
         .alternative()
@@ -1796,7 +1796,7 @@ fn api_error_json() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1812,7 +1812,7 @@ fn api_error_json() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
@@ -1830,7 +1830,7 @@ Caused by:
 }
 
 // Registry returns an API error with a 200 status code.
-#[cargo_test]
+#[crabgo_test]
 fn api_error_200() {
     let _registry = registry::RegistryBuilder::new()
         .alternative()
@@ -1844,7 +1844,7 @@ fn api_error_200() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1860,7 +1860,7 @@ fn api_error_200() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
@@ -1878,7 +1878,7 @@ Caused by:
 }
 
 // Registry returns an error code without a JSON message.
-#[cargo_test]
+#[crabgo_test]
 fn api_error_code() {
     let _registry = registry::RegistryBuilder::new()
         .alternative()
@@ -1892,7 +1892,7 @@ fn api_error_code() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1908,7 +1908,7 @@ fn api_error_code() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
@@ -1932,7 +1932,7 @@ Caused by:
 }
 
 // Registry has a network error.
-#[cargo_test]
+#[crabgo_test]
 fn api_curl_error() {
     let _registry = registry::RegistryBuilder::new()
         .alternative()
@@ -1943,7 +1943,7 @@ fn api_curl_error() {
         .build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1960,11 +1960,11 @@ fn api_curl_error() {
         .build();
 
     // This doesn't check for the exact text of the error in the remote
-    // possibility that cargo is linked with a weird version of libcurl, or
+    // possibility that crabgo is linked with a weird version of libcurl, or
     // curl changes the text of the message. Currently the message 52
     // (CURLE_GOT_NOTHING) is:
     //    Server returned nothing (no headers, no data) (Empty reply from server)
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
@@ -1982,7 +1982,7 @@ Caused by:
 }
 
 // Registry returns an invalid response.
-#[cargo_test]
+#[crabgo_test]
 fn api_other_error() {
     let _registry = registry::RegistryBuilder::new()
         .alternative()
@@ -1996,7 +1996,7 @@ fn api_other_error() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2012,7 +2012,7 @@ fn api_other_error() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
+    p.crabgo("publish --no-verify --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
@@ -2032,13 +2032,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_package_workspace() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2050,7 +2050,7 @@ fn in_package_workspace() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2063,7 +2063,7 @@ fn in_package_workspace() {
         .file("li/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p li --no-verify")
+    p.crabgo("publish -p li --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -2084,14 +2084,14 @@ You may press ctrl-c [..]
     validate_upload_li();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn with_duplicate_spec_in_members() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2104,7 +2104,7 @@ fn with_duplicate_spec_in_members() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2115,7 +2115,7 @@ fn with_duplicate_spec_in_members() {
         )
         .file("li/src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2127,7 +2127,7 @@ fn with_duplicate_spec_in_members() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -2136,13 +2136,13 @@ fn with_duplicate_spec_in_members() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_package_workspace_with_members_with_features_old() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2153,7 +2153,7 @@ fn in_package_workspace_with_members_with_features_old() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2166,7 +2166,7 @@ fn in_package_workspace_with_members_with_features_old() {
         .file("li/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p li --no-verify")
+    p.crabgo("publish -p li --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -2187,21 +2187,21 @@ You may press ctrl-c [..]
     validate_upload_li();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_virtual_workspace() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2214,7 +2214,7 @@ fn in_virtual_workspace() {
         .file("foo/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -2223,21 +2223,21 @@ fn in_virtual_workspace() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_virtual_workspace_with_p() {
     // `publish` generally requires a remote registry
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo","li"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2249,7 +2249,7 @@ fn in_virtual_workspace_with_p() {
         )
         .file("foo/src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2262,7 +2262,7 @@ fn in_virtual_workspace_with_p() {
         .file("li/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p li --no-verify")
+    p.crabgo("publish -p li --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -2281,14 +2281,14 @@ You may press ctrl-c [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_package_workspace_not_found() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2299,7 +2299,7 @@ fn in_package_workspace_not_found() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2313,7 +2313,7 @@ fn in_package_workspace_not_found() {
         .file("li/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p li --no-verify")
+    p.crabgo("publish -p li --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -2326,14 +2326,14 @@ error: package ID specification `li` did not match any packages
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn in_package_workspace_found_multiple() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2345,7 +2345,7 @@ fn in_package_workspace_found_multiple() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "li/Cargo.toml",
+            "li/Crabgo.toml",
             r#"
                 [package]
                 name = "li"
@@ -2358,7 +2358,7 @@ fn in_package_workspace_found_multiple() {
         )
         .file("li/src/main.rs", "fn main() {}")
         .file(
-            "lii/Cargo.toml",
+            "lii/Crabgo.toml",
             r#"
                 [package]
                 name = "lii"
@@ -2372,7 +2372,7 @@ fn in_package_workspace_found_multiple() {
         .file("lii/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p li* --no-verify")
+    p.crabgo("publish -p li* --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -2383,15 +2383,15 @@ error: the `-p` argument must be specified to select a single package to publish
         .run();
 }
 
-#[cargo_test]
-// https://github.com/rust-lang/cargo/issues/10536
+#[crabgo_test]
+// https://github.com/rust-lang/crabgo/issues/10536
 fn publish_path_dependency_without_workspace() {
     // Use local registry for faster test times since no publish will occur
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2403,7 +2403,7 @@ fn publish_path_dependency_without_workspace() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2417,7 +2417,7 @@ fn publish_path_dependency_without_workspace() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish -p bar --no-verify")
+    p.crabgo("publish -p bar --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -2430,13 +2430,13 @@ error: package ID specification `bar` did not match any packages
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn http_api_not_noop() {
     let registry = registry::RegistryBuilder::new().http_api().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2449,7 +2449,7 @@ fn http_api_not_noop() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -2472,7 +2472,7 @@ You may press ctrl-c [..]
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [project]
                 name = "bar"
@@ -2488,10 +2488,10 @@ You may press ctrl-c [..]
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wait_for_first_publish() {
     // Counter for number of tries before the package is "published"
     let arc: Arc<Mutex<u32>> = Arc::new(Mutex::new(0));
@@ -2514,7 +2514,7 @@ fn wait_for_first_publish() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "delay"
@@ -2528,7 +2528,7 @@ fn wait_for_first_publish() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(0)
         .with_stderr(
@@ -2554,7 +2554,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2567,13 +2567,13 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build").with_status(0).run();
+    p.crabgo("build").with_status(0).run();
 }
 
 /// A separate test is needed for package names with - or _ as they hit
-/// the responder twice per cargo invocation. If that ever gets changed
+/// the responder twice per crabgo invocation. If that ever gets changed
 /// this test will need to be changed accordingly.
-#[cargo_test]
+#[crabgo_test]
 fn wait_for_first_publish_underscore() {
     // Counter for number of tries before the package is "published"
     let arc: Arc<Mutex<u32>> = Arc::new(Mutex::new(0));
@@ -2606,7 +2606,7 @@ fn wait_for_first_publish_underscore() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "delay_with_underscore"
@@ -2620,7 +2620,7 @@ fn wait_for_first_publish_underscore() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(0)
         .with_stderr(
@@ -2653,7 +2653,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2666,10 +2666,10 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build").with_status(0).run();
+    p.crabgo("build").with_status(0).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wait_for_subsequent_publish() {
     // Counter for number of tries before the package is "published"
     let arc: Arc<Mutex<u32>> = Arc::new(Mutex::new(0));
@@ -2705,7 +2705,7 @@ fn wait_for_subsequent_publish() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "delay"
@@ -2719,7 +2719,7 @@ fn wait_for_subsequent_publish() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(0)
         .with_stderr(
@@ -2745,7 +2745,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2758,17 +2758,17 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").with_status(0).run();
+    p.crabgo("check").with_status(0).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn skip_wait_for_publish() {
     // Intentionally using local registry so the crate never makes it to the index
     let registry = registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2780,7 +2780,7 @@ fn skip_wait_for_publish() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             "
                 [publish]
                 timeout = 0
@@ -2788,9 +2788,9 @@ fn skip_wait_for_publish() {
         )
         .build();
 
-    p.cargo("publish --no-verify -Zpublish-timeout")
+    p.crabgo("publish --no-verify -Zpublish-timeout")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["publish-timeout"])
+        .masquerade_as_nightly_crabgo(&["publish-timeout"])
         .with_stderr(
             "\
 [UPDATING] crates.io index
@@ -2804,7 +2804,7 @@ See [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn timeout_waiting_for_publish() {
     // Publish doesn't happen within the timeout window.
     let registry = registry::RegistryBuilder::new()
@@ -2814,7 +2814,7 @@ fn timeout_waiting_for_publish() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "delay"
@@ -2826,7 +2826,7 @@ fn timeout_waiting_for_publish() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [publish]
                 timeout = 2
@@ -2834,9 +2834,9 @@ fn timeout_waiting_for_publish() {
         )
         .build();
 
-    p.cargo("publish --no-verify -Zpublish-timeout")
+    p.crabgo("publish --no-verify -Zpublish-timeout")
         .replace_crates_io(registry.index_url())
-        .masquerade_as_nightly_cargo(&["publish-timeout"])
+        .masquerade_as_nightly_crabgo(&["publish-timeout"])
         .with_status(0)
         .with_stderr(
             "\
@@ -2856,7 +2856,7 @@ note: The registry may have a backlog that is delaying making the crate availabl
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wait_for_git_publish() {
     // Slow publish to an index with a git index.
     let registry = registry::RegistryBuilder::new()
@@ -2871,7 +2871,7 @@ fn wait_for_git_publish() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "delay"
@@ -2884,7 +2884,7 @@ fn wait_for_git_publish() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_status(0)
         .with_stderr(
@@ -2905,7 +2905,7 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2918,17 +2918,17 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").with_status(0).run();
+    p.crabgo("check").with_status(0).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_token() {
     // Checks publish behavior with an invalid token.
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2942,9 +2942,9 @@ fn invalid_token() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
-        .env("CARGO_REGISTRY_TOKEN", "\x16")
+        .env("CRABGO_REGISTRY_TOKEN", "\x16")
         .with_stderr(
             "\
 [UPDATING] crates.io index

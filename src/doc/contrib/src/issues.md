@@ -1,7 +1,7 @@
 # Issue Tracker
 
-Cargo's issue tracker is located at
-<https://github.com/rust-lang/cargo/issues/>. This is the primary spot where
+Crabgo's issue tracker is located at
+<https://github.com/rust-lang/crabgo/issues/>. This is the primary spot where
 we track bugs and small feature requests. See [Process] for more about our
 process for proposing changes.
 
@@ -11,7 +11,7 @@ We can't fix what we don't know about, so please report problems liberally.
 This includes problems with understanding the documentation, unhelpful error
 messages, and unexpected behavior.
 
-**If you think that you have identified an issue with Cargo that might
+**If you think that you have identified an issue with Crabgo that might
 compromise its users' security, please do not open a public issue on GitHub.
 Instead, we ask you to refer to Rust's [security policy].**
 
@@ -28,20 +28,20 @@ relevant are:
 
 * [`rust-lang/rust`] --- Home for the [`rustc`] compiler and [`rustdoc`].
 * [`rust-lang/rustup`] --- Home for the [`rustup`] toolchain installer.
-* [`rust-lang/rustfmt`] --- Home for the `rustfmt` tool, which also includes `cargo fmt`.
-* [`rust-lang/rust-clippy`] --- Home for the `clippy` tool, which also includes `cargo clippy`.
+* [`rust-lang/rustfmt`] --- Home for the `rustfmt` tool, which also includes `crabgo fmt`.
+* [`rust-lang/rust-clippy`] --- Home for the `clippy` tool, which also includes `crabgo clippy`.
 * [`rust-lang/crates.io`] --- Home for the [crates.io] website.
 
-Issues with [`cargo fix`] can be tricky to know where they should be filed,
+Issues with [`crabgo fix`] can be tricky to know where they should be filed,
 since the fixes are driven by `rustc`, processed by [`rustfix`], and the
-front-interface is implemented in Cargo. Feel free to file in the Cargo issue
+front-interface is implemented in Crabgo. Feel free to file in the Crabgo issue
 tracker, and it will get moved to one of the other issue trackers if
 necessary.
 
 [Process]: process/index.md
 [security policy]: https://www.rust-lang.org/security.html
-[new-issues]: https://github.com/rust-lang/cargo/issues/new/choose
-[Open a blank issue]: https://github.com/rust-lang/cargo/issues/new
+[new-issues]: https://github.com/rust-lang/crabgo/issues/new/choose
+[Open a blank issue]: https://github.com/rust-lang/crabgo/issues/new
 [`rust-lang/rust`]: https://github.com/rust-lang/rust
 [`rust-lang/rustup`]: https://github.com/rust-lang/rustup
 [`rust-lang/rustfmt`]: https://github.com/rust-lang/rustfmt
@@ -52,7 +52,7 @@ necessary.
 [`rust-lang/crates.io`]: https://github.com/rust-lang/crates.io
 [crates.io]: https://crates.io/
 [`rustfix`]: https://github.com/rust-lang/rustfix/
-[`cargo fix`]: https://doc.rust-lang.org/cargo/commands/cargo-fix.html
+[`crabgo fix`]: https://doc.rust-lang.org/crabgo/commands/crabgo-fix.html
 
 ## Issue labels
 
@@ -68,9 +68,9 @@ Anyone can apply most labels by posting comments with a form such as:
 This example will add the [`A-doctests`] label and remove the
 [`A-dependency-resolution`] label.
 
-[Issue labels]: https://github.com/rust-lang/cargo/labels
-[`A-doctests`]: https://github.com/rust-lang/cargo/labels/A-doctests
-[`A-dependency-resolution`]: https://github.com/rust-lang/cargo/labels/A-dependency-resolution
+[Issue labels]: https://github.com/rust-lang/crabgo/labels
+[`A-doctests`]: https://github.com/rust-lang/crabgo/labels/A-doctests
+[`A-dependency-resolution`]: https://github.com/rust-lang/crabgo/labels/A-dependency-resolution
 
 The labels use a naming convention with short prefixes and colors to indicate
 the kind of label:
@@ -90,7 +90,7 @@ table td:nth-child(2) {
 | [A-]   | <span class="label-color" style="background-color:#fbca04;">&#x2003;</span>&nbsp;Yellow | The **area** of the project an issue relates to. |
 | [beta-] | <span class="label-color" style="background-color:#1e76d9;">&#x2003;</span>&nbsp;Dark Blue | Tracks changes which need to be [backported to beta][beta-backport] |
 | [C-] | <span class="label-color" style="background-color:#f5f1fd;">&#x2003;</span>&nbsp;Light Purple | The **category** of an issue. |
-| [Command-] | <span class="label-color" style="background-color:#5319e7;">&#x2003;</span>&nbsp;Dark Purple | The `cargo` command it is related to. |
+| [Command-] | <span class="label-color" style="background-color:#5319e7;">&#x2003;</span>&nbsp;Dark Purple | The `crabgo` command it is related to. |
 | [E-] | <span class="label-color" style="background-color:#02e10c;">&#x2003;</span>&nbsp;Green | The **experience** level necessary to fix an issue. |
 | [I-] | <span class="label-color" style="background-color:#fc2929;">&#x2003;</span>&nbsp;Red | The **importance** of the issue. |
 | [O-] | <span class="label-color" style="background-color:#7e7ec8;">&#x2003;</span>&nbsp;Purple Grey | The **operating system** or platform that the issue is specific to. |
@@ -101,21 +101,21 @@ table td:nth-child(2) {
 | [Z-] | <span class="label-color" style="background-color:#453574;">&#x2003;</span>&nbsp;Dark Blue | Unstable, [nightly features]. |
 
 
-[A-]: https://github.com/rust-lang/cargo/labels?q=A
-[beta-]: https://github.com/rust-lang/cargo/labels?q=beta
-[beta-backport]: https://forge.rust-lang.org/release/backporting.html#beta-backporting-in-rust-langcargo
-[C-]: https://github.com/rust-lang/cargo/labels?q=C
-[Command-]: https://github.com/rust-lang/cargo/labels?q=Command
-[E-]: https://github.com/rust-lang/cargo/labels?q=E
-[I-]: https://github.com/rust-lang/cargo/labels?q=I
-[nightly features]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html
-[O-]: https://github.com/rust-lang/cargo/labels?q=O
-[P-]: https://github.com/rust-lang/cargo/labels?q=P
-[regression-]: https://github.com/rust-lang/cargo/labels?q=regression
-[relnotes]: https://github.com/rust-lang/cargo/issues?q=label%3Arelnotes
+[A-]: https://github.com/rust-lang/crabgo/labels?q=A
+[beta-]: https://github.com/rust-lang/crabgo/labels?q=beta
+[beta-backport]: https://forge.rust-lang.org/release/backporting.html#beta-backporting-in-rust-langcrabgo
+[C-]: https://github.com/rust-lang/crabgo/labels?q=C
+[Command-]: https://github.com/rust-lang/crabgo/labels?q=Command
+[E-]: https://github.com/rust-lang/crabgo/labels?q=E
+[I-]: https://github.com/rust-lang/crabgo/labels?q=I
+[nightly features]: https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html
+[O-]: https://github.com/rust-lang/crabgo/labels?q=O
+[P-]: https://github.com/rust-lang/crabgo/labels?q=P
+[regression-]: https://github.com/rust-lang/crabgo/labels?q=regression
+[relnotes]: https://github.com/rust-lang/crabgo/issues?q=label%3Arelnotes
 [Rust release notes]: https://github.com/rust-lang/rust/blob/master/RELEASES.md
-[S-]: https://github.com/rust-lang/cargo/labels?q=S
-[Z-]: https://github.com/rust-lang/cargo/labels?q=nightly
+[S-]: https://github.com/rust-lang/crabgo/labels?q=S
+[Z-]: https://github.com/rust-lang/crabgo/labels?q=nightly
 
 ### Issue status labels
 
@@ -160,7 +160,7 @@ different steps, or in rare cases have multiple statuses.
   not yet accepted. However, this should only be tagged for changes that are
   somewhat likely to be accepted.
 
-* **[S-needs-mentor]** --- Needs a Cargo team member to commit to helping and
+* **[S-needs-mentor]** --- Needs a Crabgo team member to commit to helping and
   reviewing.
 
   This is for something that is accepted, such as after an RFC or a team
@@ -177,16 +177,16 @@ different steps, or in rare cases have multiple statuses.
   to indicate what it is waiting on.
 
 
-[S-triage]: https://github.com/rust-lang/cargo/labels/S-triage
-[S-needs-info]: https://github.com/rust-lang/cargo/labels/S-needs-info
-[S-needs-team-input]: https://github.com/rust-lang/cargo/labels/S-needs-team-input
-[S-needs-design]: https://github.com/rust-lang/cargo/labels/S-needs-design
-[S-needs-rfc]: https://github.com/rust-lang/cargo/labels/S-needs-rfc
-[S-needs-mentor]: https://github.com/rust-lang/cargo/labels/S-needs-mentor
-[S-accepted]: https://github.com/rust-lang/cargo/labels/S-accepted
-[S-waiting-on-feedback]: https://github.com/rust-lang/cargo/labels/S-waiting-on-feedback
+[S-triage]: https://github.com/rust-lang/crabgo/labels/S-triage
+[S-needs-info]: https://github.com/rust-lang/crabgo/labels/S-needs-info
+[S-needs-team-input]: https://github.com/rust-lang/crabgo/labels/S-needs-team-input
+[S-needs-design]: https://github.com/rust-lang/crabgo/labels/S-needs-design
+[S-needs-rfc]: https://github.com/rust-lang/crabgo/labels/S-needs-rfc
+[S-needs-mentor]: https://github.com/rust-lang/crabgo/labels/S-needs-mentor
+[S-accepted]: https://github.com/rust-lang/crabgo/labels/S-accepted
+[S-waiting-on-feedback]: https://github.com/rust-lang/crabgo/labels/S-waiting-on-feedback
 [RFC]: https://github.com/rust-lang/rfcs/
-[tracking issue]: https://github.com/rust-lang/cargo/labels/C-tracking-issue
+[tracking issue]: https://github.com/rust-lang/crabgo/labels/C-tracking-issue
 
 ## Triaging issues
 
@@ -223,18 +223,18 @@ There are several things to consider when triaging an issue:
     public design process.
   * [S-needs-design] --- The resolution of the issue or small feature request
     will need more work to come up with the appropriate design.
-  * [S-needs-team-input] --- The next steps are not clear, and the Cargo team
+  * [S-needs-team-input] --- The next steps are not clear, and the Crabgo team
     needs to discuss whether or not to proceed and what needs to be done to
     address the issue.
-  * [S-needs-mentor] --- This is something the Cargo team wants to address,
+  * [S-needs-mentor] --- This is something the Crabgo team wants to address,
     but does not currently have the capacity to help with reviewing.
   * [S-accepted] --- This is something that clearly needs to be addressed, and
-    a Cargo team member has volunteered to help review.
+    a Crabgo team member has volunteered to help review.
 
 Anyone is welcome to help with the triaging process. You can help with
 reproducing issues, checking for duplicates, gathering more information from
 the reporter, assigning labels using [`@rustbot` comments](#issue-labels), and
-creating a test using [Cargo's testsuite] ([example][cargotest-example]).
+creating a test using [Crabgo's testsuite] ([example][crabgotest-example]).
 
-[Cargo's testsuite]: tests/writing.md
-[cargotest-example]: https://github.com/rust-lang/cargo/issues/11628#issuecomment-1411088951
+[Crabgo's testsuite]: tests/writing.md
+[crabgotest-example]: https://github.com/rust-lang/crabgo/issues/11628#issuecomment-1411088951

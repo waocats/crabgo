@@ -1,13 +1,13 @@
 //! -Zadvanced-env tests
 
-use cargo_test_support::{paths, project, registry::Package};
+use crabgo_test_support::{paths, project, registry::Package};
 
-#[cargo_test]
+#[crabgo_test]
 fn source_config_env() {
     // Try to define [source] with environment variables.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -27,9 +27,9 @@ fn source_config_env() {
 
     let path = paths::root().join("registry");
 
-    p.cargo("check -Zadvanced-env")
-        .masquerade_as_nightly_cargo(&["advanced-env"])
-        .env("CARGO_SOURCE_crates-io_REPLACE_WITH", "my-local-source")
-        .env("CARGO_SOURCE_my-local-source_LOCAL_REGISTRY", path)
+    p.crabgo("check -Zadvanced-env")
+        .masquerade_as_nightly_crabgo(&["advanced-env"])
+        .env("CRABGO_SOURCE_crates-io_REPLACE_WITH", "my-local-source")
+        .env("CRABGO_SOURCE_my-local-source_LOCAL_REGISTRY", path)
         .run();
 }

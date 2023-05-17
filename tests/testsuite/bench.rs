@@ -1,12 +1,12 @@
-//! Tests for the `cargo bench` command.
+//! Tests for the `crabgo bench` command.
 
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::{basic_bin_manifest, basic_lib_manifest, basic_manifest, project};
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::{basic_bin_manifest, basic_lib_manifest, basic_manifest, project};
 
-#[cargo_test(nightly, reason = "bench")]
-fn cargo_bench_simple() {
+#[crabgo_test(nightly, reason = "bench")]
+fn crabgo_bench_simple() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -30,12 +30,12 @@ fn cargo_bench_simple() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.bin("foo").is_file());
 
     p.process(&p.bin("foo")).with_stdout("hello\n").run();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -46,7 +46,7 @@ fn cargo_bench_simple() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_bench_implicit() {
     let p = project()
         .file(
@@ -77,7 +77,7 @@ fn bench_bench_implicit() {
         )
         .build();
 
-    p.cargo("bench --benches")
+    p.crabgo("bench --benches")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -90,7 +90,7 @@ fn bench_bench_implicit() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_bin_implicit() {
     let p = project()
         .file(
@@ -121,7 +121,7 @@ fn bench_bin_implicit() {
         )
         .build();
 
-    p.cargo("bench --bins")
+    p.crabgo("bench --bins")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -133,7 +133,7 @@ fn bench_bin_implicit() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_tarname() {
     let p = project()
         .file(
@@ -154,7 +154,7 @@ fn bench_tarname() {
         )
         .build();
 
-    p.cargo("bench --bench bin2")
+    p.crabgo("bench --bench bin2")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -166,7 +166,7 @@ fn bench_tarname() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_multiple_targets() {
     let p = project()
         .file(
@@ -195,17 +195,17 @@ fn bench_multiple_targets() {
         )
         .build();
 
-    p.cargo("bench --bench bin1 --bench bin2")
+    p.crabgo("bench --bench bin1 --bench bin2")
         .with_stdout_contains("test run1 ... bench: [..]")
         .with_stdout_contains("test run2 ... bench: [..]")
         .with_stdout_does_not_contain("[..]run3[..]")
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
-fn cargo_bench_verbose() {
+#[crabgo_test(nightly, reason = "bench")]
+fn crabgo_bench_verbose() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -218,7 +218,7 @@ fn cargo_bench_verbose() {
         )
         .build();
 
-    p.cargo("bench -v hello")
+    p.crabgo("bench -v hello")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -230,7 +230,7 @@ fn cargo_bench_verbose() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn many_similar_names() {
     let p = project()
         .file(
@@ -266,17 +266,17 @@ fn many_similar_names() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stdout_contains("test bin_bench ... bench:           0 ns/iter (+/- 0)")
         .with_stdout_contains("test lib_bench ... bench:           0 ns/iter (+/- 0)")
         .with_stdout_contains("test bench_bench ... bench:           0 ns/iter (+/- 0)")
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
-fn cargo_bench_failing_test() {
+#[crabgo_test(nightly, reason = "bench")]
+fn crabgo_bench_failing_test() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -299,13 +299,13 @@ fn cargo_bench_failing_test() {
         )
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.bin("foo").is_file());
 
     p.process(&p.bin("foo")).with_stdout("hello\n").run();
 
     // Force libtest into serial execution so that the test header will be printed.
-    p.cargo("bench -- --test-threads=1")
+    p.crabgo("bench -- --test-threads=1")
         .with_stdout_contains("test bench_hello ...[..]")
         .with_stderr_contains(
             "\
@@ -323,11 +323,11 @@ fn cargo_bench_failing_test() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_with_lib_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -374,7 +374,7 @@ fn bench_with_lib_dep() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -387,12 +387,12 @@ fn bench_with_lib_dep() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_with_deep_lib_dep() {
     let p = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -434,7 +434,7 @@ fn bench_with_deep_lib_dep() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -446,11 +446,11 @@ fn bench_with_deep_lib_dep() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn external_bench_explicit() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -488,7 +488,7 @@ fn external_bench_explicit() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -501,7 +501,7 @@ fn external_bench_explicit() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn external_bench_implicit() {
     let p = project()
         .file(
@@ -531,7 +531,7 @@ fn external_bench_implicit() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -544,11 +544,11 @@ fn external_bench_implicit() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_autodiscover_2015() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -591,24 +591,24 @@ fn bench_autodiscover_2015() {
         )
         .build();
 
-    p.cargo("bench bench_basic")
+    p.crabgo("bench bench_basic")
         .with_stderr(
             "warning: \
-An explicit [[bench]] section is specified in Cargo.toml which currently
-disables Cargo from automatically inferring other benchmark targets.
+An explicit [[bench]] section is specified in Crabgo.toml which currently
+disables Crabgo from automatically inferring other benchmark targets.
 This inference behavior will change in the Rust 2018 edition and the following
 files will be included as a benchmark target:
 
 * [..]bench_basic.rs
 
-This is likely to break cargo build or cargo test as these files may not be
+This is likely to break crabgo build or crabgo test as these files may not be
 ready to be compiled as a benchmark target today. You can future-proof yourself
 and disable this warning by adding `autobenches = false` to your [package]
-section. You may also move the files to a location where Cargo would not
+section. You may also move the files to a location where Crabgo would not
 automatically infer them to be a target, such as in subfolders.
 
 For more information on this warning you can consult
-https://github.com/rust-lang/cargo/issues/5330
+https://github.com/rust-lang/crabgo/issues/5330
 [COMPILING] foo v0.0.1 ([CWD])
 [FINISHED] bench [optimized] target(s) in [..]
 [RUNNING] [..] (target/release/deps/foo-[..][EXE])
@@ -617,19 +617,19 @@ https://github.com/rust-lang/cargo/issues/5330
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn dont_run_examples() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
             "examples/dont-run-me-i-will-fail.rs",
-            r#"fn main() { panic!("Examples should not be run by 'cargo test'"); }"#,
+            r#"fn main() { panic!("Examples should not be run by 'crabgo test'"); }"#,
         )
         .build();
-    p.cargo("bench").run();
+    p.crabgo("bench").run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn pass_through_command_line() {
     let p = project()
         .file(
@@ -645,7 +645,7 @@ fn pass_through_command_line() {
         )
         .build();
 
-    p.cargo("bench bar")
+    p.crabgo("bench bar")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -655,7 +655,7 @@ fn pass_through_command_line() {
         .with_stdout_contains("test bar ... bench: [..]")
         .run();
 
-    p.cargo("bench foo")
+    p.crabgo("bench foo")
         .with_stderr(
             "[FINISHED] bench [optimized] target(s) in [..]
 [RUNNING] [..] (target/release/deps/foo-[..][EXE])",
@@ -664,12 +664,12 @@ fn pass_through_command_line() {
         .run();
 }
 
-// Regression test for running cargo-bench twice with
+// Regression test for running crabgo-bench twice with
 // tests in an rlib
-#[cargo_test(nightly, reason = "bench")]
-fn cargo_bench_twice() {
+#[crabgo_test(nightly, reason = "bench")]
+fn crabgo_bench_twice() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file(
             "src/foo.rs",
             r#"
@@ -685,15 +685,15 @@ fn cargo_bench_twice() {
         .build();
 
     for _ in 0..2 {
-        p.cargo("bench").run();
+        p.crabgo("bench").run();
     }
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn lib_bin_same_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -730,7 +730,7 @@ fn lib_bin_same_name() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -742,10 +742,10 @@ fn lib_bin_same_name() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn lib_with_standard_name() {
     let p = project()
-        .file("Cargo.toml", &basic_manifest("syntax", "0.0.1"))
+        .file("Crabgo.toml", &basic_manifest("syntax", "0.0.1"))
         .file(
             "src/lib.rs",
             "
@@ -775,7 +775,7 @@ fn lib_with_standard_name() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] syntax v0.0.1 ([CWD])
@@ -788,11 +788,11 @@ fn lib_with_standard_name() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn lib_with_standard_name2() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "syntax"
@@ -823,7 +823,7 @@ fn lib_with_standard_name2() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] syntax v0.0.1 ([CWD])
@@ -834,11 +834,11 @@ fn lib_with_standard_name2() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_dylib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -879,7 +879,7 @@ fn bench_dylib() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -894,7 +894,7 @@ fn bench_dylib() {
         .file("bar/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("bench -v")
+    p.crabgo("bench -v")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 ([CWD]/bar)
@@ -911,7 +911,7 @@ fn bench_dylib() {
         .run();
 
     p.root().move_into_the_past();
-    p.cargo("bench -v")
+    p.crabgo("bench -v")
         .with_stderr(
             "\
 [FRESH] bar v0.0.1 ([CWD]/bar)
@@ -924,11 +924,11 @@ fn bench_dylib() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_twice_with_build_cmd() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -950,7 +950,7 @@ fn bench_twice_with_build_cmd() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -960,7 +960,7 @@ fn bench_twice_with_build_cmd() {
         .with_stdout_contains("test foo ... bench: [..]")
         .run();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr(
             "[FINISHED] bench [optimized] target(s) in [..]
 [RUNNING] [..] (target/release/deps/foo-[..][EXE])",
@@ -969,11 +969,11 @@ fn bench_twice_with_build_cmd() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_with_examples() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1036,7 +1036,7 @@ fn bench_with_examples() {
         )
         .build();
 
-    p.cargo("bench -v")
+    p.crabgo("bench -v")
         .with_stderr(
             "\
 [COMPILING] foo v6.6.6 ([CWD])
@@ -1052,11 +1052,11 @@ fn bench_with_examples() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn test_a_bench() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1077,7 +1077,7 @@ fn test_a_bench() {
         .file("benches/b.rs", "#[test] fn foo() {}")
         .build();
 
-    p.cargo("test")
+    p.crabgo("test")
         .with_stderr(
             "\
 [COMPILING] foo v0.1.0 ([..])
@@ -1088,7 +1088,7 @@ fn test_a_bench() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn test_bench_no_run() {
     let p = project()
         .file("src/lib.rs", "")
@@ -1107,7 +1107,7 @@ fn test_bench_no_run() {
         )
         .build();
 
-    p.cargo("bench --no-run")
+    p.crabgo("bench --no-run")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1119,7 +1119,7 @@ fn test_bench_no_run() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn test_bench_no_run_emit_json() {
     let p = project()
         .file("src/lib.rs", "")
@@ -1138,7 +1138,7 @@ fn test_bench_no_run_emit_json() {
         )
         .build();
 
-    p.cargo("bench --no-run --message-format json")
+    p.crabgo("bench --no-run --message-format json")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -1148,10 +1148,10 @@ fn test_bench_no_run_emit_json() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn test_bench_no_fail_fast() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file(
             "src/main.rs",
             r#"
@@ -1188,7 +1188,7 @@ fn test_bench_no_fail_fast() {
         )
         .build();
 
-    p.cargo("bench --no-fail-fast -- --test-threads=1")
+    p.crabgo("bench --no-fail-fast -- --test-threads=1")
         .with_status(101)
         .with_stderr(
             "\
@@ -1210,11 +1210,11 @@ fn test_bench_no_fail_fast() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn test_bench_multiple_packages() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1234,7 +1234,7 @@ fn test_bench_multiple_packages() {
     let _bar = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1264,7 +1264,7 @@ fn test_bench_multiple_packages() {
     let _baz = project()
         .at("baz")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -1291,7 +1291,7 @@ fn test_bench_multiple_packages() {
         )
         .build();
 
-    p.cargo("bench -p bar -p baz")
+    p.crabgo("bench -p bar -p baz")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/bbaz-[..][EXE])")
         .with_stdout_contains("test bench_baz ... bench: [..]")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/bbar-[..][EXE])")
@@ -1299,11 +1299,11 @@ fn test_bench_multiple_packages() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_all_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1328,7 +1328,7 @@ fn bench_all_workspace() {
                 fn bench_foo(_: &mut Bencher) -> () { () }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .file(
             "bar/benches/bar.rs",
@@ -1344,7 +1344,7 @@ fn bench_all_workspace() {
         )
         .build();
 
-    p.cargo("bench --workspace")
+    p.crabgo("bench --workspace")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/bar-[..][EXE])")
         .with_stdout_contains("test bench_bar ... bench: [..]")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/foo-[..][EXE])")
@@ -1352,11 +1352,11 @@ fn bench_all_workspace() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_all_exclude() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1367,7 +1367,7 @@ fn bench_all_exclude() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file(
             "bar/src/lib.rs",
             r#"
@@ -1381,14 +1381,14 @@ fn bench_all_exclude() {
                 }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file(
             "baz/src/lib.rs",
             "#[test] pub fn baz() { break_the_build(); }",
         )
         .build();
 
-    p.cargo("bench --workspace --exclude baz")
+    p.crabgo("bench --workspace --exclude baz")
         .with_stdout_contains(
             "\
 running 1 test
@@ -1397,11 +1397,11 @@ test bar ... bench:           [..] ns/iter (+/- [..])",
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_all_exclude_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1412,7 +1412,7 @@ fn bench_all_exclude_glob() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file(
             "bar/src/lib.rs",
             r#"
@@ -1426,14 +1426,14 @@ fn bench_all_exclude_glob() {
                 }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file(
             "baz/src/lib.rs",
             "#[test] pub fn baz() { break_the_build(); }",
         )
         .build();
 
-    p.cargo("bench --workspace --exclude '*z'")
+    p.crabgo("bench --workspace --exclude '*z'")
         .with_stdout_contains(
             "\
 running 1 test
@@ -1442,17 +1442,17 @@ test bar ... bench:           [..] ns/iter (+/- [..])",
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_all_virtual_manifest() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .file(
             "bar/benches/bar.rs",
@@ -1466,7 +1466,7 @@ fn bench_all_virtual_manifest() {
                 fn bench_bar(_: &mut Bencher) -> () { () }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .file(
             "baz/benches/baz.rs",
@@ -1483,7 +1483,7 @@ fn bench_all_virtual_manifest() {
         .build();
 
     // The order in which bar and baz are built is not guaranteed
-    p.cargo("bench --workspace")
+    p.crabgo("bench --workspace")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/baz-[..][EXE])")
         .with_stdout_contains("test bench_baz ... bench: [..]")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/bar-[..][EXE])")
@@ -1491,17 +1491,17 @@ fn bench_all_virtual_manifest() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_virtual_manifest_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() { break_the_build(); }")
         .file(
             "bar/benches/bar.rs",
@@ -1515,7 +1515,7 @@ fn bench_virtual_manifest_glob() {
                 fn bench_bar(_: &mut Bencher) -> () { break_the_build(); }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .file(
             "baz/benches/baz.rs",
@@ -1532,7 +1532,7 @@ fn bench_virtual_manifest_glob() {
         .build();
 
     // The order in which bar and baz are built is not guaranteed
-    p.cargo("bench -p '*z'")
+    p.crabgo("bench -p '*z'")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/baz-[..][EXE])")
         .with_stdout_contains("test bench_baz ... bench: [..]")
         .with_stderr_does_not_contain("[RUNNING] [..] (target/release/deps/bar-[..][EXE])")
@@ -1540,12 +1540,12 @@ fn bench_virtual_manifest_glob() {
         .run();
 }
 
-// https://github.com/rust-lang/cargo/issues/4287
-#[cargo_test(nightly, reason = "bench")]
+// https://github.com/rust-lang/crabgo/issues/4287
+#[crabgo_test(nightly, reason = "bench")]
 fn legacy_bench_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1570,26 +1570,26 @@ fn legacy_bench_name() {
         )
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr_contains(
             "\
 [WARNING] path `[..]src/bench.rs` was erroneously implicitly accepted for benchmark `bench`,
-please set bench.path in Cargo.toml",
+please set bench.path in Crabgo.toml",
         )
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn bench_virtual_manifest_all_implied() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn foo() {}")
         .file(
             "bar/benches/bar.rs",
@@ -1601,7 +1601,7 @@ fn bench_virtual_manifest_all_implied() {
                 fn bench_bar(_: &mut Bencher) -> () { () }
             "#,
         )
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .file(
             "baz/benches/baz.rs",
@@ -1617,7 +1617,7 @@ fn bench_virtual_manifest_all_implied() {
 
     // The order in which bar and baz are built is not guaranteed
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/baz-[..][EXE])")
         .with_stdout_contains("test bench_baz ... bench: [..]")
         .with_stderr_contains("[RUNNING] [..] (target/release/deps/bar-[..][EXE])")
@@ -1625,7 +1625,7 @@ fn bench_virtual_manifest_all_implied() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "bench")]
+#[crabgo_test(nightly, reason = "bench")]
 fn json_artifact_includes_executable_for_benchmark() {
     let p = project()
         .file(
@@ -1642,7 +1642,7 @@ fn json_artifact_includes_executable_for_benchmark() {
         )
         .build();
 
-    p.cargo("bench --no-run --message-format=json")
+    p.crabgo("bench --no-run --message-format=json")
         .with_json(
             r#"
                 {

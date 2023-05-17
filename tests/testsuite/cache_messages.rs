@@ -1,14 +1,14 @@
 //! Tests for caching compiler diagnostics.
 
 use super::messages::raw_rustc_output;
-use cargo_test_support::tools;
-use cargo_test_support::{basic_manifest, is_coarse_mtime, project, registry::Package, sleep_ms};
+use crabgo_test_support::tools;
+use crabgo_test_support::{basic_manifest, is_coarse_mtime, project, registry::Package, sleep_ms};
 
 fn as_str(bytes: &[u8]) -> &str {
     std::str::from_utf8(bytes).expect("valid utf-8")
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     // A simple example that generates two warnings (unused functions).
     let p = project()
@@ -26,23 +26,23 @@ fn simple() {
     let rustc_output = raw_rustc_output(&p, "src/lib.rs", &[]);
 
     // -q so the output is the same as rustc (no "Compiling" or "Finished").
-    let cargo_output1 = p
-        .cargo("check -q --color=never")
+    let crabgo_output1 = p
+        .crabgo("check -q --color=never")
         .exec_with_output()
-        .expect("cargo to run");
-    assert_eq!(rustc_output, as_str(&cargo_output1.stderr));
-    assert!(cargo_output1.stdout.is_empty());
+        .expect("crabgo to run");
+    assert_eq!(rustc_output, as_str(&crabgo_output1.stderr));
+    assert!(crabgo_output1.stdout.is_empty());
     // Check that the cached version is exactly the same.
-    let cargo_output2 = p
-        .cargo("check -q")
+    let crabgo_output2 = p
+        .crabgo("check -q")
         .exec_with_output()
-        .expect("cargo to run");
-    assert_eq!(rustc_output, as_str(&cargo_output2.stderr));
-    assert!(cargo_output2.stdout.is_empty());
+        .expect("crabgo to run");
+    assert_eq!(rustc_output, as_str(&crabgo_output2.stderr));
+    assert!(crabgo_output2.stdout.is_empty());
 }
 
 // same as `simple`, except everything is using the short format
-#[cargo_test]
+#[crabgo_test]
 fn simple_short() {
     let p = project()
         .file(
@@ -56,22 +56,22 @@ fn simple_short() {
 
     let rustc_output = raw_rustc_output(&p, "src/lib.rs", &["--error-format=short"]);
 
-    let cargo_output1 = p
-        .cargo("check -q --color=never --message-format=short")
+    let crabgo_output1 = p
+        .crabgo("check -q --color=never --message-format=short")
         .exec_with_output()
-        .expect("cargo to run");
-    assert_eq!(rustc_output, as_str(&cargo_output1.stderr));
-    // assert!(cargo_output1.stdout.is_empty());
-    let cargo_output2 = p
-        .cargo("check -q --message-format=short")
+        .expect("crabgo to run");
+    assert_eq!(rustc_output, as_str(&crabgo_output1.stderr));
+    // assert!(crabgo_output1.stdout.is_empty());
+    let crabgo_output2 = p
+        .crabgo("check -q --message-format=short")
         .exec_with_output()
-        .expect("cargo to run");
-    println!("{}", String::from_utf8_lossy(&cargo_output2.stdout));
-    assert_eq!(rustc_output, as_str(&cargo_output2.stderr));
-    assert!(cargo_output2.stdout.is_empty());
+        .expect("crabgo to run");
+    println!("{}", String::from_utf8_lossy(&crabgo_output2.stdout));
+    assert_eq!(rustc_output, as_str(&crabgo_output2.stderr));
+    assert!(crabgo_output2.stdout.is_empty());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn color() {
     // Check enabling/disabling color.
     let p = project().file("src/lib.rs", "fn a() {}").build();
@@ -99,66 +99,66 @@ fn color() {
     assert!(!rustc_nocolor.contains("\x1b["));
 
     // First pass, non-cached, with color, should be the same.
-    let cargo_output1 = p
-        .cargo("check -q --color=always")
+    let crabgo_output1 = p
+        .crabgo("check -q --color=always")
         .exec_with_output()
-        .expect("cargo to run");
-    compare(&rustc_color, as_str(&cargo_output1.stderr));
+        .expect("crabgo to run");
+    compare(&rustc_color, as_str(&crabgo_output1.stderr));
 
     // Replay cached, with color.
-    let cargo_output2 = p
-        .cargo("check -q --color=always")
+    let crabgo_output2 = p
+        .crabgo("check -q --color=always")
         .exec_with_output()
-        .expect("cargo to run");
-    compare(&rustc_color, as_str(&cargo_output2.stderr));
+        .expect("crabgo to run");
+    compare(&rustc_color, as_str(&crabgo_output2.stderr));
 
     // Replay cached, no color.
-    let cargo_output_nocolor = p
-        .cargo("check -q --color=never")
+    let crabgo_output_nocolor = p
+        .crabgo("check -q --color=never")
         .exec_with_output()
-        .expect("cargo to run");
-    compare(&rustc_nocolor, as_str(&cargo_output_nocolor.stderr));
+        .expect("crabgo to run");
+    compare(&rustc_nocolor, as_str(&crabgo_output_nocolor.stderr));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cached_as_json() {
     // Check that cached JSON output is the same.
     let p = project().file("src/lib.rs", "fn a() {}").build();
 
     // Grab the non-cached output, feature disabled.
     // NOTE: When stabilizing, this will need to be redone.
-    let cargo_output = p
-        .cargo("check --message-format=json")
+    let crabgo_output = p
+        .crabgo("check --message-format=json")
         .exec_with_output()
-        .expect("cargo to run");
-    assert!(cargo_output.status.success());
-    let orig_cargo_out = as_str(&cargo_output.stdout);
-    assert!(orig_cargo_out.contains("compiler-message"));
-    p.cargo("clean").run();
+        .expect("crabgo to run");
+    assert!(crabgo_output.status.success());
+    let orig_crabgo_out = as_str(&crabgo_output.stdout);
+    assert!(orig_crabgo_out.contains("compiler-message"));
+    p.crabgo("clean").run();
 
     // Check JSON output, not fresh.
-    let cargo_output1 = p
-        .cargo("check --message-format=json")
+    let crabgo_output1 = p
+        .crabgo("check --message-format=json")
         .exec_with_output()
-        .expect("cargo to run");
-    assert_eq!(as_str(&cargo_output1.stdout), orig_cargo_out);
+        .expect("crabgo to run");
+    assert_eq!(as_str(&crabgo_output1.stdout), orig_crabgo_out);
 
     // Check JSON output, fresh.
-    let cargo_output2 = p
-        .cargo("check --message-format=json")
+    let crabgo_output2 = p
+        .crabgo("check --message-format=json")
         .exec_with_output()
-        .expect("cargo to run");
+        .expect("crabgo to run");
     // The only difference should be this field.
-    let fix_fresh = as_str(&cargo_output2.stdout).replace("\"fresh\":true", "\"fresh\":false");
-    assert_eq!(fix_fresh, orig_cargo_out);
+    let fix_fresh = as_str(&crabgo_output2.stdout).replace("\"fresh\":true", "\"fresh\":false");
+    assert_eq!(fix_fresh, orig_crabgo_out);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clears_cache_after_fix() {
     // Make sure the cache is invalidated when there is no output.
     let p = project().file("src/lib.rs", "fn asdf() {}").build();
     // Fill the cache.
-    p.cargo("check").with_stderr_contains("[..]asdf[..]").run();
+    p.crabgo("check").with_stderr_contains("[..]asdf[..]").run();
     let cpath = p
         .glob("target/debug/.fingerprint/foo-*/output-*")
         .next()
@@ -172,7 +172,7 @@ fn clears_cache_after_fix() {
     }
     p.change_file("src/lib.rs", "");
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stdout("")
         .with_stderr(
             "\
@@ -187,7 +187,7 @@ fn clears_cache_after_fix() {
     );
 
     // And again, check the cache is correct.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stdout("")
         .with_stderr(
             "\
@@ -197,7 +197,7 @@ fn clears_cache_after_fix() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustdoc() {
     // Create a warning in rustdoc.
     let p = project()
@@ -211,7 +211,7 @@ fn rustdoc() {
         .build();
 
     let rustdoc_output = p
-        .cargo("doc -q --color=always")
+        .crabgo("doc -q --color=always")
         .exec_with_output()
         .expect("rustdoc to run");
     assert!(rustdoc_output.status.success());
@@ -225,23 +225,23 @@ fn rustdoc() {
 
     // Check the cached output.
     let rustdoc_output = p
-        .cargo("doc -q --color=always")
+        .crabgo("doc -q --color=always")
         .exec_with_output()
         .expect("rustdoc to run");
     assert_eq!(as_str(&rustdoc_output.stderr), rustdoc_stderr);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fix() {
     // Make sure `fix` is not broken by caching.
     let p = project().file("src/lib.rs", "pub fn try() {}").build();
 
-    p.cargo("fix --edition --allow-no-vcs").run();
+    p.crabgo("fix --edition --allow-no-vcs").run();
 
     assert_eq!(p.read_file("src/lib.rs"), "pub fn r#try() {}");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn very_verbose() {
     // Handle cap-lints in dependencies.
     Package::new("bar", "1.0.0")
@@ -250,7 +250,7 @@ fn very_verbose() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -263,18 +263,18 @@ fn very_verbose() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -vv")
+    p.crabgo("check -vv")
         .with_stderr_contains("[..]not_used[..]")
         .run();
 
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
-    p.cargo("check -vv")
+    p.crabgo("check -vv")
         .with_stderr_contains("[..]not_used[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doesnt_create_extra_files() {
     // Ensure it doesn't create `output` files when not needed.
     Package::new("dep", "1.0.0")
@@ -283,7 +283,7 @@ fn doesnt_create_extra_files() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -297,7 +297,7 @@ fn doesnt_create_extra_files() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     assert_eq!(
         p.glob("target/debug/.fingerprint/foo-*/output-*").count(),
@@ -311,19 +311,19 @@ fn doesnt_create_extra_files() {
         sleep_ms(1000);
     }
     p.change_file("src/lib.rs", "fn unused() {}");
-    p.cargo("check").run();
+    p.crabgo("check").run();
     assert_eq!(
         p.glob("target/debug/.fingerprint/foo-*/output-*").count(),
         1
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replay_non_json() {
     // Handles non-json output.
     let rustc = project()
         .at("rustc")
-        .file("Cargo.toml", &basic_manifest("rustc_alt", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("rustc_alt", "1.0.0"))
         .file(
             "src/main.rs",
             r#"
@@ -338,9 +338,9 @@ fn replay_non_json() {
             "#,
         )
         .build();
-    rustc.cargo("build").run();
+    rustc.crabgo("build").run();
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", rustc.bin("rustc_alt"))
         .with_stderr(
             "\
@@ -352,7 +352,7 @@ line 2
         )
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", rustc.bin("rustc_alt"))
         .with_stderr(
             "\
@@ -364,7 +364,7 @@ line 2
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn caching_large_output() {
     // Handles large number of messages.
     // This is an arbitrary amount that is greater than the 100 used in
@@ -372,7 +372,7 @@ fn caching_large_output() {
     const COUNT: usize = 250;
     let rustc = project()
         .at("rustc")
-        .file("Cargo.toml", &basic_manifest("rustc_alt", "1.0.0"))
+        .file("Crabgo.toml", &basic_manifest("rustc_alt", "1.0.0"))
         .file(
             "src/main.rs",
             &format!(
@@ -399,9 +399,9 @@ fn caching_large_output() {
         expected.push_str(&format!("test message {}\n", i));
     }
 
-    rustc.cargo("build").run();
+    rustc.crabgo("build").run();
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", rustc.bin("rustc_alt"))
         .with_stderr(&format!(
             "\
@@ -413,7 +413,7 @@ fn caching_large_output() {
         ))
         .run();
 
-    p.cargo("check")
+    p.crabgo("check")
         .env("RUSTC", rustc.bin("rustc_alt"))
         .with_stderr(&format!(
             "\
@@ -425,7 +425,7 @@ fn caching_large_output() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rustc_workspace_wrapper() {
     let p = project()
         .file(
@@ -435,13 +435,13 @@ fn rustc_workspace_wrapper() {
         )
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("WRAPPER CALLED: rustc --crate-name foo src/lib.rs [..]")
         .run();
 
     // Check without a wrapper should rebuild
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains(
             "\
 [CHECKING] foo [..]
@@ -453,21 +453,21 @@ fn rustc_workspace_wrapper() {
         .run();
 
     // Again, reading from the cache.
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .env("RUSTC_WORKSPACE_WRAPPER", tools::echo_wrapper())
         .with_stderr_contains("[FRESH] foo [..]")
         .with_stdout_does_not_contain("WRAPPER CALLED: rustc --crate-name foo src/lib.rs [..]")
         .run();
 
     // And `check` should also be fresh, reading from cache.
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_stderr_contains("[FRESH] foo [..]")
         .with_stderr_contains("[WARNING] [..]unused_func[..]")
         .with_stdout_does_not_contain("WRAPPER CALLED: rustc --crate-name foo src/lib.rs [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn wacky_hashless_fingerprint() {
     // On Windows, executables don't have hashes. This checks for a bad
     // assumption that caused bad caching.
@@ -475,14 +475,14 @@ fn wacky_hashless_fingerprint() {
         .file("src/bin/a.rs", "fn main() { let unused = 1; }")
         .file("src/bin/b.rs", "fn main() {}")
         .build();
-    p.cargo("check --bin b")
+    p.crabgo("check --bin b")
         .with_stderr_does_not_contain("[..]unused[..]")
         .run();
-    p.cargo("check --bin a")
+    p.crabgo("check --bin a")
         .with_stderr_contains("[..]unused[..]")
         .run();
     // This should not pick up the cache from `a`.
-    p.cargo("check --bin b")
+    p.crabgo("check --bin b")
         .with_stderr_does_not_contain("[..]unused[..]")
         .run();
 }

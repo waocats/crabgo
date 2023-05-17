@@ -30,7 +30,7 @@ label = "O-windows"
 new_pr = true
 
 [assign]
-contributing_url = "https://rust-lang.github.io/cargo/contrib/"
+contributing_url = "https://rust-lang.github.io/crabgo/contrib/"
 warn_non_default_branch = true
 
 [assign.owners]
@@ -38,94 +38,94 @@ warn_non_default_branch = true
 
 [autolabel."A-build-execution"]
 trigger_files = [
-  "src/cargo/core/compiler/compilation.rs",
-  "src/cargo/core/compiler/job_queue/",
-  "src/cargo/core/compiler/mod.rs",
+  "src/crabgo/core/compiler/compilation.rs",
+  "src/crabgo/core/compiler/job_queue/",
+  "src/crabgo/core/compiler/mod.rs",
 ]
 
 [autolabel."A-build-scripts"]
-trigger_files = ["src/cargo/core/compiler/custom_build.rs"]
+trigger_files = ["src/crabgo/core/compiler/custom_build.rs"]
 
 [autolabel."A-cache-messages"]
-trigger_files = ["src/cargo/util/rustc.rs"]
+trigger_files = ["src/crabgo/util/rustc.rs"]
 
-[autolabel."A-cargo-targets"]
+[autolabel."A-crabgo-targets"]
 trigger_files = [
-  "src/cargo/ops/cargo_compile/compile_filter.rs",
-  "src/cargo/ops/cargo_compile/unit_generator.rs",
+  "src/crabgo/ops/crabgo_compile/compile_filter.rs",
+  "src/crabgo/ops/crabgo_compile/unit_generator.rs",
 ]
 
 [autolabel."A-cfg-expr"]
 trigger_files = [
-  "crates/cargo-platform/",
-  "src/cargo/core/compiler/build_context/target_info.rs",
+  "crates/crabgo-platform/",
+  "src/crabgo/core/compiler/build_context/target_info.rs",
 ]
 
 [autolabel."A-cli"]
-trigger_files = ["src/bin/", "src/cargo/util/command_prelude.rs"]
+trigger_files = ["src/bin/", "src/crabgo/util/command_prelude.rs"]
 
 [autolabel."A-cli-help"]
 trigger_files = ["crates/mdman/", "src/etc/man/"]
 
 [autolabel."A-completions"]
-trigger_files = ["src/etc/_cargo", "src/etc/cargo.bashcomp.sh"]
+trigger_files = ["src/etc/_crabgo", "src/etc/crabgo.bashcomp.sh"]
 
 [autolabel."A-configuration"]
-trigger_files = ["src/cargo/util/config/mod.rs"]
+trigger_files = ["src/crabgo/util/config/mod.rs"]
 
 [autolabel."A-console-output"]
 trigger_files = [
-  "src/cargo/core/shell.rs",
-  "src/cargo/util/machine_message.rs",
-  "src/cargo/util/progress.rs",
+  "src/crabgo/core/shell.rs",
+  "src/crabgo/util/machine_message.rs",
+  "src/crabgo/util/progress.rs",
 ]
 
 [autolabel."A-crate-dependencies"]
-trigger_files = ["src/cargo/core/dependency.rs"]
+trigger_files = ["src/crabgo/core/dependency.rs"]
 
 [autolabel."A-crate-types"]
-trigger_files = ["src/cargo/core/compiler/crate_type.rs"]
+trigger_files = ["src/crabgo/core/compiler/crate_type.rs"]
 
 [autolabel."A-dep-info"]
-trigger_files = ["src/cargo/core/compiler/output_depinfo.rs"]
+trigger_files = ["src/crabgo/core/compiler/output_depinfo.rs"]
 
 [autolabel."A-dependency-resolution"]
 trigger_files = [
   "benches/benchsuite/benches/resolve.rs",
   "crates/resolver-tests/",
-  "src/cargo/core/resolver/",
+  "src/crabgo/core/resolver/",
 ]
 
 [autolabel."A-directory-source"]
-trigger_files = ["src/cargo/sources/directory.rs"]
+trigger_files = ["src/crabgo/sources/directory.rs"]
 
-[autolabel."A-documenting-cargo-itself"]
+[autolabel."A-documenting-crabgo-itself"]
 trigger_files = ["src/doc/"]
 
 [autolabel."A-environment-variables"]
 trigger_files = [
   "crates/home/",
-  "src/cargo/util/config/environment.rs",
+  "src/crabgo/util/config/environment.rs",
 ]
 
 [autolabel."A-errors"]
-trigger_files = ["src/cargo/util/diagnostic_server.rs"]
+trigger_files = ["src/crabgo/util/diagnostic_server.rs"]
 
 [autolabel."A-features2"]
-trigger_files = ["src/cargo/core/resolver/features.rs"]
+trigger_files = ["src/crabgo/core/resolver/features.rs"]
 
 [autolabel."A-filesystem"]
-trigger_files = ["src/cargo/util/flock.rs", "src/cargo/util/important_paths.rs"]
+trigger_files = ["src/crabgo/util/flock.rs", "src/crabgo/util/important_paths.rs"]
 
 [autolabel."A-future-incompat"]
-trigger_files = ["src/cargo/core/compiler/future_incompat.rs"]
+trigger_files = ["src/crabgo/core/compiler/future_incompat.rs"]
 
 [autolabel."A-git"]
-trigger_files = ["src/cargo/sources/git/"]
+trigger_files = ["src/crabgo/sources/git/"]
 
 [autolabel."A-infrastructure"]
 trigger_files = [
-  ".cargo/",
+  ".crabgo/",
   ".github/",
   "build.rs",
   "ci/",
@@ -137,199 +137,199 @@ trigger_files = [
 ]
 
 [autolabel."A-interacts-with-crates.io"]
-trigger_files = ["crates/crates-io/", "src/cargo/ops/registry.rs"]
+trigger_files = ["crates/crates-io/", "src/crabgo/ops/registry.rs"]
 
 [autolabel."A-layout"]
 trigger_files = [
-  "src/cargo/core/compiler/context/compilation_files.rs",
-  "src/cargo/core/compiler/layout.rs",
+  "src/crabgo/core/compiler/context/compilation_files.rs",
+  "src/crabgo/core/compiler/layout.rs",
 ]
 
 [autolabel."A-links"]
-trigger_files = ["src/cargo/core/compiler/links.rs"]
+trigger_files = ["src/crabgo/core/compiler/links.rs"]
 
 [autolabel."A-local-registry-source"]
-trigger_files = ["src/cargo/sources/registry/local.rs"]
+trigger_files = ["src/crabgo/sources/registry/local.rs"]
 
 [autolabel."A-lockfile"]
-trigger_files = ["src/cargo/ops/lockfile.rs", "src/cargo/core/resolver/encode.rs"]
+trigger_files = ["src/crabgo/ops/lockfile.rs", "src/crabgo/core/resolver/encode.rs"]
 
 [autolabel."A-lto"]
-trigger_files = ["src/cargo/core/compiler/lto.rs"]
+trigger_files = ["src/crabgo/core/compiler/lto.rs"]
 
 [autolabel."A-manifest"]
 trigger_files = [
-    "src/cargo/core/manifest.rs",
-    "src/cargo/util/toml/mod.rs",
-    "src/cargo/util/toml_mut/",
+    "src/crabgo/core/manifest.rs",
+    "src/crabgo/util/toml/mod.rs",
+    "src/crabgo/util/toml_mut/",
 ]
 
 [autolabel."A-networking"]
-trigger_files = ["src/cargo/util/network/"]
+trigger_files = ["src/crabgo/util/network/"]
 
 [autolabel."A-overrides"]
-trigger_files = ["src/cargo/sources/replaced.rs"]
+trigger_files = ["src/crabgo/sources/replaced.rs"]
 
 [autolabel."A-profiles"]
-trigger_files = ["src/cargo/core/profiles.rs"]
+trigger_files = ["src/crabgo/core/profiles.rs"]
 
 [autolabel."A-rebuild-detection"]
-trigger_files = ["src/cargo/core/compiler/fingerprint/"]
+trigger_files = ["src/crabgo/core/compiler/fingerprint/"]
 
 [autolabel."A-registries"]
-trigger_files = ["src/cargo/sources/registry/", "src/cargo/core/registry.rs"]
+trigger_files = ["src/crabgo/sources/registry/", "src/crabgo/core/registry.rs"]
 
 [autolabel."A-registry-authentication"]
-trigger_files = ["src/cargo/util/auth.rs", "credential/"]
+trigger_files = ["src/crabgo/util/auth.rs", "credential/"]
 
 [autolabel."A-semver"]
 trigger_files = [
   "crates/semver-check",
-  "src/cargo/util/semver_ext.rs",
-  "src/cargo/util/to_semver.rs",
+  "src/crabgo/util/semver_ext.rs",
+  "src/crabgo/util/to_semver.rs",
 ]
 
 [autolabel."A-source-replacement"]
-trigger_files = ["src/cargo/sources/replaced.rs"]
+trigger_files = ["src/crabgo/sources/replaced.rs"]
 
 [autolabel."A-sparse-registry"]
-trigger_files = ["src/cargo/sources/registry/http_remote.rs"]
+trigger_files = ["src/crabgo/sources/registry/http_remote.rs"]
 
-[autolabel."A-testing-cargo-itself"]
+[autolabel."A-testing-crabgo-itself"]
 trigger_files = [
     "benches/",
-    "crates/cargo-test-macro/",
-    "crates/cargo-test-support/",
+    "crates/crabgo-test-macro/",
+    "crates/crabgo-test-support/",
 ]
 
 [autolabel."A-timings"]
 trigger_files = [
-    "src/cargo/core/compiler/timings.js",
-    "src/cargo/core/compiler/timings.rs",
-    "src/cargo/util/cpu.rs",
+    "src/crabgo/core/compiler/timings.js",
+    "src/crabgo/core/compiler/timings.rs",
+    "src/crabgo/util/cpu.rs",
 ]
 
 [autolabel."A-unstable"]
-trigger_files = ["src/cargo/core/features.rs"]
+trigger_files = ["src/crabgo/core/features.rs"]
 
 [autolabel."A-vcs"]
-trigger_files = ["src/cargo/util/vcs.rs"]
+trigger_files = ["src/crabgo/util/vcs.rs"]
 
 [autolabel."A-workspaces"]
 trigger_files = [
   "benches/benchsuite/benches/workspace_initialization.rs",
-  "src/cargo/core/workspace.rs",
-  "src/cargo/util/workspace.rs"
+  "src/crabgo/core/workspace.rs",
+  "src/crabgo/util/workspace.rs"
 ]
 
 [autolabel."Command-add"]
-trigger_files = ["src/bin/cargo/commands/add.rs", "src/cargo/ops/cargo_add/"]
+trigger_files = ["src/bin/crabgo/commands/add.rs", "src/crabgo/ops/crabgo_add/"]
 
 [autolabel."Command-bench"]
-trigger_files = ["src/bin/cargo/commands/bench.rs"]
+trigger_files = ["src/bin/crabgo/commands/bench.rs"]
 
 [autolabel."Command-build"]
-trigger_files = ["src/bin/cargo/commands/build.rs"]
+trigger_files = ["src/bin/crabgo/commands/build.rs"]
 
 [autolabel."Command-check"]
-trigger_files = ["src/bin/cargo/commands/check.rs"]
+trigger_files = ["src/bin/crabgo/commands/check.rs"]
 
 [autolabel."Command-clean"]
-trigger_files = ["src/bin/cargo/commands/clean.rs", "src/cargo/ops/cargo_clean.rs"]
+trigger_files = ["src/bin/crabgo/commands/clean.rs", "src/crabgo/ops/crabgo_clean.rs"]
 
 [autolabel."Command-doc"]
-trigger_files = ["src/bin/cargo/commands/doc.rs", "src/cargo/ops/cargo_doc.rs"]
+trigger_files = ["src/bin/crabgo/commands/doc.rs", "src/crabgo/ops/crabgo_doc.rs"]
 
 [autolabel."Command-fetch"]
-trigger_files = ["src/bin/cargo/commands/fetch.rs", "src/cargo/ops/cargo_fetch.rs"]
+trigger_files = ["src/bin/crabgo/commands/fetch.rs", "src/crabgo/ops/crabgo_fetch.rs"]
 
 [autolabel."Command-fix"]
 trigger_files = [
-    "src/bin/cargo/commands/fix.rs",
-    "src/cargo/ops/fix.rs",
-    "src/cargo/util/lockserver.rs",
+    "src/bin/crabgo/commands/fix.rs",
+    "src/crabgo/ops/fix.rs",
+    "src/crabgo/util/lockserver.rs",
 ]
 
 [autolabel."Command-generate-lockfile"]
-trigger_files = ["src/bin/cargo/commands/generate_lockfile.rs", "src/cargo/ops/cargo_generate_lockfile.rs"]
+trigger_files = ["src/bin/crabgo/commands/generate_lockfile.rs", "src/crabgo/ops/crabgo_generate_lockfile.rs"]
 
 [autolabel."Command-git-checkout"]
-trigger_files = ["src/bin/cargo/commands/git_checkout.rs"]
+trigger_files = ["src/bin/crabgo/commands/git_checkout.rs"]
 
 [autolabel."Command-init"]
-trigger_files = ["src/bin/cargo/commands/init.rs"]
+trigger_files = ["src/bin/crabgo/commands/init.rs"]
 
 [autolabel."Command-install"]
-trigger_files = ["src/bin/cargo/commands/install.rs", "src/cargo/ops/cargo_install.rs"]
+trigger_files = ["src/bin/crabgo/commands/install.rs", "src/crabgo/ops/crabgo_install.rs"]
 
 [autolabel."Command-locate-project"]
-trigger_files = ["src/bin/cargo/commands/locate_project.rs"]
+trigger_files = ["src/bin/crabgo/commands/locate_project.rs"]
 
 [autolabel."Command-login"]
-trigger_files = ["src/bin/cargo/commands/login.rs"]
+trigger_files = ["src/bin/crabgo/commands/login.rs"]
 
 [autolabel."Command-logout"]
-trigger_files = ["src/bin/cargo/commands/logout.rs"]
+trigger_files = ["src/bin/crabgo/commands/logout.rs"]
 
 [autolabel."Command-metadata"]
-trigger_files = ["src/bin/cargo/commands/metadata.rs", "src/cargo/ops/cargo_output_metadata.rs"]
+trigger_files = ["src/bin/crabgo/commands/metadata.rs", "src/crabgo/ops/crabgo_output_metadata.rs"]
 
 [autolabel."Command-new"]
-trigger_files = ["src/bin/cargo/commands/new.rs", "src/cargo/ops/cargo_new.rs"]
+trigger_files = ["src/bin/crabgo/commands/new.rs", "src/crabgo/ops/crabgo_new.rs"]
 
 [autolabel."Command-owner"]
-trigger_files = ["src/bin/cargo/commands/owner.rs"]
+trigger_files = ["src/bin/crabgo/commands/owner.rs"]
 
 [autolabel."Command-package"]
-trigger_files = ["src/bin/cargo/commands/package.rs", "src/cargo/ops/cargo_package.rs"]
+trigger_files = ["src/bin/crabgo/commands/package.rs", "src/crabgo/ops/crabgo_package.rs"]
 
 [autolabel."Command-pkgid"]
-trigger_files = ["src/bin/cargo/commands/pkgid.rs", "src/cargo/ops/cargo_pkgid.rs"]
+trigger_files = ["src/bin/crabgo/commands/pkgid.rs", "src/crabgo/ops/crabgo_pkgid.rs"]
 
 [autolabel."Command-publish"]
-trigger_files = ["src/bin/cargo/commands/publish.rs"]
+trigger_files = ["src/bin/crabgo/commands/publish.rs"]
 
 [autolabel."Command-read-manifest"]
-trigger_files = ["src/bin/cargo/commands/read_manifest.rs", "src/cargo/ops/cargo_read_manifest.rs"]
+trigger_files = ["src/bin/crabgo/commands/read_manifest.rs", "src/crabgo/ops/crabgo_read_manifest.rs"]
 
 [autolabel."Command-remove"]
-trigger_files = ["src/bin/cargo/commands/remove.rs", "src/cargo/ops/cargo_remove.rs"]
+trigger_files = ["src/bin/crabgo/commands/remove.rs", "src/crabgo/ops/crabgo_remove.rs"]
 
 [autolabel."Command-report"]
-trigger_files = ["src/bin/cargo/commands/report.rs"]
+trigger_files = ["src/bin/crabgo/commands/report.rs"]
 
 [autolabel."Command-run"]
-trigger_files = ["src/bin/cargo/commands/run.rs", "src/cargo/ops/cargo_run.rs"]
+trigger_files = ["src/bin/crabgo/commands/run.rs", "src/crabgo/ops/crabgo_run.rs"]
 
 [autolabel."Command-rustc"]
-trigger_files = ["src/bin/cargo/commands/rustc.rs"]
+trigger_files = ["src/bin/crabgo/commands/rustc.rs"]
 
 [autolabel."Command-rustdoc"]
-trigger_files = ["src/bin/cargo/commands/rustdoc.rs"]
+trigger_files = ["src/bin/crabgo/commands/rustdoc.rs"]
 
 [autolabel."Command-search"]
-trigger_files = ["src/bin/cargo/commands/search.rs"]
+trigger_files = ["src/bin/crabgo/commands/search.rs"]
 
 [autolabel."Command-test"]
-trigger_files = ["src/bin/cargo/commands/test.rs", "src/cargo/ops/cargo_test.rs"]
+trigger_files = ["src/bin/crabgo/commands/test.rs", "src/crabgo/ops/crabgo_test.rs"]
 
 [autolabel."Command-tree"]
-trigger_files = ["src/bin/cargo/commands/tree.rs", "src/cargo/ops/tree/"]
+trigger_files = ["src/bin/crabgo/commands/tree.rs", "src/crabgo/ops/tree/"]
 
 [autolabel."Command-uninstall"]
-trigger_files = ["src/bin/cargo/commands/uninstall.rs", "src/cargo/ops/cargo_uninstall.rs"]
+trigger_files = ["src/bin/crabgo/commands/uninstall.rs", "src/crabgo/ops/crabgo_uninstall.rs"]
 
 [autolabel."Command-update"]
-trigger_files = ["src/bin/cargo/commands/update.rs"]
+trigger_files = ["src/bin/crabgo/commands/update.rs"]
 
 [autolabel."Command-vendor"]
-trigger_files = ["src/bin/cargo/commands/vendor.rs", "src/cargo/ops/vendor.rs"]
+trigger_files = ["src/bin/crabgo/commands/vendor.rs", "src/crabgo/ops/vendor.rs"]
 
 [autolabel."Command-verify-project"]
-trigger_files = ["src/bin/cargo/commands/verify_project.rs"]
+trigger_files = ["src/bin/crabgo/commands/verify_project.rs"]
 
 [autolabel."Command-version"]
-trigger_files = ["src/bin/cargo/commands/version.rs"]
+trigger_files = ["src/bin/crabgo/commands/version.rs"]
 
 [autolabel."Command-yank"]
-trigger_files = ["src/bin/cargo/commands/yank.rs"]
+trigger_files = ["src/bin/crabgo/commands/yank.rs"]

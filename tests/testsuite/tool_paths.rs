@@ -1,16 +1,16 @@
 //! Tests for configuration values that point to programs.
 
-use cargo_test_support::{basic_lib_manifest, project, rustc_host, rustc_host_env};
+use crabgo_test_support::{basic_lib_manifest, project, rustc_host, rustc_host_env};
 
-#[cargo_test]
+#[crabgo_test]
 fn pathless_tools() {
     let target = rustc_host();
 
     let foo = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -21,7 +21,7 @@ fn pathless_tools() {
         )
         .build();
 
-    foo.cargo("build --verbose")
+    foo.crabgo("build --verbose")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -32,7 +32,7 @@ fn pathless_tools() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn absolute_tools() {
     let target = rustc_host();
 
@@ -44,10 +44,10 @@ fn absolute_tools() {
     };
 
     let foo = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{target}]
@@ -59,7 +59,7 @@ fn absolute_tools() {
         )
         .build();
 
-    foo.cargo("build --verbose")
+    foo.crabgo("build --verbose")
         .with_stderr(
             "\
 [COMPILING] foo v0.5.0 ([CWD])
@@ -70,7 +70,7 @@ fn absolute_tools() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn relative_tools() {
     let target = rustc_host();
 
@@ -82,13 +82,13 @@ fn relative_tools() {
     };
 
     // Funky directory structure to test that relative tool paths are made absolute
-    // by reference to the `.cargo/..` directory and not to (for example) the CWD.
+    // by reference to the `.crabgo/..` directory and not to (for example) the CWD.
     let p = project()
         .no_manifest()
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{target}]
@@ -102,7 +102,7 @@ fn relative_tools() {
 
     let prefix = p.root().into_os_string().into_string().unwrap();
 
-    p.cargo("build --verbose")
+    p.crabgo("build --verbose")
         .cwd("bar")
         .with_stderr(&format!(
             "\
@@ -115,7 +115,7 @@ fn relative_tools() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner() {
     let target = rustc_host();
 
@@ -124,7 +124,7 @@ fn custom_runner() {
         .file("tests/test.rs", "")
         .file("benches/bench.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.{}]
@@ -135,7 +135,7 @@ fn custom_runner() {
         )
         .build();
 
-    p.cargo("run -- --param")
+    p.crabgo("run -- --param")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -146,7 +146,7 @@ fn custom_runner() {
         )
         .run();
 
-    p.cargo("test --test test --verbose -- --param")
+    p.crabgo("test --test test --verbose -- --param")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -158,7 +158,7 @@ fn custom_runner() {
         )
         .run();
 
-    p.cargo("bench --bench bench --verbose -- --param")
+    p.crabgo("bench --bench bench --verbose -- --param")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -173,12 +173,12 @@ fn custom_runner() {
 }
 
 // can set a custom runner via `target.'cfg(..)'.runner`
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner_cfg() {
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [target.'cfg(not(target_os = "none"))']
             runner = "nonexistent-runner -r"
@@ -186,7 +186,7 @@ fn custom_runner_cfg() {
         )
         .build();
 
-    p.cargo("run -- --param")
+    p.crabgo("run -- --param")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -199,14 +199,14 @@ fn custom_runner_cfg() {
 }
 
 // custom runner set via `target.$triple.runner` have precedence over `target.'cfg(..)'.runner`
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner_cfg_precedence() {
     let target = rustc_host();
 
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                     [target.'cfg(not(target_os = "none"))']
@@ -220,7 +220,7 @@ fn custom_runner_cfg_precedence() {
         )
         .build();
 
-    p.cargo("run -- --param")
+    p.crabgo("run -- --param")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -232,12 +232,12 @@ fn custom_runner_cfg_precedence() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner_cfg_collision() {
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [target.'cfg(not(target_arch = "avr"))']
             runner = "true"
@@ -248,25 +248,25 @@ fn custom_runner_cfg_collision() {
         )
         .build();
 
-    p.cargo("run -- --param")
+    p.crabgo("run -- --param")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] several matching instances of `target.'cfg(..)'.runner` in configurations
-first match `cfg(not(target_arch = \"avr\"))` located in [..]/foo/.cargo/config
-second match `cfg(not(target_os = \"none\"))` located in [..]/foo/.cargo/config
+first match `cfg(not(target_arch = \"avr\"))` located in [..]/foo/.crabgo/config
+second match `cfg(not(target_os = \"none\"))` located in [..]/foo/.crabgo/config
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner_env() {
     let p = project().file("src/main.rs", "fn main() {}").build();
 
-    let key = format!("CARGO_TARGET_{}_RUNNER", rustc_host_env());
+    let key = format!("CRABGO_TARGET_{}_RUNNER", rustc_host_env());
 
-    p.cargo("run")
+    p.crabgo("run")
         .env(&key, "nonexistent-runner --foo")
         .with_status(101)
         // FIXME: Update "Caused by" error message once rust/pull/87704 is merged.
@@ -286,13 +286,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_runner_env_overrides_config() {
     let target = rustc_host();
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             &format!(
                 r#"
                     [target.{}]
@@ -303,54 +303,54 @@ fn custom_runner_env_overrides_config() {
         )
         .build();
 
-    let key = format!("CARGO_TARGET_{}_RUNNER", rustc_host_env());
+    let key = format!("CRABGO_TARGET_{}_RUNNER", rustc_host_env());
 
-    p.cargo("run")
+    p.crabgo("run")
         .env(&key, "should-run --foo")
         .with_status(101)
         .with_stderr_contains("[RUNNING] `should-run --foo target/debug/foo[EXE]`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 #[cfg(unix)] // Assumes `true` is in PATH.
 fn custom_runner_env_true() {
     // Check for a bug where "true" was interpreted as a boolean instead of
     // the executable.
     let p = project().file("src/main.rs", "fn main() {}").build();
 
-    let key = format!("CARGO_TARGET_{}_RUNNER", rustc_host_env());
+    let key = format!("CRABGO_TARGET_{}_RUNNER", rustc_host_env());
 
-    p.cargo("run")
+    p.crabgo("run")
         .env(&key, "true")
         .with_stderr_contains("[RUNNING] `true target/debug/foo[EXE]`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn custom_linker_env() {
     let p = project().file("src/main.rs", "fn main() {}").build();
 
-    let key = format!("CARGO_TARGET_{}_LINKER", rustc_host_env());
+    let key = format!("CRABGO_TARGET_{}_LINKER", rustc_host_env());
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .env(&key, "nonexistent-linker")
         .with_status(101)
         .with_stderr_contains("[RUNNING] `rustc [..]-C linker=nonexistent-linker [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_in_environment_contains_lower_case() {
     let p = project().file("src/main.rs", "fn main() {}").build();
 
     let target = rustc_host();
     let env_key = format!(
-        "CARGO_TARGET_{}_LINKER",
+        "CRABGO_TARGET_{}_LINKER",
         target.to_lowercase().replace('-', "_")
     );
 
-    p.cargo("build -v --target")
+    p.crabgo("build -v --target")
         .arg(target)
         .env(&env_key, "nonexistent-linker")
         .with_stderr_contains(format!(
@@ -362,12 +362,12 @@ fn target_in_environment_contains_lower_case() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cfg_ignored_fields() {
     // Test for some ignored fields in [target.'cfg()'] tables.
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             # Try some empty tables.
             [target.'cfg(not(foo))']
@@ -386,7 +386,7 @@ fn cfg_ignored_fields() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] unused key `somelib` in [target] config table `cfg(not(bar))`

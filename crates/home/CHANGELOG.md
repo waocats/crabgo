@@ -6,13 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.5.6
 - Fixed & enhanced documentation.
-  [#12047](https://github.com/rust-lang/cargo/pull/12047)
+  [#12047](https://github.com/rust-lang/crabgo/pull/12047)
 
 ## 0.5.5 - 2023-04-25
-- The `home` crate has migrated to the <https://github.com/rust-lang/cargo/> repository.
-  [#11359](https://github.com/rust-lang/cargo/pull/11359)
+- The `home` crate has migrated to the <https://github.com/rust-lang/crabgo/> repository.
+  [#11359](https://github.com/rust-lang/crabgo/pull/11359)
 - Replaced the winapi dependency with windows-sys.
-  [#11656](https://github.com/rust-lang/cargo/pull/11656)
+  [#11656](https://github.com/rust-lang/crabgo/pull/11656)
 
 ## [0.5.4] - 2022-10-10
 - Add `_with_env` variants of functions to support in-process threaded tests for
@@ -27,7 +27,7 @@ Use Rust 1.36.0 as minimum Rust version.
 *YANKED since it cannot be built on Rust 1.36.0*
 
 ### Changed
-- Check for emptiness of `CARGO_HOME` and `RUSTUP_HOME` environment variables.
+- Check for emptiness of `CRABGO_HOME` and `RUSTUP_HOME` environment variables.
 - Windows: Use `SHGetFolderPath` to replace `GetUserProfileDirectory` syscall.
   * Remove `scopeguard` dependency.
 
@@ -41,7 +41,7 @@ Use Rust 1.36.0 as minimum Rust version.
 
 ### Fixed
 - Fix `rustup_home` implementation when `RUSTUP_HOME` is an absolute directory.
-- Fix `cargo_home` implementation when `CARGO_HOME` is an absolute directory.
+- Fix `cargo_home` implementation when `CRABGO_HOME` is an absolute directory.
 
 ### Removed
 - Remove support for `multirust` folder used in old version of `rustup`.

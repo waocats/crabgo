@@ -1,17 +1,17 @@
 //! Tests for alternative registries.
 
-use cargo_test_support::compare::assert_match_exact;
-use cargo_test_support::publish::validate_alt_upload;
-use cargo_test_support::registry::{self, Package, RegistryBuilder};
-use cargo_test_support::{basic_manifest, paths, project};
+use crabgo_test_support::compare::assert_match_exact;
+use crabgo_test_support::publish::validate_alt_upload;
+use crabgo_test_support::registry::{self, Package, RegistryBuilder};
+use crabgo_test_support::{basic_manifest, paths, project};
 use std::fs;
 
-#[cargo_test]
+#[crabgo_test]
 fn depend_on_alt_registry() {
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -28,7 +28,7 @@ fn depend_on_alt_registry() {
 
     Package::new("bar", "0.0.1").alternative(true).publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -41,10 +41,10 @@ fn depend_on_alt_registry() {
         )
         .run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
     // Don't download a second time
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1 (registry `alternative`)
@@ -55,12 +55,12 @@ fn depend_on_alt_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn depend_on_alt_registry_depends_on_same_registry_no_index() {
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -81,7 +81,7 @@ fn depend_on_alt_registry_depends_on_same_registry_no_index() {
         .alternative(true)
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -97,12 +97,12 @@ fn depend_on_alt_registry_depends_on_same_registry_no_index() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn depend_on_alt_registry_depends_on_same_registry() {
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -123,7 +123,7 @@ fn depend_on_alt_registry_depends_on_same_registry() {
         .alternative(true)
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -139,12 +139,12 @@ fn depend_on_alt_registry_depends_on_same_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn depend_on_alt_registry_depends_on_crates_io() {
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -165,7 +165,7 @@ fn depend_on_alt_registry_depends_on_crates_io() {
         .alternative(true)
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_unordered(
             "\
 [UPDATING] `alternative` index
@@ -182,13 +182,13 @@ fn depend_on_alt_registry_depends_on_crates_io() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_and_path_dep_works() {
     registry::alt_init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -201,11 +201,11 @@ fn registry_and_path_dep_works() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1 ([CWD]/bar)
@@ -216,13 +216,13 @@ fn registry_and_path_dep_works() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry_incompatible_with_git() {
     registry::alt_init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -237,7 +237,7 @@ fn registry_incompatible_with_git() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr_contains(
             "  dependency (bar) specification is ambiguous. \
@@ -246,13 +246,13 @@ fn registry_incompatible_with_git() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cannot_publish_to_crates_io_with_registry_dependency() {
     let crates_io = registry::init();
     let _alternative = RegistryBuilder::new().alternative().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -268,13 +268,13 @@ fn cannot_publish_to_crates_io_with_registry_dependency() {
 
     Package::new("bar", "0.0.1").alternative(true).publish();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(crates_io.index_url())
         .with_status(101)
         .with_stderr_contains("[ERROR] crates cannot be published to crates.io[..]")
         .run();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(crates_io.index_url())
         .arg("--token")
         .arg(crates_io.token())
@@ -285,7 +285,7 @@ fn cannot_publish_to_crates_io_with_registry_dependency() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_registry_dependency() {
     let _reg = RegistryBuilder::new()
         .http_api()
@@ -295,7 +295,7 @@ fn publish_with_registry_dependency() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -312,7 +312,7 @@ fn publish_with_registry_dependency() {
 
     Package::new("bar", "0.0.1").alternative(true).publish();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -370,16 +370,16 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
             "vers": "0.0.1"
         }"#,
         "foo-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn alt_registry_and_crates_io_deps() {
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -402,7 +402,7 @@ fn alt_registry_and_crates_io_deps() {
         .alternative(true)
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_unordered(
             "\
 [UPDATING] `alternative` index
@@ -419,27 +419,27 @@ fn alt_registry_and_crates_io_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn block_publish_due_to_no_token() {
     registry::alt_init();
     let p = project().file("src/lib.rs", "").build();
 
-    fs::remove_file(paths::home().join(".cargo/credentials.toml")).unwrap();
+    fs::remove_file(paths::home().join(".crabgo/credentials.toml")).unwrap();
 
     // Now perform the actual publish
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
 [UPDATING] `alternative` index
-error: no token found for `alternative`, please run `cargo login --registry alternative`
-or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN",
+error: no token found for `alternative`, please run `crabgo login --registry alternative`
+or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN",
         )
         .run();
 }
 
-#[cargo_test]
-fn cargo_registries_crates_io_protocol() {
+#[crabgo_test]
+fn crabgo_registries_crates_io_protocol() {
     let _ = RegistryBuilder::new()
         .no_configure_token()
         .alternative()
@@ -448,24 +448,24 @@ fn cargo_registries_crates_io_protocol() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             "[registries.crates-io]
             protocol = 'sparse'",
         )
         .build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
 [UPDATING] `alternative` index
-error: no token found for `alternative`, please run `cargo login --registry alternative`
-or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN",
+error: no token found for `alternative`, please run `crabgo login --registry alternative`
+or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_to_alt_registry() {
     let _reg = RegistryBuilder::new()
         .http_api()
@@ -476,7 +476,7 @@ fn publish_to_alt_registry() {
     let p = project().file("src/main.rs", "fn main() {}").build();
 
     // Now perform the actual publish
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -520,11 +520,11 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
             "vers": "0.0.1"
         }"#,
         "foo-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_crates_io_dep() {
     // crates.io registry.
     let _dummy_reg = registry::init();
@@ -536,7 +536,7 @@ fn publish_with_crates_io_dep() {
         .build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -554,7 +554,7 @@ fn publish_with_crates_io_dep() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -613,15 +613,15 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
             "vers": "0.0.1"
         }"#,
         "foo-0.0.1.crate",
-        &["Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "src/main.rs"],
+        &["Crabgo.lock", "Crabgo.toml", "Crabgo.toml.orig", "src/main.rs"],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn passwords_in_registries_index_url_forbidden() {
     registry::alt_init();
 
-    let config = paths::home().join(".cargo/config");
+    let config = paths::home().join(".crabgo/config");
 
     fs::write(
         config,
@@ -634,11 +634,11 @@ fn passwords_in_registries_index_url_forbidden() {
 
     let p = project().file("src/main.rs", "fn main() {}").build();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr(
             "\
-error: invalid index URL for registry `alternative` defined in [..]/home/.cargo/config
+error: invalid index URL for registry `alternative` defined in [..]/home/.crabgo/config
 
 Caused by:
   registry URLs may not contain passwords
@@ -647,13 +647,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_alt_reg() {
     registry::alt_init();
     Package::new("bar", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -673,11 +673,11 @@ fn patch_alt_reg() {
             pub fn f() { bar::bar(); }
             ",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -689,11 +689,11 @@ fn patch_alt_reg() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_registry_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -708,11 +708,11 @@ fn bad_registry_name() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[CWD]/Cargo.toml`
+[ERROR] failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   invalid character ` ` in registry name: `bad name`, [..]",
@@ -728,7 +728,7 @@ Caused by:
         "search",
         "yank --version 0.0.1",
     ] {
-        p.cargo(cmd)
+        p.crabgo(cmd)
             .arg("--registry")
             .arg("bad name")
             .with_status(101)
@@ -737,7 +737,7 @@ Caused by:
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_api() {
     let _registry = RegistryBuilder::new().alternative().no_api().build();
     Package::new("bar", "0.0.1").alternative(true).publish();
@@ -745,7 +745,7 @@ fn no_api() {
     // First check that a dependency works.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -759,7 +759,7 @@ fn no_api() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -775,44 +775,44 @@ fn no_api() {
     // Check all of the API commands.
     let err = "[ERROR] registry `alternative` does not support API commands";
 
-    p.cargo("login --registry alternative TOKEN")
+    p.crabgo("login --registry alternative TOKEN")
         .with_status(101)
         .with_stderr_contains(&err)
         .run();
 
-    p.cargo("publish --registry alternative")
+    p.crabgo("publish --registry alternative")
         .with_status(101)
         .with_stderr_contains(&err)
         .run();
 
-    p.cargo("search --registry alternative")
+    p.crabgo("search --registry alternative")
         .with_status(101)
         .with_stderr_contains(&err)
         .run();
 
-    p.cargo("owner --registry alternative --list")
+    p.crabgo("owner --registry alternative --list")
         .with_status(101)
         .with_stderr_contains(&err)
         .run();
 
-    p.cargo("yank --registry alternative --version=0.0.1 bar")
+    p.crabgo("yank --registry alternative --version=0.0.1 bar")
         .with_status(101)
         .with_stderr_contains(&err)
         .run();
 
-    p.cargo("yank --registry alternative --version=0.0.1 bar")
+    p.crabgo("yank --registry alternative --version=0.0.1 bar")
         .with_stderr_contains(&err)
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn alt_reg_metadata() {
-    // Check for "registry" entries in `cargo metadata` with alternative registries.
+    // Check for "registry" entries in `crabgo metadata` with alternative registries.
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -842,7 +842,7 @@ fn alt_reg_metadata() {
     // foo -> iodep: null (because it is in crates.io)
     // altdep -> bar: null (because it is in crates.io)
     // iodep -> altdep2: alternative-registry
-    p.cargo("metadata --format-version=1 --no-deps")
+    p.crabgo("metadata --format-version=1 --no-deps")
         .with_json(
             r#"
             {
@@ -883,7 +883,7 @@ fn alt_reg_metadata() {
                         ],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/foo/Cargo.toml",
+                        "manifest_path": "[..]/foo/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -912,7 +912,7 @@ fn alt_reg_metadata() {
         .run();
 
     // --no-deps uses a different code path, make sure both work.
-    p.cargo("metadata --format-version=1")
+    p.crabgo("metadata --format-version=1")
         .with_json(
             r#"
              {
@@ -941,7 +941,7 @@ fn alt_reg_metadata() {
                         ],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/altdep-0.0.1/Cargo.toml",
+                        "manifest_path": "[..]/altdep-0.0.1/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -967,7 +967,7 @@ fn alt_reg_metadata() {
                         "dependencies": [],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/altdep2-0.0.1/Cargo.toml",
+                        "manifest_path": "[..]/altdep2-0.0.1/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -993,7 +993,7 @@ fn alt_reg_metadata() {
                         "dependencies": [],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/bar-0.0.1/Cargo.toml",
+                        "manifest_path": "[..]/bar-0.0.1/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -1044,7 +1044,7 @@ fn alt_reg_metadata() {
                         ],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/foo/Cargo.toml",
+                        "manifest_path": "[..]/foo/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -1083,7 +1083,7 @@ fn alt_reg_metadata() {
                         ],
                         "targets": "{...}",
                         "features": {},
-                        "manifest_path": "[..]/iodep-0.0.1/Cargo.toml",
+                        "manifest_path": "[..]/iodep-0.0.1/Crabgo.toml",
                         "metadata": null,
                         "publish": null,
                         "authors": [],
@@ -1112,14 +1112,14 @@ fn alt_reg_metadata() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unknown_registry() {
     // A known registry refers to an unknown registry.
     // foo -> bar(crates.io) -> baz(alt)
     registry::alt_init();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1139,7 +1139,7 @@ fn unknown_registry() {
         .publish();
 
     // Remove "alternative" from config.
-    let cfg_path = paths::home().join(".cargo/config");
+    let cfg_path = paths::home().join(".crabgo/config");
     let mut config = fs::read_to_string(&cfg_path).unwrap();
     let start = config.find("[registries.alternative]").unwrap();
     config.insert(start, '#');
@@ -1147,12 +1147,12 @@ fn unknown_registry() {
     config.insert(start + start_index, '#');
     fs::write(&cfg_path, config).unwrap();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Important parts:
     // foo -> bar registry = null
     // bar -> baz registry = alternate
-    p.cargo("metadata --format-version=1")
+    p.crabgo("metadata --format-version=1")
         .with_json(
             r#"
             {
@@ -1246,7 +1246,7 @@ fn unknown_registry() {
                   ],
                   "targets": "{...}",
                   "features": {},
-                  "manifest_path": "[..]/foo/Cargo.toml",
+                  "manifest_path": "[..]/foo/Crabgo.toml",
                   "metadata": null,
                   "publish": null,
                   "authors": [],
@@ -1276,10 +1276,10 @@ fn unknown_registry() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registries_index_relative_url() {
     registry::alt_init();
-    let config = paths::root().join(".cargo/config");
+    let config = paths::root().join(".crabgo/config");
     fs::create_dir_all(config.parent().unwrap()).unwrap();
     fs::write(
         &config,
@@ -1292,7 +1292,7 @@ fn registries_index_relative_url() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1309,7 +1309,7 @@ fn registries_index_relative_url() {
 
     Package::new("bar", "0.0.1").alternative(true).publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `relative` index
@@ -1323,10 +1323,10 @@ fn registries_index_relative_url() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registries_index_relative_path_not_allowed() {
     registry::alt_init();
-    let config = paths::root().join(".cargo/config");
+    let config = paths::root().join(".crabgo/config");
     fs::create_dir_all(config.parent().unwrap()).unwrap();
     fs::write(
         &config,
@@ -1339,7 +1339,7 @@ fn registries_index_relative_path_not_allowed() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1356,13 +1356,13 @@ fn registries_index_relative_path_not_allowed() {
 
     Package::new("bar", "0.0.1").alternative(true).publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
-error: failed to parse manifest at `{root}/foo/Cargo.toml`
+error: failed to parse manifest at `{root}/foo/Crabgo.toml`
 
 Caused by:
-  invalid index URL for registry `relative` defined in [..]/.cargo/config
+  invalid index URL for registry `relative` defined in [..]/.crabgo/config
 
 Caused by:
   invalid url `alternative-registry`: relative URL without a base
@@ -1373,11 +1373,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn both_index_and_registry() {
     let p = project().file("src/lib.rs", "").build();
     for cmd in &["publish", "owner", "search", "yank --version 1.0.0"] {
-        p.cargo(cmd)
+        p.crabgo(cmd)
             .arg("--registry=foo")
             .arg("--index=foo")
             .with_status(101)
@@ -1389,7 +1389,7 @@ fn both_index_and_registry() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn both_index_and_default() {
     let p = project().file("src/lib.rs", "").build();
     for cmd in &[
@@ -1399,8 +1399,8 @@ fn both_index_and_default() {
         "yank --version 1.0.0",
         "install foo",
     ] {
-        p.cargo(cmd)
-            .env("CARGO_REGISTRY_DEFAULT", "undefined")
+        p.crabgo(cmd)
+            .env("CRABGO_REGISTRY_DEFAULT", "undefined")
             .arg(format!("--index=index_url"))
             .with_status(101)
             .with_stderr("[ERROR] invalid url `index_url`: relative URL without a base")
@@ -1408,7 +1408,7 @@ fn both_index_and_default() {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn sparse_lockfile() {
     let _registry = registry::RegistryBuilder::new()
         .http_index()
@@ -1418,7 +1418,7 @@ fn sparse_lockfile() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [project]
                 name = "a"
@@ -1432,10 +1432,10 @@ fn sparse_lockfile() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile").run();
+    p.crabgo("generate-lockfile").run();
     assert_match_exact(
         &p.read_lockfile(),
-        r#"# This file is automatically @generated by Cargo.
+        r#"# This file is automatically @generated by Crabgo.
 # It is not intended for manual editing.
 version = 3
 
@@ -1454,7 +1454,7 @@ checksum = "f6a200a9339fef960979d94d5c99cbbfd899b6f5a396a55d9775089119050203""#,
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_with_transitive_dep() {
     let _alt1 = RegistryBuilder::new()
         .http_api()
@@ -1469,7 +1469,7 @@ fn publish_with_transitive_dep() {
 
     let p1 = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1478,11 +1478,11 @@ fn publish_with_transitive_dep() {
         )
         .file("src/lib.rs", "")
         .build();
-    p1.cargo("publish --registry Alt-1").run();
+    p1.crabgo("publish --registry Alt-1").run();
 
     let p2 = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1495,5 +1495,5 @@ fn publish_with_transitive_dep() {
         )
         .file("src/lib.rs", "")
         .build();
-    p2.cargo("publish").run();
+    p2.crabgo("publish").run();
 }

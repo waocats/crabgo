@@ -1,13 +1,13 @@
 ## Build cache
 
-Cargo stores the output of a build into the "target" directory. By default,
+Crabgo stores the output of a build into the "target" directory. By default,
 this is the directory named `target` in the root of your
 [*workspace*][def-workspace]. To change the location, you can set the
-`CARGO_TARGET_DIR` [environment variable], the [`build.target-dir`] config
+`CRABGO_TARGET_DIR` [environment variable], the [`build.target-dir`] config
 value, or the `--target-dir` command-line flag.
 
 The directory layout depends on whether or not you are using the `--target`
-flag to build for a specific platform. If `--target` is not specified, Cargo
+flag to build for a specific platform. If `--target` is not specified, Crabgo
 runs in a mode where it builds for the host architecture. The output goes into
 the root of the target directory, with each [profile] stored in a separate
 subdirectory:
@@ -31,7 +31,7 @@ Directory | Example
 <code style="white-space: nowrap">target/&lt;triple&gt;/debug/</code> | <code style="white-space: nowrap">target/thumbv7em-none-eabihf/debug/</code>
 <code style="white-space: nowrap">target/&lt;triple&gt;/release/</code> | <code style="white-space: nowrap">target/thumbv7em-none-eabihf/release/</code>
 
-> **Note**: When not using `--target`, this has a consequence that Cargo will
+> **Note**: When not using `--target`, this has a consequence that Crabgo will
 > share your dependencies with build scripts and proc macros. [`RUSTFLAGS`]
 > will be shared with every `rustc` invocation. With the `--target` flag,
 > build scripts and proc macros are built separately (for the host
@@ -50,11 +50,11 @@ the `target` directory:
 
 Directory | Description
 ----------|------------
-<code style="white-space: nowrap">target/doc/</code> | Contains rustdoc documentation ([`cargo doc`]).
-<code style="white-space: nowrap">target/package/</code> | Contains the output of the [`cargo package`] and [`cargo publish`] commands.
+<code style="white-space: nowrap">target/doc/</code> | Contains rustdoc documentation ([`crabgo doc`]).
+<code style="white-space: nowrap">target/package/</code> | Contains the output of the [`crabgo package`] and [`crabgo publish`] commands.
 
-Cargo also creates several other directories and files needed for the build
-process. Their layout is considered internal to Cargo, and is subject to
+Crabgo also creates several other directories and files needed for the build
+process. Their layout is considered internal to Crabgo, and is subject to
 change. Some of these directories are:
 
 Directory | Description
@@ -68,7 +68,7 @@ Directory | Description
 Next to each compiled artifact is a file called a "dep info" file with a `.d`
 suffix. This file is a Makefile-like syntax that indicates all of the file
 dependencies required to rebuild the artifact. These are intended to be used
-with external build systems so that they can detect if Cargo needs to be
+with external build systems so that they can detect if Crabgo needs to be
 re-executed. The paths in the file are absolute by default. See the
 [`build.dep-info-basedir`] config option to use relative paths.
 
@@ -82,19 +82,19 @@ re-executed. The paths in the file are absolute by default. See the
 A third party tool, [sccache], can be used to share built dependencies across
 different workspaces.
 
-To setup `sccache`, install it with `cargo install sccache` and set
-`RUSTC_WRAPPER` environmental variable to `sccache` before invoking Cargo. If
+To setup `sccache`, install it with `crabgo install sccache` and set
+`RUSTC_WRAPPER` environmental variable to `sccache` before invoking Crabgo. If
 you use bash, it makes sense to add `export RUSTC_WRAPPER=sccache` to
-`.bashrc`. Alternatively, you can set [`build.rustc-wrapper`] in the [Cargo
+`.bashrc`. Alternatively, you can set [`build.rustc-wrapper`] in the [Crabgo
 configuration][config]. Refer to sccache documentation for more details.
 
 [`RUSTFLAGS`]: ../reference/config.md#buildrustflags
 [`build.dep-info-basedir`]: ../reference/config.md#builddep-info-basedir
 [`build.rustc-wrapper`]: ../reference/config.md#buildrustc-wrapper
 [`build.target-dir`]: ../reference/config.md#buildtarget-dir
-[`cargo doc`]: ../commands/cargo-doc.md
-[`cargo package`]: ../commands/cargo-package.md
-[`cargo publish`]: ../commands/cargo-publish.md
+[`crabgo doc`]: ../commands/crabgo-doc.md
+[`crabgo package`]: ../commands/crabgo-package.md
+[`crabgo publish`]: ../commands/crabgo-publish.md
 [build scripts]: ../reference/build-scripts.md
 [config]: ../reference/config.md
 [def-workspace]:  ../appendix/glossary.md#workspace  '"workspace" (glossary entry)'
@@ -103,6 +103,6 @@ configuration][config]. Refer to sccache documentation for more details.
 [incremental output]: ../reference/profiles.md#incremental
 [sccache]: https://github.com/mozilla/sccache
 [profile]: ../reference/profiles.md
-[binary executables]: ../reference/cargo-targets.md#binaries
-[library targets]: ../reference/cargo-targets.md#library
-[example targets]: ../reference/cargo-targets.md#examples
+[binary executables]: ../reference/crabgo-targets.md#binaries
+[library targets]: ../reference/crabgo-targets.md#library
+[example targets]: ../reference/crabgo-targets.md#examples

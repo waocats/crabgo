@@ -3,12 +3,12 @@
 Most new features should go through the unstable process. This means that the
 feature will only be usable on the nightly channel, and requires a specific
 opt-in by the user. Small changes can skip this process, but please consult
-with the Cargo team first.
+with the Crabgo team first.
 
 ## Unstable feature opt-in
 
-For features that require behavior changes or new syntax in `Cargo.toml`, then
-it will need a `cargo-features` value placed at the top of `Cargo.toml` to
+For features that require behavior changes or new syntax in `Crabgo.toml`, then
+it will need a `crabgo-features` value placed at the top of `Crabgo.toml` to
 enable it. The process for doing adding a new feature is described in the
 [`features` module]. Code that implements the feature will need to manually
 check that the feature is enabled for the current manifest.
@@ -24,7 +24,7 @@ been passed.
 Every unstable feature should have a section added to the [unstable chapter]
 describing how to use the feature.
 
-[unstable chapter]: https://github.com/rust-lang/cargo/blob/master/src/doc/src/reference/unstable.md
+[unstable chapter]: https://github.com/rust-lang/crabgo/blob/master/src/doc/src/reference/unstable.md
 
 ## Tracking issues
 
@@ -39,9 +39,9 @@ one of the `Z-` prefixed labels for nightly features.
 When opening a tracking issue, be sure to also add an `S-` status label to
 indicate what needs to happen for it to move forward:
 
-* [S-needs-mentor] --- The feature isn't yet implemented, and needs a Cargo
+* [S-needs-mentor] --- The feature isn't yet implemented, and needs a Crabgo
   team member to commit to helping guide and review the implementation.
-* [S-accepted] --- The feature isn't yet implemented, and has a Cargo team
+* [S-accepted] --- The feature isn't yet implemented, and has a Crabgo team
   member willing to help review the implementation.
 * [S-waiting-on-feedback] --- After the feature has been implemented, this
   label indicates that it is waiting on community feedback for bugs or design
@@ -52,11 +52,11 @@ something is only partially implemented, it may have both
 [S-waiting-on-feedback] (for what is implemented) and [S-needs-mentor] or
 [S-accepted] to finish the rest of the work.
 
-[tracking issue]: https://github.com/rust-lang/cargo/labels/C-tracking-issue
-[tracking issue template]: https://github.com/rust-lang/cargo/issues/new?labels=C-tracking-issue&template=tracking_issue.md
-[S-needs-mentor]: https://github.com/rust-lang/cargo/labels/S-needs-mentor
-[S-accepted]: https://github.com/rust-lang/cargo/labels/S-accepted
-[S-waiting-on-feedback]: https://github.com/rust-lang/cargo/labels/S-waiting-on-feedback
+[tracking issue]: https://github.com/rust-lang/crabgo/labels/C-tracking-issue
+[tracking issue template]: https://github.com/rust-lang/crabgo/issues/new?labels=C-tracking-issue&template=tracking_issue.md
+[S-needs-mentor]: https://github.com/rust-lang/crabgo/labels/S-needs-mentor
+[S-accepted]: https://github.com/rust-lang/crabgo/labels/S-accepted
+[S-waiting-on-feedback]: https://github.com/rust-lang/crabgo/labels/S-waiting-on-feedback
 
 ## Pre-Stabilization 
 
@@ -73,7 +73,7 @@ link to the testing notes and the tracking issue (as needed). If there is not an
 RFC, a pull request should be made to the [TWiR repo] adding the feature to the
 `Call for Testing` section ([example]).
 
-[workspace inheritance testing notes]: https://github.com/rust-lang/cargo/blob/6d6dd9d9be9c91390da620adf43581619c2fa90e/src/doc/src/reference/unstable.md#testing-notes
+[workspace inheritance testing notes]: https://github.com/rust-lang/crabgo/blob/6d6dd9d9be9c91390da620adf43581619c2fa90e/src/doc/src/reference/unstable.md#testing-notes
 [rust subreddit]: https://www.reddit.com/r/rust/
 [users]: https://users.rust-lang.org/
 [internals]: https://internals.rust-lang.org/
@@ -100,9 +100,9 @@ to call for stabilization might be warranted. This gives the community a final
 chance to provide feedback about the proposed design.
 
 For a small feature, or one that has already gone through the RFC process, a
-Cargo Team member may decide to call for a "final comment period" using
+Crabgo Team member may decide to call for a "final comment period" using
 [rfcbot]. This is a public signal that a major change is being made, and gives
-the Cargo Team members an opportunity to confirm or block the change. This
+the Crabgo Team members an opportunity to confirm or block the change. This
 process can take a few days or weeks, or longer if a concern is raised.
 
 Once the stabilization has been approved, the person who called for
@@ -112,14 +112,14 @@ stabilization should prepare a PR to stabilize the feature. This PR should:
 * Remove any unstable checks that aren't automatically handled by the feature
   system.
 * Move the documentation from the [unstable chapter] into the appropriate
-  places in the Cargo book and man pages.
+  places in the Crabgo book and man pages.
 * Remove the `-Z` flags and help message if applicable.
 * Update all tests to remove nightly checks.
 * Tag the PR with [relnotes] label if it seems important enough to highlight
   in the [Rust release notes].
 
-[`features` module]: https://github.com/rust-lang/cargo/blob/master/src/cargo/core/features.rs
+[`features` module]: https://github.com/rust-lang/crabgo/blob/master/src/crabgo/core/features.rs
 [RFC process]: https://github.com/rust-lang/rfcs/
 [rfcbot]: https://github.com/rust-lang/rfcbot-rs
 [Rust release notes]: https://github.com/rust-lang/rust/blob/master/RELEASES.md
-[relnotes]: https://github.com/rust-lang/cargo/issues?q=label%3Arelnotes
+[relnotes]: https://github.com/rust-lang/crabgo/issues?q=label%3Arelnotes

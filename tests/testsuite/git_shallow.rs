@@ -1,13 +1,13 @@
 use crate::git_gc::find_index;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_manifest, git, paths, project};
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_manifest, git, paths, project};
 
 enum RepoMode {
     Shallow,
     Complete,
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_shallow_two_revs_same_deps() {
     perform_two_revs_same_deps(true)
 }
@@ -15,7 +15,7 @@ fn gitoxide_clones_shallow_two_revs_same_deps() {
 fn perform_two_revs_same_deps(shallow: bool) {
     let bar = git::new("meta-dep", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("bar", "0.0.0"))
+            .file("Crabgo.toml", &basic_manifest("bar", "0.0.0"))
             .file("src/lib.rs", "pub fn bar() -> i32 { 1 }")
     });
 
@@ -29,7 +29,7 @@ fn perform_two_revs_same_deps(shallow: bool) {
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -65,7 +65,7 @@ fn perform_two_revs_same_deps(shallow: bool) {
     let _baz = project()
         .at("baz")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -95,25 +95,25 @@ fn perform_two_revs_same_deps(shallow: bool) {
     } else {
         "build -v"
     };
-    foo.cargo(args)
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+    foo.crabgo(args)
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
     assert!(foo.bin("foo").is_file());
     foo.process(&foo.bin("foo")).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_revs_same_deps() {
     perform_two_revs_same_deps(false)
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_with_git2_fetch(
 ) -> anyhow::Result<()> {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -125,9 +125,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_with_git2_fetch(
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let shallow_repo = gix::open_opts(find_index(), gix::open::Options::isolated())?;
@@ -143,8 +143,8 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_with_git2_fetch(
     assert!(shallow_repo.is_shallow());
 
     Package::new("bar", "1.1.0").publish();
-    p.cargo("update")
-        .env("__CARGO_USE_GITOXIDE_INSTEAD_OF_GIT2", "0")
+    p.crabgo("update")
+        .env("__CRABGO_USE_GITOXIDE_INSTEAD_OF_GIT2", "0")
         .run();
 
     let repo = gix::open_opts(
@@ -163,13 +163,13 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_with_git2_fetch(
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_followup_fetches(
 ) -> anyhow::Result<()> {
-    // Example where an old lockfile with an explicit branch="master" in Cargo.toml.
+    // Example where an old lockfile with an explicit branch="master" in Crabgo.toml.
     Package::new("bar", "1.0.0").publish();
     let (bar, bar_repo) = git::new_repo("bar", |p| {
-        p.file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -189,7 +189,7 @@ fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_fol
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -205,9 +205,9 @@ fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_fol
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-deps")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let db_clone = gix::open_opts(
@@ -249,8 +249,8 @@ fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_fol
         );
     }
 
-    p.cargo("update")
-        .env("__CARGO_USE_GITOXIDE_INSTEAD_OF_GIT2", "0")
+    p.crabgo("update")
+        .env("__CRABGO_USE_GITOXIDE_INSTEAD_OF_GIT2", "0")
         .run();
 
     let db_clone = gix::open_opts(
@@ -278,7 +278,7 @@ fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_fol
 
     let max_history_depth = glob::glob(
         paths::home()
-            .join(".cargo/git/checkouts/bar-*/*/.git")
+            .join(".crabgo/git/checkouts/bar-*/*/.git")
             .to_str()
             .unwrap(),
     )?
@@ -300,11 +300,11 @@ fn gitoxide_clones_git_dependency_with_shallow_protocol_and_git2_is_used_for_fol
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()> {
     Package::new("bar", "1.0.0").publish();
     let (bar, bar_repo) = git::new_repo("bar", |p| {
-        p.file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -324,7 +324,7 @@ fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()>
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -340,9 +340,9 @@ fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()>
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-deps")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let shallow_db_clone = gix::open_opts(
@@ -384,9 +384,9 @@ fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()>
         );
     }
 
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch") // shallow-deps is omitted intentionally
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let db_clone = gix::open_opts(
@@ -411,7 +411,7 @@ fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()>
 
     let max_history_depth = glob::glob(
         paths::home()
-            .join(".cargo/git/checkouts/bar-*/*/.git")
+            .join(".crabgo/git/checkouts/bar-*/*/.git")
             .to_str()
             .unwrap(),
     )?
@@ -438,13 +438,13 @@ fn gitoxide_shallow_clone_followed_by_non_shallow_update() -> anyhow::Result<()>
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_fetch_maintains_shallowness(
 ) -> anyhow::Result<()> {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -456,9 +456,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_fetch_maintains_
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let repo = gix::open_opts(find_index(), gix::open::Options::isolated())?;
@@ -473,9 +473,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_fetch_maintains_
     assert!(repo.is_shallow());
 
     Package::new("bar", "1.1.0").publish();
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-index") // NOTE: the flag needs to be consistent or else a different index is created
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert_eq!(
@@ -490,9 +490,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_fetch_maintains_
 
     Package::new("bar", "1.2.0").publish();
     Package::new("bar", "1.3.0").publish();
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert_eq!(
@@ -509,13 +509,13 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_follow_up_fetch_maintains_
 }
 
 /// If there is shallow *and* non-shallow clones, non-shallow will naturally be returned due to sort order.
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_shallowness(
 ) -> anyhow::Result<()> {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -527,9 +527,9 @@ fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_sh
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .arg("-Zgitoxide=fetch")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let repo = gix::open_opts(find_index(), gix::open::Options::isolated())?;
@@ -544,9 +544,9 @@ fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_sh
     assert!(!repo.is_shallow());
 
     Package::new("bar", "1.1.0").publish();
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let shallow_repo = gix::open_opts(
@@ -565,9 +565,9 @@ fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_sh
 
     Package::new("bar", "1.2.0").publish();
     Package::new("bar", "1.3.0").publish();
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert_eq!(
@@ -581,9 +581,9 @@ fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_sh
     );
     assert!(shallow_repo.is_shallow());
 
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert_eq!(
@@ -598,13 +598,13 @@ fn gitoxide_clones_registry_without_shallow_protocol_and_follow_up_fetch_uses_sh
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
     // db exists from previous build, then dependency changes to refer to revision that isn't
     // available in the shallow clone.
 
     let (bar, bar_repo) = git::new_repo("bar", |p| {
-        p.file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -616,7 +616,7 @@ fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
     git::commit(&bar_repo);
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -632,9 +632,9 @@ fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .arg("-Zgitoxide=fetch,shallow-deps")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let db_clone = gix::open_opts(
@@ -645,7 +645,7 @@ fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -662,9 +662,9 @@ fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .arg("-Zgitoxide=fetch,shallow-deps")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert!(
@@ -675,10 +675,10 @@ fn gitoxide_git_dependencies_switch_from_branch_to_rev() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shallow_deps_work_with_revisions_and_branches_mixed_on_same_dependency() -> anyhow::Result<()> {
     let (bar, bar_repo) = git::new_repo("bar", |p| {
-        p.file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -691,7 +691,7 @@ fn shallow_deps_work_with_revisions_and_branches_mixed_on_same_dependency() -> a
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -710,12 +710,12 @@ fn shallow_deps_work_with_revisions_and_branches_mixed_on_same_dependency() -> a
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .arg("-Zgitoxide=fetch,shallow-deps")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
-    let db_paths = glob::glob(paths::home().join(".cargo/git/db/bar-*").to_str().unwrap())?
+    let db_paths = glob::glob(paths::home().join(".crabgo/git/db/bar-*").to_str().unwrap())?
         .map(Result::unwrap)
         .collect::<Vec<_>>();
     assert_eq!(
@@ -732,13 +732,13 @@ fn shallow_deps_work_with_revisions_and_branches_mixed_on_same_dependency() -> a
     Ok(())
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_registry_with_shallow_protocol_and_aborts_and_updates_again(
 ) -> anyhow::Result<()> {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -750,9 +750,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_aborts_and_updates_again(
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("fetch")
+    p.crabgo("fetch")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     let repo = gix::open_opts(find_index(), gix::open::Options::isolated())?;
@@ -772,9 +772,9 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_aborts_and_updates_again(
     std::fs::remove_file(repo.shallow_file())?;
 
     Package::new("bar", "1.1.0").publish();
-    p.cargo("update")
+    p.crabgo("update")
         .arg("-Zgitoxide=fetch,shallow-index")
-        .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"])
+        .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"])
         .run();
 
     assert!(!shallow_lock.is_file(), "the repository was re-initialized");
@@ -794,7 +794,7 @@ fn gitoxide_clones_registry_with_shallow_protocol_and_aborts_and_updates_again(
 fn find_lexicographically_first_bar_checkout() -> std::path::PathBuf {
     glob::glob(
         paths::home()
-            .join(".cargo/git/checkouts/bar-*/*/.git")
+            .join(".crabgo/git/checkouts/bar-*/*/.git")
             .to_str()
             .unwrap(),
     )
@@ -808,7 +808,7 @@ fn find_lexicographically_first_bar_checkout() -> std::path::PathBuf {
 fn find_remote_index(mode: RepoMode) -> std::path::PathBuf {
     glob::glob(
         paths::home()
-            .join(".cargo/registry/index/*")
+            .join(".crabgo/registry/index/*")
             .to_str()
             .unwrap(),
     )
@@ -821,7 +821,7 @@ fn find_remote_index(mode: RepoMode) -> std::path::PathBuf {
 
 /// Find a checkout directory for bar, `shallow` or not.
 fn find_bar_db(mode: RepoMode) -> std::path::PathBuf {
-    glob::glob(paths::home().join(".cargo/git/db/bar-*").to_str().unwrap())
+    glob::glob(paths::home().join(".crabgo/git/db/bar-*").to_str().unwrap())
         .unwrap()
         .map(Result::unwrap)
         .filter(|p| p.to_string_lossy().ends_with("-shallow") == matches!(mode, RepoMode::Shallow))

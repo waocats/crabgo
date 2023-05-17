@@ -1,10 +1,10 @@
 use benchsuite::fixtures;
-use cargo::core::compiler::{CompileKind, RustcTargetData};
-use cargo::core::resolver::features::{FeatureOpts, FeatureResolver};
-use cargo::core::resolver::{CliFeatures, ForceAllTargets, HasDevUnits, ResolveBehavior};
-use cargo::core::{PackageIdSpec, Workspace};
-use cargo::ops::WorkspaceResolve;
-use cargo::Config;
+use crabgo::core::compiler::{CompileKind, RustcTargetData};
+use crabgo::core::resolver::features::{FeatureOpts, FeatureResolver};
+use crabgo::core::resolver::{CliFeatures, ForceAllTargets, HasDevUnits, ResolveBehavior};
+use crabgo::core::{PackageIdSpec, Workspace};
+use crabgo::ops::WorkspaceResolve;
+use crabgo::Config;
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::path::Path;
 
@@ -24,16 +24,16 @@ struct ResolveInfo<'cfg> {
 /// during resolution.
 fn do_resolve<'cfg>(config: &'cfg Config, ws_root: &Path) -> ResolveInfo<'cfg> {
     let requested_kinds = [CompileKind::Host];
-    let ws = Workspace::new(&ws_root.join("Cargo.toml"), config).unwrap();
+    let ws = Workspace::new(&ws_root.join("Crabgo.toml"), config).unwrap();
     let target_data = RustcTargetData::new(&ws, &requested_kinds).unwrap();
     let cli_features = CliFeatures::from_command_line(&[], false, true).unwrap();
-    let pkgs = cargo::ops::Packages::Default;
+    let pkgs = crabgo::ops::Packages::Default;
     let specs = pkgs.to_package_id_specs(&ws).unwrap();
     let has_dev_units = HasDevUnits::Yes;
     let force_all_targets = ForceAllTargets::No;
     // Do an initial run to download anything necessary so that it does
     // not confuse criterion's warmup.
-    let ws_resolve = cargo::ops::resolve_ws_with_opts(
+    let ws_resolve = crabgo::ops::resolve_ws_with_opts(
         &ws,
         &target_data,
         &requested_kinds,
@@ -57,7 +57,7 @@ fn do_resolve<'cfg>(config: &'cfg Config, ws_root: &Path) -> ResolveInfo<'cfg> {
 
 /// Benchmark of the full `resolve_ws_with_opts` which runs the resolver
 /// twice, the feature resolver, and more. This is a major component of a
-/// regular cargo build.
+/// regular crabgo build.
 fn resolve_ws(c: &mut Criterion) {
     let fixtures = fixtures!();
     let mut group = c.benchmark_group("resolve_ws");
@@ -65,7 +65,7 @@ fn resolve_ws(c: &mut Criterion) {
         let config = fixtures.make_config(&ws_root);
         // The resolver info is initialized only once in a lazy fashion. This
         // allows criterion to skip this workspace if the user passes a filter
-        // on the command-line (like `cargo bench -- resolve_ws/tikv`).
+        // on the command-line (like `crabgo bench -- resolve_ws/tikv`).
         //
         // Due to the way criterion works, it tends to only run the inner
         // iterator once, and we don't want to call `do_resolve` in every
@@ -83,7 +83,7 @@ fn resolve_ws(c: &mut Criterion) {
                 ..
             } = lazy_info.get_or_insert_with(|| do_resolve(&config, &ws_root));
             b.iter(|| {
-                cargo::ops::resolve_ws_with_opts(
+                crabgo::ops::resolve_ws_with_opts(
                     ws,
                     target_data,
                     requested_kinds,

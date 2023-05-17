@@ -4,16 +4,16 @@ use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-use cargo_test_support::git;
-use cargo_test_support::git::cargo_uses_gitoxide;
-use cargo_test_support::paths;
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::git;
+use crabgo_test_support::git::crabgo_uses_gitoxide;
+use crabgo_test_support::paths;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
 use url::Url;
 
 pub fn find_index() -> PathBuf {
-    let dir = paths::home().join(".cargo/registry/index");
+    let dir = paths::home().join(".crabgo/registry/index");
     dir.read_dir().unwrap().next().unwrap().unwrap().path()
 }
 
@@ -22,7 +22,7 @@ fn run_test(path_env: Option<&OsStr>) {
 
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -37,7 +37,7 @@ fn run_test(path_env: Option<&OsStr>) {
         .build();
     Package::new("bar", "0.1.0").publish();
 
-    foo.cargo("check").run();
+    foo.crabgo("check").run();
 
     let index = find_index();
     let path = paths::home().join("tmp");
@@ -69,12 +69,12 @@ fn run_test(path_env: Option<&OsStr>) {
         .count();
     assert!(before > N);
 
-    let mut cmd = foo.cargo("update");
-    cmd.env("__CARGO_PACKFILE_LIMIT", "10");
+    let mut cmd = foo.crabgo("update");
+    cmd.env("__CRABGO_PACKFILE_LIMIT", "10");
     if let Some(path) = path_env {
         cmd.env("PATH", path);
     }
-    cmd.env("CARGO_LOG", "trace");
+    cmd.env("CRABGO_LOG", "trace");
     cmd.run();
     let after = find_index()
         .join(".git/objects/pack")
@@ -90,14 +90,14 @@ fn run_test(path_env: Option<&OsStr>) {
     );
 }
 
-#[cargo_test(requires_git)]
+#[crabgo_test(requires_git)]
 fn use_git_gc() {
     run_test(None);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn avoid_using_git() {
-    if cargo_uses_gitoxide() {
+    if crabgo_uses_gitoxide() {
         // file protocol without git binary is currently not possible - needs built-in upload-pack.
         // See https://github.com/Byron/gitoxide/issues/734 (support for the file protocol) progress updates.
         return;

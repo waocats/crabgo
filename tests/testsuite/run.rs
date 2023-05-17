@@ -1,15 +1,15 @@
-//! Tests for the `cargo run` command.
+//! Tests for the `crabgo run` command.
 
-use cargo_test_support::{basic_bin_manifest, basic_lib_manifest, project, Project};
-use cargo_util::paths::dylib_path_envvar;
+use crabgo_test_support::{basic_bin_manifest, basic_lib_manifest, project, Project};
+use crabgo_util::paths::dylib_path_envvar;
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -21,37 +21,37 @@ fn simple() {
     assert!(p.bin("foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn quiet_arg() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run -q").with_stderr("").with_stdout("hello").run();
+    p.crabgo("run -q").with_stderr("").with_stdout("hello").run();
 
-    p.cargo("run --quiet")
+    p.crabgo("run --quiet")
         .with_stderr("")
         .with_stdout("hello")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn quiet_arg_and_verbose_arg() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run -q -v")
+    p.crabgo("run -q -v")
         .with_status(101)
         .with_stderr("[ERROR] cannot set both --verbose and --quiet")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn quiet_arg_and_verbose_config() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [term]
                 verbose = true
@@ -60,14 +60,14 @@ fn quiet_arg_and_verbose_config() {
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run -q").with_stderr("").with_stdout("hello").run();
+    p.crabgo("run -q").with_stderr("").with_stdout("hello").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn verbose_arg_and_quiet_config() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [term]
                 quiet = true
@@ -76,7 +76,7 @@ fn verbose_arg_and_quiet_config() {
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run -v")
+    p.crabgo("run -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -88,11 +88,11 @@ fn verbose_arg_and_quiet_config() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn quiet_config_alone() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [term]
                 quiet = true
@@ -101,14 +101,14 @@ fn quiet_config_alone() {
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run").with_stderr("").with_stdout("hello").run();
+    p.crabgo("run").with_stderr("").with_stdout("hello").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn verbose_config_alone() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [term]
                 verbose = true
@@ -117,7 +117,7 @@ fn verbose_config_alone() {
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -129,11 +129,11 @@ fn verbose_config_alone() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn quiet_config_and_verbose_config() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [term]
                 verbose = true
@@ -143,13 +143,13 @@ fn quiet_config_and_verbose_config() {
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr("[ERROR] cannot set both `term.verbose` and `term.quiet`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_with_args() {
     let p = project()
         .file(
@@ -163,11 +163,11 @@ fn simple_with_args() {
         )
         .build();
 
-    p.cargo("run hello world").run();
+    p.crabgo("run hello world").run();
 }
 
 #[cfg(unix)]
-#[cargo_test]
+#[crabgo_test]
 fn simple_with_non_utf8_args() {
     use std::os::unix::ffi::OsStrExt;
 
@@ -186,13 +186,13 @@ fn simple_with_non_utf8_args() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .arg("hello")
         .arg(std::ffi::OsStr::from_bytes(b"ab\xFFcd"))
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn exit_code() {
     let p = project()
         .file("src/main.rs", "fn main() { std::process::exit(2); }")
@@ -210,10 +210,10 @@ fn exit_code() {
             "[ERROR] process didn't exit successfully: `target[..]foo[..]` (exit [..]: 2)",
         );
     }
-    p.cargo("run").with_status(2).with_stderr(output).run();
+    p.crabgo("run").with_status(2).with_stderr(output).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn exit_code_verbose() {
     let p = project()
         .file("src/main.rs", "fn main() { std::process::exit(2); }")
@@ -233,23 +233,23 @@ fn exit_code_verbose() {
         );
     }
 
-    p.cargo("run -v").with_status(2).with_stderr(output).run();
+    p.crabgo("run -v").with_status(2).with_stderr(output).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_main_file() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "[ERROR] a bin target must be available \
-             for `cargo run`\n",
+             for `crabgo run`\n",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn too_many_bins() {
     let p = project()
         .file("src/lib.rs", "")
@@ -258,10 +258,10 @@ fn too_many_bins() {
         .build();
 
     // Using [..] here because the order is not stable
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
-            "[ERROR] `cargo run` could not determine which binary to run. \
+            "[ERROR] `crabgo run` could not determine which binary to run. \
              Use the `--bin` option to specify a binary, or the \
              `default-run` manifest key.\
              \navailable binaries: [..]\n",
@@ -269,7 +269,7 @@ fn too_many_bins() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn specify_name() {
     let p = project()
         .file("src/lib.rs", "")
@@ -291,7 +291,7 @@ fn specify_name() {
         )
         .build();
 
-    p.cargo("run --bin a -v")
+    p.crabgo("run --bin a -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -303,7 +303,7 @@ fn specify_name() {
         .with_stdout("hello a.rs")
         .run();
 
-    p.cargo("run --bin b -v")
+    p.crabgo("run --bin b -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -315,11 +315,11 @@ fn specify_name() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn specify_default_run() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -333,16 +333,16 @@ fn specify_default_run() {
         .file("src/bin/b.rs", r#"fn main() { println!("hello B"); }"#)
         .build();
 
-    p.cargo("run").with_stdout("hello A").run();
-    p.cargo("run --bin a").with_stdout("hello A").run();
-    p.cargo("run --bin b").with_stdout("hello B").run();
+    p.crabgo("run").with_stdout("hello A").run();
+    p.crabgo("run --bin a").with_stdout("hello A").run();
+    p.crabgo("run --bin b").with_stdout("hello B").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bogus_default_run() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -355,11 +355,11 @@ fn bogus_default_run() {
         .file("src/bin/a.rs", r#"fn main() { println!("hello A"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   default-run target `b` not found
@@ -370,7 +370,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example() {
     let p = project()
         .file("src/lib.rs", "")
@@ -378,7 +378,7 @@ fn run_example() {
         .file("src/bin/a.rs", r#"fn main() { println!("bin"); }"#)
         .build();
 
-    p.cargo("run --example a")
+    p.crabgo("run --example a")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -389,11 +389,11 @@ fn run_example() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_library_example() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -408,17 +408,17 @@ fn run_library_example() {
         .file("examples/bar.rs", "fn foo() {}")
         .build();
 
-    p.cargo("run --example bar")
+    p.crabgo("run --example bar")
         .with_status(101)
         .with_stderr("[ERROR] example target `bar` is a library and cannot be executed")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_bin_example() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -432,7 +432,7 @@ fn run_bin_example() {
         .file("examples/bar.rs", r#"fn main() { println!("example"); }"#)
         .build();
 
-    p.cargo("run --example bar")
+    p.crabgo("run --example bar")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -450,7 +450,7 @@ fn autodiscover_examples_project(rust_edition: &str, autoexamples: Option<bool>)
     };
     project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -481,28 +481,28 @@ fn autodiscover_examples_project(rust_edition: &str, autoexamples: Option<bool>)
         .build()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example_autodiscover_2015() {
     let p = autodiscover_examples_project("2015", None);
-    p.cargo("run --example a")
+    p.crabgo("run --example a")
         .with_status(101)
         .with_stderr(
             "warning: \
-An explicit [[example]] section is specified in Cargo.toml which currently
-disables Cargo from automatically inferring other example targets.
+An explicit [[example]] section is specified in Crabgo.toml which currently
+disables Crabgo from automatically inferring other example targets.
 This inference behavior will change in the Rust 2018 edition and the following
 files will be included as a example target:
 
 * [..]a.rs
 
-This is likely to break cargo build or cargo test as these files may not be
+This is likely to break crabgo build or crabgo test as these files may not be
 ready to be compiled as a example target today. You can future-proof yourself
 and disable this warning by adding `autoexamples = false` to your [package]
-section. You may also move the files to a location where Cargo would not
+section. You may also move the files to a location where Crabgo would not
 automatically infer them to be a target, such as in subfolders.
 
 For more information on this warning you can consult
-https://github.com/rust-lang/cargo/issues/5330
+https://github.com/rust-lang/crabgo/issues/5330
 error: no example target named `a`.
 Available example targets:
     do_magic
@@ -512,10 +512,10 @@ Available example targets:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example_autodiscover_2015_with_autoexamples_enabled() {
     let p = autodiscover_examples_project("2015", Some(true));
-    p.cargo("run --example a")
+    p.crabgo("run --example a")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -526,10 +526,10 @@ fn run_example_autodiscover_2015_with_autoexamples_enabled() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example_autodiscover_2015_with_autoexamples_disabled() {
     let p = autodiscover_examples_project("2015", Some(false));
-    p.cargo("run --example a")
+    p.crabgo("run --example a")
         .with_status(101)
         .with_stderr(
             "\
@@ -542,10 +542,10 @@ Available example targets:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_example_autodiscover_2018() {
     let p = autodiscover_examples_project("2018", None);
-    p.cargo("run --example a")
+    p.crabgo("run --example a")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -556,11 +556,11 @@ fn run_example_autodiscover_2018() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn autobins_disables() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -572,13 +572,13 @@ fn autobins_disables() {
         .file("src/bin/mod.rs", "// empty")
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
-        .with_stderr("[ERROR] a bin target must be available for `cargo run`")
+        .with_stderr("[ERROR] a bin target must be available for `crabgo run`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_bins() {
     let p = project()
         .file("src/lib.rs", "")
@@ -586,7 +586,7 @@ fn run_bins() {
         .file("src/bin/a.rs", r#"fn main() { println!("bin"); }"#)
         .build();
 
-    p.cargo("run --bins")
+    p.crabgo("run --bins")
         .with_status(1)
         .with_stderr_contains(
             "\
@@ -597,7 +597,7 @@ error: unexpected argument '--bins' found
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_with_filename() {
     let p = project()
         .file("src/lib.rs", "")
@@ -611,7 +611,7 @@ fn run_with_filename() {
         .file("examples/a.rs", r#"fn main() { println!("example"); }"#)
         .build();
 
-    p.cargo("run --bin bin.rs")
+    p.crabgo("run --bin bin.rs")
         .with_status(101)
         .with_stderr(
             "\
@@ -623,7 +623,7 @@ Available bin targets:
         )
         .run();
 
-    p.cargo("run --bin a.rs")
+    p.crabgo("run --bin a.rs")
         .with_status(101)
         .with_stderr(
             "\
@@ -633,7 +633,7 @@ Available bin targets:
         )
         .run();
 
-    p.cargo("run --example example.rs")
+    p.crabgo("run --example example.rs")
         .with_status(101)
         .with_stderr(
             "\
@@ -645,7 +645,7 @@ Available example targets:
         )
         .run();
 
-    p.cargo("run --example a.rs")
+    p.crabgo("run --example a.rs")
         .with_status(101)
         .with_stderr(
             "\
@@ -656,24 +656,24 @@ Available example targets:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn either_name_or_example() {
     let p = project()
         .file("src/bin/a.rs", r#"fn main() { println!("hello a.rs"); }"#)
         .file("examples/b.rs", r#"fn main() { println!("hello b.rs"); }"#)
         .build();
 
-    p.cargo("run --bin a --example b")
+    p.crabgo("run --bin a --example b")
         .with_status(101)
         .with_stderr(
-            "[ERROR] `cargo run` can run at most one \
+            "[ERROR] `crabgo run` can run at most one \
              executable, but multiple were \
              specified",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn one_bin_multiple_examples() {
     let p = project()
         .file("src/lib.rs", "")
@@ -685,7 +685,7 @@ fn one_bin_multiple_examples() {
         .file("examples/b.rs", r#"fn main() { println!("hello b.rs"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -696,11 +696,11 @@ fn one_bin_multiple_examples() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn example_with_release_flag() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -727,7 +727,7 @@ fn example_with_release_flag() {
                 }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file(
             "bar/src/bar.rs",
             r#"
@@ -742,7 +742,7 @@ fn example_with_release_flag() {
         )
         .build();
 
-    p.cargo("run -v --release --example a")
+    p.crabgo("run -v --release --example a")
         .with_stderr(
             "\
 [COMPILING] bar v0.5.0 ([CWD]/bar)
@@ -771,7 +771,7 @@ fast2",
         )
         .run();
 
-    p.cargo("run -v --example a")
+    p.crabgo("run -v --example a")
         .with_stderr(
             "\
 [COMPILING] bar v0.5.0 ([CWD]/bar)
@@ -801,11 +801,11 @@ slow2",
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_dylib_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -821,7 +821,7 @@ fn run_dylib_dep() {
             r#"extern crate bar; fn main() { bar::bar(); }"#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -836,14 +836,14 @@ fn run_dylib_dep() {
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("run hello world").run();
+    p.crabgo("run hello world").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_with_bin_dep() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -855,7 +855,7 @@ fn run_with_bin_dep() {
         )
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -869,7 +869,7 @@ fn run_with_bin_dep() {
         .file("bar/src/main.rs", r#"fn main() { println!("bar"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [WARNING] foo v0.0.1 ([CWD]) ignoring invalid dependency `bar` which is missing a lib target
@@ -881,11 +881,11 @@ fn run_with_bin_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_with_bin_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -899,7 +899,7 @@ fn run_with_bin_deps() {
         )
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .file(
-            "bar1/Cargo.toml",
+            "bar1/Crabgo.toml",
             r#"
                 [package]
                 name = "bar1"
@@ -912,7 +912,7 @@ fn run_with_bin_deps() {
         )
         .file("bar1/src/main.rs", r#"fn main() { println!("bar1"); }"#)
         .file(
-            "bar2/Cargo.toml",
+            "bar2/Crabgo.toml",
             r#"
                 [package]
                 name = "bar2"
@@ -926,7 +926,7 @@ fn run_with_bin_deps() {
         .file("bar2/src/main.rs", r#"fn main() { println!("bar2"); }"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [WARNING] foo v0.0.1 ([CWD]) ignoring invalid dependency `bar1` which is missing a lib target
@@ -939,18 +939,18 @@ fn run_with_bin_deps() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_with_bin_dep_in_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo1", "foo2"]
             "#,
         )
         .file(
-            "foo1/Cargo.toml",
+            "foo1/Crabgo.toml",
             r#"
                 [package]
                 name = "foo1"
@@ -962,7 +962,7 @@ fn run_with_bin_dep_in_workspace() {
         )
         .file("foo1/src/main.rs", r#"fn main() { println!("hello"); }"#)
         .file(
-            "foo1/bar1/Cargo.toml",
+            "foo1/bar1/Crabgo.toml",
             r#"
                 [package]
                 name = "bar1"
@@ -978,7 +978,7 @@ fn run_with_bin_dep_in_workspace() {
             r#"fn main() { println!("bar1"); }"#,
         )
         .file(
-            "foo2/Cargo.toml",
+            "foo2/Crabgo.toml",
             r#"
                 [package]
                 name = "foo2"
@@ -990,7 +990,7 @@ fn run_with_bin_dep_in_workspace() {
         )
         .file("foo2/src/main.rs", r#"fn main() { println!("hello"); }"#)
         .file(
-            "foo2/bar2/Cargo.toml",
+            "foo2/bar2/Crabgo.toml",
             r#"
                 [package]
                 name = "bar2"
@@ -1007,16 +1007,16 @@ fn run_with_bin_dep_in_workspace() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] `cargo run` could not determine which binary to run[..]
+[ERROR] `crabgo run` could not determine which binary to run[..]
 available binaries: bar1, bar2, foo1, foo2",
         )
         .run();
 
-    p.cargo("run --bin foo1")
+    p.crabgo("run --bin foo1")
         .with_stderr(
             "\
 [WARNING] foo1 v0.0.1 ([CWD]/foo1) ignoring invalid dependency `bar1` which is missing a lib target
@@ -1029,7 +1029,7 @@ available binaries: bar1, bar2, foo1, foo2",
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn release_works() {
     let p = project()
         .file(
@@ -1040,7 +1040,7 @@ fn release_works() {
         )
         .build();
 
-    p.cargo("run --release")
+    p.crabgo("run --release")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -1052,7 +1052,7 @@ fn release_works() {
     assert!(p.release_bin("foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn release_short_works() {
     let p = project()
         .file(
@@ -1063,7 +1063,7 @@ fn release_short_works() {
         )
         .build();
 
-    p.cargo("run -r")
+    p.crabgo("run -r")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -1075,11 +1075,11 @@ fn release_short_works() {
     assert!(p.release_bin("foo").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_bin_different_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1093,10 +1093,10 @@ fn run_bin_different_name() {
         .file("src/bar.rs", "fn main() {}")
         .build();
 
-    p.cargo("run").run();
+    p.crabgo("run").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn dashes_are_forwarded() {
     let p = project()
         .file(
@@ -1113,19 +1113,19 @@ fn dashes_are_forwarded() {
         )
         .build();
 
-    p.cargo("run -- -- a -- b").run();
+    p.crabgo("run -- -- a -- b").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_from_executable_folder() {
     let p = project()
         .file("src/main.rs", r#"fn main() { println!("hello"); }"#)
         .build();
 
     let cwd = p.root().join("target").join("debug");
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
-    p.cargo("run")
+    p.crabgo("run")
         .cwd(cwd)
         .with_stderr(
             "[FINISHED] dev [unoptimized + debuginfo] target(s) in [..]\n\
@@ -1135,7 +1135,7 @@ fn run_from_executable_folder() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_with_library_paths() {
     let p = project();
 
@@ -1149,7 +1149,7 @@ fn run_with_library_paths() {
 
     let p = p
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1163,8 +1163,8 @@ fn run_with_library_paths() {
             &format!(
                 r##"
                     fn main() {{
-                        println!(r#"cargo:rustc-link-search=native={}"#);
-                        println!(r#"cargo:rustc-link-search={}"#);
+                        println!(r#"crabgo:rustc-link-search=native={}"#);
+                        println!(r#"crabgo:rustc-link-search={}"#);
                     }}
                 "##,
                 dir1.display(),
@@ -1190,10 +1190,10 @@ fn run_with_library_paths() {
         )
         .build();
 
-    p.cargo("run").run();
+    p.crabgo("run").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn library_paths_sorted_alphabetically() {
     let p = project();
 
@@ -1208,7 +1208,7 @@ fn library_paths_sorted_alphabetically() {
 
     let p = p
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1222,9 +1222,9 @@ fn library_paths_sorted_alphabetically() {
             &format!(
                 r##"
                     fn main() {{
-                        println!(r#"cargo:rustc-link-search=native={}"#);
-                        println!(r#"cargo:rustc-link-search=native={}"#);
-                        println!(r#"cargo:rustc-link-search=native={}"#);
+                        println!(r#"crabgo:rustc-link-search=native={}"#);
+                        println!(r#"crabgo:rustc-link-search=native={}"#);
+                        println!(r#"crabgo:rustc-link-search=native={}"#);
                     }}
                 "##,
                 dir1.display(),
@@ -1250,28 +1250,28 @@ fn library_paths_sorted_alphabetically() {
         )
         .build();
 
-    p.cargo("run").run();
+    p.crabgo("run").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fail_no_extra_verbose() {
     let p = project()
         .file("src/main.rs", "fn main() { std::process::exit(1); }")
         .build();
 
-    p.cargo("run -q")
+    p.crabgo("run -q")
         .with_status(1)
         .with_stdout("")
         .with_stderr("")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_multiple_packages() {
     let p = project()
         .no_manifest()
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1290,24 +1290,24 @@ fn run_multiple_packages() {
             "#,
         )
         .file("foo/src/foo.rs", "fn main() { println!(\"foo\"); }")
-        .file("foo/d1/Cargo.toml", &basic_bin_manifest("d1"))
+        .file("foo/d1/Crabgo.toml", &basic_bin_manifest("d1"))
         .file("foo/d1/src/lib.rs", "")
         .file("foo/d1/src/main.rs", "fn main() { println!(\"d1\"); }")
-        .file("foo/d2/Cargo.toml", &basic_bin_manifest("d2"))
+        .file("foo/d2/Crabgo.toml", &basic_bin_manifest("d2"))
         .file("foo/d2/src/main.rs", "fn main() { println!(\"d2\"); }")
-        .file("d3/Cargo.toml", &basic_bin_manifest("d3"))
+        .file("d3/Crabgo.toml", &basic_bin_manifest("d3"))
         .file("d3/src/main.rs", "fn main() { println!(\"d2\"); }")
         .build();
 
-    let cargo = || {
-        let mut process_builder = p.cargo("run");
+    let crabgo = || {
+        let mut process_builder = p.crabgo("run");
         process_builder.cwd("foo");
         process_builder
     };
 
-    cargo().arg("-p").arg("d1").with_stdout("d1").run();
+    crabgo().arg("-p").arg("d1").with_stdout("d1").run();
 
-    cargo()
+    crabgo()
         .arg("-p")
         .arg("d2")
         .arg("--bin")
@@ -1315,9 +1315,9 @@ fn run_multiple_packages() {
         .with_stdout("d2")
         .run();
 
-    cargo().with_stdout("foo").run();
+    crabgo().with_stdout("foo").run();
 
-    cargo()
+    crabgo()
         .arg("-p")
         .arg("d1")
         .arg("-p")
@@ -1328,24 +1328,24 @@ fn run_multiple_packages() {
         )
         .run();
 
-    cargo()
+    crabgo()
         .arg("-p")
         .arg("d3")
         .with_status(101)
         .with_stderr_contains("[ERROR] package(s) `d3` not found in workspace [..]")
         .run();
 
-    cargo()
+    crabgo()
         .arg("-p")
         .arg("d*")
         .with_status(101)
         .with_stderr_contains(
-            "[ERROR] `cargo run` does not support glob pattern `d*` on package selection",
+            "[ERROR] `crabgo run` does not support glob pattern `d*` on package selection",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn explicit_bin_with_args() {
     let p = project()
         .file(
@@ -1359,48 +1359,48 @@ fn explicit_bin_with_args() {
         )
         .build();
 
-    p.cargo("run --bin foo hello world").run();
+    p.crabgo("run --bin foo hello world").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn run_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b"]
             "#,
         )
-        .file("a/Cargo.toml", &basic_bin_manifest("a"))
+        .file("a/Crabgo.toml", &basic_bin_manifest("a"))
         .file("a/src/main.rs", r#"fn main() {println!("run-a");}"#)
-        .file("b/Cargo.toml", &basic_bin_manifest("b"))
+        .file("b/Crabgo.toml", &basic_bin_manifest("b"))
         .file("b/src/main.rs", r#"fn main() {println!("run-b");}"#)
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] `cargo run` could not determine which binary to run[..]
+[ERROR] `crabgo run` could not determine which binary to run[..]
 available binaries: a, b",
         )
         .run();
-    p.cargo("run --bin a").with_stdout("run-a").run();
+    p.crabgo("run --bin a").with_stdout("run-a").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_run_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b"]
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1409,24 +1409,24 @@ fn default_run_workspace() {
             "#,
         )
         .file("a/src/main.rs", r#"fn main() {println!("run-a");}"#)
-        .file("b/Cargo.toml", &basic_bin_manifest("b"))
+        .file("b/Crabgo.toml", &basic_bin_manifest("b"))
         .file("b/src/main.rs", r#"fn main() {println!("run-b");}"#)
         .build();
 
-    p.cargo("run").with_stdout("run-a").run();
+    p.crabgo("run").with_stdout("run-a").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 #[cfg(target_os = "macos")]
 fn run_link_system_path_macos() {
-    use cargo_test_support::paths::{self, CargoPathExt};
+    use crabgo_test_support::paths::{self, CrabgoPathExt};
     use std::fs;
     // Check that the default system library path is honored.
     // First, build a shared library that will be accessed from
     // DYLD_FALLBACK_LIBRARY_PATH.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1440,7 +1440,7 @@ fn run_link_system_path_macos() {
             "#[no_mangle] pub extern fn something_shared() {}",
         )
         .build();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     // This is convoluted. Since this test can't modify things in /usr,
     // this needs to dance around to check that things work.
@@ -1455,13 +1455,13 @@ fn run_link_system_path_macos() {
     // 1. Build with rustc-link-search pointing to libfoo so the initial
     //    binary can be linked.
     // 2. Move the library to ~/lib
-    // 3. Run `cargo run` to make sure it can still find the library in
+    // 3. Run `crabgo run` to make sure it can still find the library in
     //    ~/lib.
     //
     // This should be equivalent to having the library in /usr/local/lib.
     let p2 = project()
         .at("bar")
-        .file("Cargo.toml", &basic_bin_manifest("bar"))
+        .file("Crabgo.toml", &basic_bin_manifest("bar"))
         .file(
             "src/main.rs",
             r#"
@@ -1478,16 +1478,16 @@ fn run_link_system_path_macos() {
             &format!(
                 r#"
                 fn main() {{
-                    println!("cargo:rustc-link-lib=foo");
-                    println!("cargo:rustc-link-search={}");
+                    println!("crabgo:rustc-link-lib=foo");
+                    println!("crabgo:rustc-link-search={}");
                 }}
                 "#,
                 p.target_debug_dir().display()
             ),
         )
         .build();
-    p2.cargo("build").run();
-    p2.cargo("test").run();
+    p2.crabgo("build").run();
+    p2.crabgo("test").run();
 
     let libdir = paths::home().join("lib");
     fs::create_dir(&libdir).unwrap();
@@ -1499,11 +1499,11 @@ fn run_link_system_path_macos() {
     p.root().rm_rf();
     const VAR: &str = "DYLD_FALLBACK_LIBRARY_PATH";
     // Reset DYLD_FALLBACK_LIBRARY_PATH so that we don't inherit anything that
-    // was set by the cargo that invoked the test.
-    p2.cargo("run").env_remove(VAR).run();
-    p2.cargo("test").env_remove(VAR).run();
+    // was set by the crabgo that invoked the test.
+    p2.crabgo("run").env_remove(VAR).run();
+    p2.crabgo("test").env_remove(VAR).run();
     // Ensure this still works when DYLD_FALLBACK_LIBRARY_PATH has
     // a value set.
-    p2.cargo("run").env(VAR, &libdir).run();
-    p2.cargo("test").env(VAR, &libdir).run();
+    p2.crabgo("run").env(VAR, &libdir).run();
+    p2.crabgo("test").env(VAR, &libdir).run();
 }

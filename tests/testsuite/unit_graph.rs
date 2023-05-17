@@ -1,12 +1,12 @@
 //! Tests for --unit-graph option.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
-#[cargo_test]
+#[crabgo_test]
 fn gated() {
     let p = project().file("src/lib.rs", "").build();
-    p.cargo("build --unit-graph")
+    p.crabgo("build --unit-graph")
         .with_status(101)
         .with_stderr(
             "\
@@ -18,7 +18,7 @@ See [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     Package::new("a", "1.0.0")
         .dep("b", "1.0")
@@ -32,7 +32,7 @@ fn simple() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -45,8 +45,8 @@ fn simple() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build --features a/feata --unit-graph -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["unit-graph"])
+    p.crabgo("build --features a/feata --unit-graph -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["unit-graph"])
         .with_json(
             r#"{
               "roots": [

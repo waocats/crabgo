@@ -1,18 +1,18 @@
-//! Tests for the `cargo doc` command.
+//! Tests for the `crabgo doc` command.
 
-use cargo::core::compiler::RustDocFingerprint;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_lib_manifest, basic_manifest, git, project};
-use cargo_test_support::{rustc_host, symlink_supported, tools};
+use crabgo::core::compiler::RustDocFingerprint;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_lib_manifest, basic_manifest, git, project};
+use crabgo_test_support::{rustc_host, symlink_supported, tools};
 use std::fs;
 use std::str;
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -25,7 +25,7 @@ fn simple() {
         .file("src/lib.rs", "pub fn foo() {}")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [..] foo v0.0.1 ([CWD])
@@ -38,11 +38,11 @@ fn simple() {
     assert!(p.root().join("target/doc/foo/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_no_libs() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -57,14 +57,14 @@ fn doc_no_libs() {
         .file("src/main.rs", "bad code")
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_twice() {
     let p = project().file("src/lib.rs", "pub fn foo() {}").build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -73,14 +73,14 @@ fn doc_twice() {
         )
         .run();
 
-    p.cargo("doc").with_stdout("").run();
+    p.crabgo("doc").with_stdout("").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -92,11 +92,11 @@ fn doc_deps() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar; pub fn foo() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [..] bar v0.0.1 ([CWD]/bar)
@@ -115,8 +115,8 @@ fn doc_deps() {
     assert_eq!(p.glob("target/debug/**/*.rlib").count(), 0);
     assert_eq!(p.glob("target/debug/deps/libbar-*.rmeta").count(), 1);
 
-    p.cargo("doc")
-        .env("CARGO_LOG", "cargo::ops::cargo_rustc::fingerprint")
+    p.crabgo("doc")
+        .env("CRABGO_LOG", "crabgo::ops::crabgo_rustc::fingerprint")
         .with_stdout("")
         .run();
 
@@ -125,11 +125,11 @@ fn doc_deps() {
     assert!(p.root().join("target/doc/bar/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_no_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -141,11 +141,11 @@ fn doc_no_deps() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar; pub fn foo() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("doc --no-deps")
+    p.crabgo("doc --no-deps")
         .with_stderr(
             "\
 [CHECKING] bar v0.0.1 ([CWD]/bar)
@@ -160,11 +160,11 @@ fn doc_no_deps() {
     assert!(!p.root().join("target/doc/bar/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_only_bin() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -176,29 +176,29 @@ fn doc_only_bin() {
             "#,
         )
         .file("src/main.rs", "extern crate bar; pub fn foo() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("doc -v").run();
+    p.crabgo("doc -v").run();
 
     assert!(p.root().join("target/doc").is_dir());
     assert!(p.root().join("target/doc/bar/index.html").is_file());
     assert!(p.root().join("target/doc/foo/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_multiple_targets_same_name_lib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -209,7 +209,7 @@ fn doc_multiple_targets_same_name_lib() {
         )
         .file("foo/src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -221,7 +221,7 @@ fn doc_multiple_targets_same_name_lib() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_status(101)
         .with_stderr(
             "\
@@ -229,24 +229,24 @@ error: document output filename collision
 The lib `foo_lib` in package `foo v0.1.0 ([ROOT]/foo/foo)` has the same name as \
 the lib `foo_lib` in package `bar v0.1.0 ([ROOT]/foo/bar)`.
 Only one may be documented at once since they output to the same path.
-Consider documenting only one, renaming one, or marking one with `doc = false` in Cargo.toml.
+Consider documenting only one, renaming one, or marking one with `doc = false` in Crabgo.toml.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_multiple_targets_same_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -258,7 +258,7 @@ fn doc_multiple_targets_same_name() {
         )
         .file("foo/src/foo_lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -270,7 +270,7 @@ fn doc_multiple_targets_same_name() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_stderr_unordered(
             "\
 warning: output filename collision.
@@ -280,7 +280,7 @@ has the same output filename as the lib target `foo_lib` in package \
 Colliding filename is: [ROOT]/foo/target/doc/foo_lib/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [DOCUMENTING] bar v0.1.0 ([ROOT]/foo/bar)
 [DOCUMENTING] foo v0.1.0 ([ROOT]/foo/foo)
 [FINISHED] [..]
@@ -289,18 +289,18 @@ the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_multiple_targets_same_name_bin() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -309,7 +309,7 @@ fn doc_multiple_targets_same_name_bin() {
         )
         .file("foo/src/bin/foo-cli.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -319,7 +319,7 @@ fn doc_multiple_targets_same_name_bin() {
         .file("bar/src/bin/foo-cli.rs", "")
         .build();
 
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_status(101)
         .with_stderr(
             "\
@@ -327,24 +327,24 @@ error: document output filename collision
 The bin `foo-cli` in package `foo v0.1.0 ([ROOT]/foo/foo)` has the same name as \
 the bin `foo-cli` in package `bar v0.1.0 ([ROOT]/foo/bar)`.
 Only one may be documented at once since they output to the same path.
-Consider documenting only one, renaming one, or marking one with `doc = false` in Cargo.toml.
+Consider documenting only one, renaming one, or marking one with `doc = false` in Crabgo.toml.
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_multiple_targets_same_name_undoced() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -355,7 +355,7 @@ fn doc_multiple_targets_same_name_undoced() {
         )
         .file("foo/src/foo-cli.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -368,10 +368,10 @@ fn doc_multiple_targets_same_name_undoced() {
         .file("bar/src/foo-cli.rs", "")
         .build();
 
-    p.cargo("doc --workspace").run();
+    p.crabgo("doc --workspace").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_same_name_documents_lib() {
     let p = project()
         .file(
@@ -393,7 +393,7 @@ fn doc_lib_bin_same_name_documents_lib() {
         )
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -406,7 +406,7 @@ fn doc_lib_bin_same_name_documents_lib() {
     assert!(!doc_html.contains("Binary"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_same_name_documents_lib_when_requested() {
     let p = project()
         .file(
@@ -428,7 +428,7 @@ fn doc_lib_bin_same_name_documents_lib_when_requested() {
         )
         .build();
 
-    p.cargo("doc --lib")
+    p.crabgo("doc --lib")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -441,7 +441,7 @@ fn doc_lib_bin_same_name_documents_lib_when_requested() {
     assert!(!doc_html.contains("Binary"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_same_name_documents_named_bin_when_requested() {
     let p = project()
         .file(
@@ -463,7 +463,7 @@ fn doc_lib_bin_same_name_documents_named_bin_when_requested() {
         )
         .build();
 
-    p.cargo("doc --bin foo")
+    p.crabgo("doc --bin foo")
         // The checking/documenting lines are sometimes swapped since they run
         // concurrently.
         .with_stderr_unordered(
@@ -474,7 +474,7 @@ has the same output filename as the lib target `foo` in package `foo v0.0.1 ([RO
 Colliding filename is: [ROOT]/foo/target/doc/foo/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [CHECKING] foo v0.0.1 ([CWD])
 [DOCUMENTING] foo v0.0.1 ([CWD])
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]
@@ -486,7 +486,7 @@ the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
     assert!(doc_html.contains("Binary"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_same_name_documents_bins_when_requested() {
     let p = project()
         .file(
@@ -508,7 +508,7 @@ fn doc_lib_bin_same_name_documents_bins_when_requested() {
         )
         .build();
 
-    p.cargo("doc --bins")
+    p.crabgo("doc --bins")
         // The checking/documenting lines are sometimes swapped since they run
         // concurrently.
         .with_stderr_unordered(
@@ -519,7 +519,7 @@ has the same output filename as the lib target `foo` in package `foo v0.0.1 ([RO
 Colliding filename is: [ROOT]/foo/target/doc/foo/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [CHECKING] foo v0.0.1 ([CWD])
 [DOCUMENTING] foo v0.0.1 ([CWD])
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]
@@ -531,7 +531,7 @@ the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
     assert!(doc_html.contains("Binary"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_example_same_name_documents_named_example_when_requested() {
     let p = project()
         .file(
@@ -560,7 +560,7 @@ fn doc_lib_bin_example_same_name_documents_named_example_when_requested() {
         )
         .build();
 
-    p.cargo("doc --example ex1")
+    p.crabgo("doc --example ex1")
         // The checking/documenting lines are sometimes swapped since they run
         // concurrently.
         .with_stderr_unordered(
@@ -577,7 +577,7 @@ fn doc_lib_bin_example_same_name_documents_named_example_when_requested() {
     assert!(doc_html.contains("Example1"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_bin_example_same_name_documents_examples_when_requested() {
     let p = project()
         .file(
@@ -613,7 +613,7 @@ fn doc_lib_bin_example_same_name_documents_examples_when_requested() {
         )
         .build();
 
-    p.cargo("doc --examples")
+    p.crabgo("doc --examples")
         // The checking/documenting lines are sometimes swapped since they run
         // concurrently.
         .with_stderr_unordered(
@@ -637,11 +637,11 @@ fn doc_lib_bin_example_same_name_documents_examples_when_requested() {
     assert!(example_doc_html_2.contains("Example2"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_dash_p() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -654,7 +654,7 @@ fn doc_dash_p() {
         )
         .file("src/lib.rs", "extern crate a;")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -666,11 +666,11 @@ fn doc_dash_p() {
             "#,
         )
         .file("a/src/lib.rs", "extern crate b;")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("doc -p a")
+    p.crabgo("doc -p a")
         .with_stderr(
             "\
 [..] b v0.0.1 ([CWD]/b)
@@ -682,23 +682,23 @@ fn doc_dash_p() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_all_exclude() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("doc --workspace --exclude baz")
+    p.crabgo("doc --workspace --exclude baz")
         .with_stderr_does_not_contain("[DOCUMENTING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -709,23 +709,23 @@ fn doc_all_exclude() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_all_exclude_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("doc --workspace --exclude '*z'")
+    p.crabgo("doc --workspace --exclude '*z'")
         .with_stderr_does_not_contain("[DOCUMENTING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -736,7 +736,7 @@ fn doc_all_exclude_glob() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_same_name() {
     let p = project()
         .file("src/lib.rs", "")
@@ -745,10 +745,10 @@ fn doc_same_name() {
         .file("tests/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test(nightly, reason = "no_core, lang_items requires nightly")]
+#[crabgo_test(nightly, reason = "no_core, lang_items requires nightly")]
 fn doc_target() {
     const TARGET: &str = "arm-unknown-linux-gnueabihf";
 
@@ -769,7 +769,7 @@ fn doc_target() {
         )
         .build();
 
-    p.cargo("doc --verbose --target").arg(TARGET).run();
+    p.crabgo("doc --verbose --target").arg(TARGET).run();
     assert!(p.root().join(&format!("target/{}/doc", TARGET)).is_dir());
     assert!(p
         .root()
@@ -777,11 +777,11 @@ fn doc_target() {
         .is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_specific_not_documented() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -793,18 +793,18 @@ fn target_specific_not_documented() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/lib.rs", "not rust")
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn output_not_captured() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -816,7 +816,7 @@ fn output_not_captured() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file(
             "a/src/lib.rs",
             "
@@ -828,16 +828,16 @@ fn output_not_captured() {
         )
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_contains("[..]unknown start of token: `")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn target_specific_documented() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -862,7 +862,7 @@ fn target_specific_documented() {
             pub fn foo() {}
         ",
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file(
             "a/src/lib.rs",
             "
@@ -872,14 +872,14 @@ fn target_specific_documented() {
         )
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_document_build_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -891,7 +891,7 @@ fn no_document_build_deps() {
             "#,
         )
         .file("src/lib.rs", "pub fn foo() {}")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file(
             "a/src/lib.rs",
             "
@@ -903,15 +903,15 @@ fn no_document_build_deps() {
         )
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_release() {
     let p = project().file("src/lib.rs", "").build();
 
-    p.cargo("check --release").run();
-    p.cargo("doc --release -v")
+    p.crabgo("check --release").run();
+    p.crabgo("doc --release -v")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([..])
@@ -922,11 +922,11 @@ fn doc_release() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_multiple_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -941,24 +941,24 @@ fn doc_multiple_deps() {
             "#,
         )
         .file("src/lib.rs", "extern crate bar; pub fn foo() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.0.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.0.1"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("doc -p bar -p baz -v").run();
+    p.crabgo("doc -p bar -p baz -v").run();
 
     assert!(p.root().join("target/doc").is_dir());
     assert!(p.root().join("target/doc/bar/index.html").is_file());
     assert!(p.root().join("target/doc/baz/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn features() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -974,7 +974,7 @@ fn features() {
         )
         .file("src/lib.rs", r#"#[cfg(feature = "foo")] pub fn foo() {}"#)
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -989,7 +989,7 @@ fn features() {
             "bar/build.rs",
             r#"
                 fn main() {
-                    println!("cargo:rustc-cfg=bar");
+                    println!("crabgo:rustc-cfg=bar");
                 }
             "#,
         )
@@ -998,7 +998,7 @@ fn features() {
             r#"#[cfg(feature = "bar")] pub fn bar() {}"#,
         )
         .build();
-    p.cargo("doc --features foo")
+    p.crabgo("doc --features foo")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 [..]
@@ -1012,7 +1012,7 @@ fn features() {
     assert!(p.root().join("target/doc/foo/fn.foo.html").is_file());
     assert!(p.root().join("target/doc/bar/fn.bar.html").is_file());
     // Check that turning the feature off will remove the files.
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [COMPILING] bar v0.0.1 [..]
@@ -1025,7 +1025,7 @@ fn features() {
     assert!(!p.root().join("target/doc/foo/fn.foo.html").is_file());
     assert!(!p.root().join("target/doc/bar/fn.bar.html").is_file());
     // And switching back will rebuild and bring them back.
-    p.cargo("doc --features foo")
+    p.crabgo("doc --features foo")
         .with_stderr(
             "\
 [DOCUMENTING] bar v0.0.1 [..]
@@ -1038,7 +1038,7 @@ fn features() {
     assert!(p.root().join("target/doc/bar/fn.bar.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn rerun_when_dir_removed() {
     let p = project()
         .file(
@@ -1050,16 +1050,16 @@ fn rerun_when_dir_removed() {
         )
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     assert!(p.root().join("target/doc/foo/index.html").is_file());
 
     fs::remove_dir_all(p.root().join("target/doc/foo")).unwrap();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     assert!(p.root().join("target/doc/foo/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn document_only_lib() {
     let p = project()
         .file(
@@ -1080,15 +1080,15 @@ fn document_only_lib() {
             "#,
         )
         .build();
-    p.cargo("doc --lib").run();
+    p.crabgo("doc --lib").run();
     assert!(p.root().join("target/doc/foo/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn plugins_no_use_target() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1101,14 +1101,14 @@ fn plugins_no_use_target() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("doc --target=x86_64-unknown-openbsd -v").run();
+    p.crabgo("doc --target=x86_64-unknown-openbsd -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_all_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1121,81 +1121,81 @@ fn doc_all_workspace() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
     // The order in which bar is compiled or documented is not deterministic
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_stderr_contains("[..] Documenting bar v0.1.0 ([..])")
         .with_stderr_contains("[..] Checking bar v0.1.0 ([..])")
         .with_stderr_contains("[..] Documenting foo v0.1.0 ([..])")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_all_virtual_manifest() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
     // The order in which bar and baz are documented is not guaranteed
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_stderr_contains("[..] Documenting baz v0.1.0 ([..])")
         .with_stderr_contains("[..] Documenting bar v0.1.0 ([..])")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_virtual_manifest_all_implied() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
     // The order in which bar and baz are documented is not guaranteed
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_contains("[..] Documenting baz v0.1.0 ([..])")
         .with_stderr_contains("[..] Documenting bar v0.1.0 ([..])")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_virtual_manifest_one_project() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() { break_the_build(); }")
         .build();
 
-    p.cargo("doc -p bar")
+    p.crabgo("doc -p bar")
         .with_stderr_does_not_contain("[DOCUMENTING] baz v0.1.0 [..]")
         .with_stderr(
             "\
@@ -1206,23 +1206,23 @@ fn doc_virtual_manifest_one_project() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_virtual_manifest_glob() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar", "baz"]
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {  break_the_build(); }")
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.0"))
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("doc -p '*z'")
+    p.crabgo("doc -p '*z'")
         .with_stderr_does_not_contain("[DOCUMENTING] bar v0.1.0 [..]")
         .with_stderr(
             "\
@@ -1233,18 +1233,18 @@ fn doc_virtual_manifest_glob() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_all_member_dependency_same_name() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1259,7 +1259,7 @@ fn doc_all_member_dependency_same_name() {
 
     Package::new("bar", "0.1.0").publish();
 
-    p.cargo("doc --workspace")
+    p.crabgo("doc --workspace")
         .with_stderr_unordered(
             "\
 [UPDATING] [..]
@@ -1271,7 +1271,7 @@ the lib target `bar` in package `bar v0.1.0 ([ROOT]/foo/bar)`.
 Colliding filename is: [ROOT]/foo/target/doc/bar/index.html
 The targets should have unique names.
 This is a known bug where multiple crates with the same name use
-the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
+the same path; see <https://github.com/rust-lang/crabgo/issues/6313>.
 [DOCUMENTING] bar v0.1.0
 [CHECKING] bar v0.1.0
 [DOCUMENTING] bar v0.1.0 [..]
@@ -1281,24 +1281,24 @@ the same path; see <https://github.com/rust-lang/cargo/issues/6313>.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_workspace_open_help_message() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo", "bar"]
             "#,
         )
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
     // The order in which bar is compiled or documented is not deterministic
-    p.cargo("doc --workspace --open")
+    p.crabgo("doc --workspace --open")
         .env("BROWSER", tools::echo())
         .with_stderr_contains("[..] Documenting bar v0.1.0 ([..])")
         .with_stderr_contains("[..] Documenting foo v0.1.0 ([..])")
@@ -1306,11 +1306,11 @@ fn doc_workspace_open_help_message() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "-Zextern-html-root-url is unstable")]
+#[crabgo_test(nightly, reason = "-Zextern-html-root-url is unstable")]
 fn doc_extern_map_local() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1318,12 +1318,12 @@ fn doc_extern_map_local() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file(".cargo/config.toml", "doc.extern-map.std = 'local'")
+        .file(".crabgo/config.toml", "doc.extern-map.std = 'local'")
         .build();
 
-    p.cargo("doc -v --no-deps -Zrustdoc-map --open")
+    p.crabgo("doc -v --no-deps -Zrustdoc-map --open")
         .env("BROWSER", tools::echo())
-        .masquerade_as_nightly_cargo(&["rustdoc-map"])
+        .masquerade_as_nightly_crabgo(&["rustdoc-map"])
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.1.0 [..]
@@ -1335,11 +1335,11 @@ fn doc_extern_map_local() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn open_no_doc_crate() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1353,25 +1353,25 @@ fn open_no_doc_crate() {
         .file("src/lib.rs", "#[cfg(feature)] pub fn f();")
         .build();
 
-    p.cargo("doc --open")
+    p.crabgo("doc --open")
         .env("BROWSER", "do_not_run_me")
         .with_status(101)
         .with_stderr_contains("error: no crates with documentation")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_workspace_open_different_library_and_package_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1383,7 +1383,7 @@ fn doc_workspace_open_different_library_and_package_names() {
         .file("foo/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --open")
+    p.crabgo("doc --open")
         .env("BROWSER", tools::echo())
         .with_stderr_contains("[..] Documenting foo v0.1.0 ([..])")
         .with_stderr_contains("[..] [CWD]/target/doc/foolib/index.html")
@@ -1391,7 +1391,7 @@ fn doc_workspace_open_different_library_and_package_names() {
         .run();
 
     p.change_file(
-        ".cargo/config.toml",
+        ".crabgo/config.toml",
         &format!(
             r#"
                 [doc]
@@ -1401,25 +1401,25 @@ fn doc_workspace_open_different_library_and_package_names() {
         ),
     );
 
-    // check that the cargo config overrides the browser env var
-    p.cargo("doc --open")
+    // check that the crabgo config overrides the browser env var
+    p.crabgo("doc --open")
         .env("BROWSER", "do_not_run_me")
         .with_stdout_contains("a [CWD]/target/doc/foolib/index.html")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_workspace_open_binary() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1432,25 +1432,25 @@ fn doc_workspace_open_binary() {
         .file("foo/src/main.rs", "")
         .build();
 
-    p.cargo("doc --open")
+    p.crabgo("doc --open")
         .env("BROWSER", tools::echo())
         .with_stderr_contains("[..] Documenting foo v0.1.0 ([..])")
         .with_stderr_contains("[..] Opening [CWD]/target/doc/foobin/index.html")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_workspace_open_binary_and_library() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo"]
             "#,
         )
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1466,18 +1466,18 @@ fn doc_workspace_open_binary_and_library() {
         .file("foo/src/main.rs", "")
         .build();
 
-    p.cargo("doc --open")
+    p.crabgo("doc --open")
         .env("BROWSER", tools::echo())
         .with_stderr_contains("[..] Documenting foo v0.1.0 ([..])")
         .with_stderr_contains("[..] Opening [CWD]/target/doc/foolib/index.html")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_edition() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1489,20 +1489,20 @@ fn doc_edition() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc -v")
+    p.crabgo("doc -v")
         .with_stderr_contains("[RUNNING] `rustdoc [..]--edition=2018[..]")
         .run();
 
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr_contains("[RUNNING] `rustdoc [..]--edition=2018[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_target_edition() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1516,22 +1516,22 @@ fn doc_target_edition() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc -v")
+    p.crabgo("doc -v")
         .with_stderr_contains("[RUNNING] `rustdoc [..]--edition=2018[..]")
         .run();
 
-    p.cargo("test -v")
+    p.crabgo("test -v")
         .with_stderr_contains("[RUNNING] `rustdoc [..]--edition=2018[..]")
         .run();
 }
 
 // Tests an issue where depending on different versions of the same crate depending on `cfg`s
-// caused `cargo doc` to fail.
-#[cargo_test]
+// caused `crabgo doc` to fail.
+#[crabgo_test]
 fn issue_5345() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1550,16 +1550,16 @@ fn issue_5345() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.2.0").publish();
 
-    foo.cargo("check").run();
-    foo.cargo("doc").run();
+    foo.crabgo("check").run();
+    foo.crabgo("doc").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_private_items() {
     let foo = project()
         .file("src/lib.rs", "mod private { fn private_item() {} }")
         .build();
-    foo.cargo("doc --document-private-items").run();
+    foo.crabgo("doc --document-private-items").run();
 
     assert!(foo.root().join("target/doc").is_dir());
     assert!(foo
@@ -1568,23 +1568,23 @@ fn doc_private_items() {
         .is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_private_ws() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b"]
             "#,
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/lib.rs", "fn p() {}")
-        .file("b/Cargo.toml", &basic_manifest("b", "0.0.1"))
+        .file("b/Crabgo.toml", &basic_manifest("b", "0.0.1"))
         .file("b/src/lib.rs", "fn p2() {}")
         .file("b/src/bin/b-cli.rs", "fn main() {}")
         .build();
-    p.cargo("doc --workspace --bins --lib --document-private-items -v")
+    p.crabgo("doc --workspace --bins --lib --document-private-items -v")
         .with_stderr_contains(
             "[RUNNING] `rustdoc [..] a/src/lib.rs [..]--document-private-items[..]",
         )
@@ -1604,16 +1604,16 @@ const BAD_INTRA_LINK_LIB: &str = r#"
 pub fn foo() {}
 "#;
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_cap_lints() {
     let a = git::new("a", |p| {
-        p.file("Cargo.toml", &basic_lib_manifest("a"))
+        p.file("Crabgo.toml", &basic_lib_manifest("a"))
             .file("src/lib.rs", BAD_INTRA_LINK_LIB)
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1630,7 +1630,7 @@ fn doc_cap_lints() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_unordered(
             "\
 [UPDATING] git repository `[..]`
@@ -1644,16 +1644,16 @@ fn doc_cap_lints() {
 
     p.root().join("target").rm_rf();
 
-    p.cargo("doc -vv")
+    p.crabgo("doc -vv")
         .with_stderr_contains("[WARNING] [..]`bad_link`[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_message_format() {
     let p = project().file("src/lib.rs", BAD_INTRA_LINK_LIB).build();
 
-    p.cargo("doc --message-format=json")
+    p.crabgo("doc --message-format=json")
         .with_status(101)
         .with_json_contains_unordered(
             r#"
@@ -1676,7 +1676,7 @@ fn doc_message_format() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_json_artifacts() {
     // Checks the output of json artifact messages.
     let p = project()
@@ -1684,13 +1684,13 @@ fn doc_json_artifacts() {
         .file("src/bin/somebin.rs", "fn main() {}")
         .build();
 
-    p.cargo("doc --message-format=json")
+    p.crabgo("doc --message-format=json")
         .with_json_contains_unordered(
             r#"
 {
     "reason": "compiler-artifact",
     "package_id": "foo 0.0.1 [..]",
-    "manifest_path": "[ROOT]/foo/Cargo.toml",
+    "manifest_path": "[ROOT]/foo/Crabgo.toml",
     "target":
     {
         "kind": ["lib"],
@@ -1712,7 +1712,7 @@ fn doc_json_artifacts() {
 {
     "reason": "compiler-artifact",
     "package_id": "foo 0.0.1 [..]",
-    "manifest_path": "[ROOT]/foo/Cargo.toml",
+    "manifest_path": "[ROOT]/foo/Crabgo.toml",
     "target":
     {
         "kind": ["lib"],
@@ -1734,7 +1734,7 @@ fn doc_json_artifacts() {
 {
     "reason": "compiler-artifact",
     "package_id": "foo 0.0.1 [..]",
-    "manifest_path": "[ROOT]/foo/Cargo.toml",
+    "manifest_path": "[ROOT]/foo/Crabgo.toml",
     "target":
     {
         "kind": ["bin"],
@@ -1759,20 +1759,20 @@ fn doc_json_artifacts() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn short_message_format() {
     let p = project().file("src/lib.rs", BAD_INTRA_LINK_LIB).build();
-    p.cargo("doc --message-format=short")
+    p.crabgo("doc --message-format=short")
         .with_status(101)
         .with_stderr_contains("src/lib.rs:4:6: error: [..]`bad_link`[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_example() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1797,7 +1797,7 @@ fn doc_example() {
         )
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     assert!(p
         .build_dir()
         .join("doc")
@@ -1806,11 +1806,11 @@ fn doc_example() {
         .exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_example_with_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1838,7 +1838,7 @@ fn doc_example_with_deps() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -1851,7 +1851,7 @@ fn doc_example_with_deps() {
         .file("a/src/fun.rs", "pub fn fun() {}")
         .file("a/src/lib.rs", "pub mod fun;")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
             [package]
             name = "b"
@@ -1861,7 +1861,7 @@ fn doc_example_with_deps() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --examples").run();
+    p.crabgo("doc --examples").run();
     assert!(p
         .build_dir()
         .join("doc")
@@ -1870,11 +1870,11 @@ fn doc_example_with_deps() {
         .exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bin_private_items() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1897,7 +1897,7 @@ fn bin_private_items() {
         )
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [DOCUMENTING] foo v0.0.1 ([CWD])
@@ -1922,11 +1922,11 @@ fn bin_private_items() {
     assert!(p.root().join("target/doc/foo/foo_mod/index.html").is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bin_private_items_deps() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1944,7 +1944,7 @@ fn bin_private_items_deps() {
             pub fn foo_pub() {}
         ",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file(
             "bar/src/lib.rs",
             "
@@ -1955,7 +1955,7 @@ fn bin_private_items_deps() {
         )
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_unordered(
             "\
 [DOCUMENTING] bar v0.0.1 ([..])
@@ -1975,11 +1975,11 @@ fn bin_private_items_deps() {
     assert!(!p.root().join("target/doc/bar/fn.bar_priv.html").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_versions() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1990,7 +1990,7 @@ fn crate_versions() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("doc -v")
+    p.crabgo("doc -v")
         .with_stderr(
             "\
 [DOCUMENTING] foo v1.2.4 [..]
@@ -2006,11 +2006,11 @@ fn crate_versions() {
     assert!(output_documentation.contains("Version 1.2.4"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_versions_flag_is_overridden() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2030,22 +2030,22 @@ fn crate_versions_flag_is_overridden() {
         assert!(html.contains("Version 2.0.3"));
     };
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .env("RUSTDOCFLAGS", "--crate-version 2.0.3")
         .run();
     asserts(output_documentation());
 
     p.build_dir().rm_rf();
 
-    p.cargo("rustdoc -- --crate-version 2.0.3").run();
+    p.crabgo("rustdoc -- --crate-version 2.0.3").run();
     asserts(output_documentation());
 }
 
-#[cargo_test(nightly, reason = "-Zdoctest-in-workspace is unstable")]
+#[crabgo_test(nightly, reason = "-Zdoctest-in-workspace is unstable")]
 fn doc_test_in_workspace() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = [
@@ -2055,7 +2055,7 @@ fn doc_test_in_workspace() {
             "#,
         )
         .file(
-            "crate-a/Cargo.toml",
+            "crate-a/Crabgo.toml",
             r#"
                 [package]
                 name = "crate-a"
@@ -2071,7 +2071,7 @@ fn doc_test_in_workspace() {
             ",
         )
         .file(
-            "crate-b/Cargo.toml",
+            "crate-b/Crabgo.toml",
             r#"
                 [package]
                 name = "crate-b"
@@ -2087,8 +2087,8 @@ fn doc_test_in_workspace() {
             ",
         )
         .build();
-    p.cargo("test -Zdoctest-in-workspace --doc -vv")
-        .masquerade_as_nightly_cargo(&["doctest-in-workspace"])
+    p.crabgo("test -Zdoctest-in-workspace --doc -vv")
+        .masquerade_as_nightly_crabgo(&["doctest-in-workspace"])
         .with_stderr_contains("[DOCTEST] crate-a")
         .with_stdout_contains(
             "
@@ -2112,7 +2112,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out[..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_fingerprint_is_versioning_consistent() {
     // Random rustc verbose version
     let old_rustc_verbose_version = format!(
@@ -2131,7 +2131,7 @@ LLVM version: 9.0
     // Create the dummy project.
     let dummy_project = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2142,7 +2142,7 @@ LLVM version: 9.0
         .file("src/lib.rs", "//! These are the docs!")
         .build();
 
-    dummy_project.cargo("doc").run();
+    dummy_project.crabgo("doc").run();
 
     let fingerprint: RustDocFingerprint =
         serde_json::from_str(&dummy_project.read_file("target/.rustdoc_fingerprint.json"))
@@ -2176,10 +2176,10 @@ LLVM version: 9.0
     .expect("Error writing test bogus file");
 
     // Now if we trigger another compilation, since the fingerprint contains an old version
-    // of rustc, cargo should remove the entire `/doc` folder (including the fingerprint)
+    // of rustc, crabgo should remove the entire `/doc` folder (including the fingerprint)
     // and generating another one with the actual version.
     // It should also remove the bogus file we created above.
-    dummy_project.cargo("doc").run();
+    dummy_project.crabgo("doc").run();
 
     assert!(!dummy_project.build_dir().join("doc/bogus_file").exists());
 
@@ -2195,7 +2195,7 @@ LLVM version: 9.0
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_fingerprint_respects_target_paths() {
     // Random rustc verbose version
     let old_rustc_verbose_version = format!(
@@ -2214,7 +2214,7 @@ LLVM version: 9.0
     // Create the dummy project.
     let dummy_project = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2225,7 +2225,7 @@ LLVM version: 9.0
         .file("src/lib.rs", "//! These are the docs!")
         .build();
 
-    dummy_project.cargo("doc --target").arg(rustc_host()).run();
+    dummy_project.crabgo("doc --target").arg(rustc_host()).run();
 
     let fingerprint: RustDocFingerprint =
         serde_json::from_str(&dummy_project.read_file("target/.rustdoc_fingerprint.json"))
@@ -2262,10 +2262,10 @@ LLVM version: 9.0
     .expect("Error writing test bogus file");
 
     // Now if we trigger another compilation, since the fingerprint contains an old version
-    // of rustc, cargo should remove the entire `/doc` folder (including the fingerprint)
+    // of rustc, crabgo should remove the entire `/doc` folder (including the fingerprint)
     // and generating another one with the actual version.
     // It should also remove the bogus file we created above.
-    dummy_project.cargo("doc --target").arg(rustc_host()).run();
+    dummy_project.crabgo("doc --target").arg(rustc_host()).run();
 
     assert!(!dummy_project
         .build_dir()
@@ -2285,7 +2285,7 @@ LLVM version: 9.0
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_fingerprint_unusual_behavior() {
     // Checks for some unusual circumstances with clearing the doc directory.
     if !symlink_supported() {
@@ -2299,7 +2299,7 @@ fn doc_fingerprint_unusual_behavior() {
     p.symlink(&real_doc, &build_doc);
     fs::write(real_doc.join("somefile"), "test").unwrap();
     fs::write(real_doc.join(".hidden"), "test").unwrap();
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
     // Make sure for the first run, it does not delete any files and does not
     // break the symlink.
     assert!(build_doc.join("somefile").exists());
@@ -2313,7 +2313,7 @@ fn doc_fingerprint_unusual_behavior() {
     );
     // Change file to trigger a new build.
     p.change_file("src/lib.rs", "// changed");
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "[DOCUMENTING] foo [..]\n\
              [FINISHED] [..]",
@@ -2331,8 +2331,8 @@ fn doc_fingerprint_unusual_behavior() {
     // Change file to trigger a new build.
     p.change_file("src/lib.rs", "// changed2");
     fs::write(real_doc.join("somefile"), "test").unwrap();
-    p.cargo("doc -Z skip-rustdoc-fingerprint")
-        .masquerade_as_nightly_cargo(&["skip-rustdoc-fingerprint"])
+    p.crabgo("doc -Z skip-rustdoc-fingerprint")
+        .masquerade_as_nightly_crabgo(&["skip-rustdoc-fingerprint"])
         .with_stderr(
             "[DOCUMENTING] foo [..]\n\
              [FINISHED] [..]",
@@ -2343,7 +2343,7 @@ fn doc_fingerprint_unusual_behavior() {
     assert!(real_doc.join("somefile").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn lib_before_bin() {
     // Checks that the library is documented before the binary.
     // Previously they were built concurrently, which can cause issues
@@ -2367,10 +2367,10 @@ fn lib_before_bin() {
 
     // Run check first. This just helps ensure that the test clearly shows the
     // order of the rustdoc commands.
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // The order of output here should be deterministic.
-    p.cargo("doc -v")
+    p.crabgo("doc -v")
         .with_stderr(
             "\
 [DOCUMENTING] foo [..]
@@ -2386,12 +2386,12 @@ fn lib_before_bin() {
     assert!(bin_html.contains("../foo/fn.abc.html"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_false() {
     // doc = false for a library
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2407,7 +2407,7 @@ fn doc_lib_false() {
         .file("src/lib.rs", "extern crate bar;")
         .file("src/bin/some-bin.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2420,7 +2420,7 @@ fn doc_lib_false() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.0 [..]
@@ -2436,13 +2436,13 @@ fn doc_lib_false() {
     assert!(p.build_dir().join("doc/some_bin").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn doc_lib_false_dep() {
     // doc = false for a dependency
     // Ensures that the rmeta gets produced
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2454,7 +2454,7 @@ fn doc_lib_false_dep() {
         )
         .file("src/lib.rs", "extern crate bar;")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -2467,7 +2467,7 @@ fn doc_lib_false_dep() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.0 [..]
@@ -2481,7 +2481,7 @@ fn doc_lib_false_dep() {
     assert!(!p.build_dir().join("doc/bar").exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn link_to_private_item() {
     let main = r#"
     //! [bar]
@@ -2489,12 +2489,12 @@ fn link_to_private_item() {
     fn bar() {}
     "#;
     let p = project().file("src/lib.rs", main).build();
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr_contains("[..] documentation for `foo` links to private item `bar`")
         .run();
     // Check that binaries don't emit a private_intra_doc_links warning.
     fs::rename(p.root().join("src/lib.rs"), p.root().join("src/main.rs")).unwrap();
-    p.cargo("doc")
+    p.crabgo("doc")
         .with_stderr(
             "[DOCUMENTING] foo [..]\n\
              [FINISHED] [..]",

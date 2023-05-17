@@ -1,18 +1,18 @@
 //! Tests for the jobserver protocol.
 
-use cargo_util::is_ci;
+use crabgo_util::is_ci;
 use std::net::TcpListener;
 use std::process::Command;
 use std::thread;
 
-use cargo_test_support::install::{assert_has_installed_exe, cargo_home};
-use cargo_test_support::{cargo_exe, project};
+use crabgo_test_support::install::{assert_has_installed_exe, cargo_home};
+use crabgo_test_support::{crabgo_exe, project};
 
 const EXE_CONTENT: &str = r#"
 use std::env;
 
 fn main() {
-    let var = env::var("CARGO_MAKEFLAGS").unwrap();
+    let var = env::var("CRABGO_MAKEFLAGS").unwrap();
     let arg = var.split(' ')
                  .find(|p| p.starts_with("--jobserver"))
                 .unwrap();
@@ -49,7 +49,7 @@ fn validate(_: &str) {
 }
 "#;
 
-#[cargo_test]
+#[crabgo_test]
 fn jobserver_exists() {
     let p = project()
         .file("build.rs", EXE_CONTENT)
@@ -59,10 +59,10 @@ fn jobserver_exists() {
     // Explicitly use `-j2` to ensure that there's eventually going to be a
     // token to read from `validate` above, since running the build script
     // itself consumes a token.
-    p.cargo("check -j2").run();
+    p.crabgo("check -j2").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn external_subcommand_inherits_jobserver() {
     let make = if cfg!(windows) {
         "mingw32-make"
@@ -73,10 +73,10 @@ fn external_subcommand_inherits_jobserver() {
         return;
     }
 
-    let name = "cargo-jobserver-check";
+    let name = "crabgo-jobserver-check";
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -90,18 +90,18 @@ fn external_subcommand_inherits_jobserver() {
             "Makefile",
             "\
 all:
-\t+$(CARGO) jobserver-check
+\t+$(CRABGO) jobserver-check
 ",
         )
         .build();
 
-    p.cargo("install --path .").run();
+    p.crabgo("install --path .").run();
     assert_has_installed_exe(cargo_home(), name);
 
-    p.process(make).env("CARGO", cargo_exe()).arg("-j2").run();
+    p.process(make).env("CRABGO", crabgo_exe()).arg("-j2").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn makes_jobserver_used() {
     let make = if cfg!(windows) {
         "mingw32-make"
@@ -114,7 +114,7 @@ fn makes_jobserver_used() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -129,7 +129,7 @@ fn makes_jobserver_used() {
         )
         .file("src/lib.rs", "")
         .file(
-            "d1/Cargo.toml",
+            "d1/Crabgo.toml",
             r#"
                 [package]
                 name = "d1"
@@ -140,7 +140,7 @@ fn makes_jobserver_used() {
         )
         .file("d1/src/lib.rs", "")
         .file(
-            "d2/Cargo.toml",
+            "d2/Crabgo.toml",
             r#"
                 [package]
                 name = "d2"
@@ -151,7 +151,7 @@ fn makes_jobserver_used() {
         )
         .file("d2/src/lib.rs", "")
         .file(
-            "d3/Cargo.toml",
+            "d3/Crabgo.toml",
             r#"
                 [package]
                 name = "d3"
@@ -180,7 +180,7 @@ fn makes_jobserver_used() {
             "Makefile",
             "\
 all:
-\t+$(CARGO) build
+\t+$(CRABGO) build
 ",
         )
         .build();
@@ -206,14 +206,14 @@ all:
     });
 
     p.process(make)
-        .env("CARGO", cargo_exe())
+        .env("CRABGO", crabgo_exe())
         .env("ADDR", addr.to_string())
         .arg("-j2")
         .run();
     child.join().unwrap();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn jobserver_and_j() {
     let make = if cfg!(windows) {
         "mingw32-make"
@@ -230,17 +230,17 @@ fn jobserver_and_j() {
             "Makefile",
             "\
 all:
-\t+$(CARGO) build -j2
+\t+$(CRABGO) build -j2
 ",
         )
         .build();
 
     p.process(make)
-        .env("CARGO", cargo_exe())
+        .env("CRABGO", crabgo_exe())
         .arg("-j2")
         .with_stderr(
             "\
-warning: a `-j` argument was passed to Cargo but Cargo is also configured \
+warning: a `-j` argument was passed to Crabgo but Crabgo is also configured \
 with an external jobserver in its environment, ignoring the `-j` parameter
 [COMPILING] [..]
 [FINISHED] [..]

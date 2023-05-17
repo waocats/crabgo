@@ -1,12 +1,12 @@
 //! Tests for `[patch]` table source replacement.
 
-use cargo_test_support::git;
-use cargo_test_support::paths;
-use cargo_test_support::registry::{self, Package};
-use cargo_test_support::{basic_manifest, project};
+use crabgo_test_support::git;
+use crabgo_test_support::paths;
+use crabgo_test_support::registry::{self, Package};
+use crabgo_test_support::{basic_manifest, project};
 use std::fs;
 
-#[cargo_test]
+#[crabgo_test]
 fn replace() {
     Package::new("bar", "0.1.0").publish();
     Package::new("baz", "0.1.0")
@@ -19,7 +19,7 @@ fn replace() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -45,11 +45,11 @@ fn replace() {
             }
         ",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -63,16 +63,16 @@ fn replace() {
         )
         .run();
 
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn from_config() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -84,18 +84,18 @@ fn from_config() {
             "#,
         )
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [patch.crates-io]
                 bar = { path = 'bar' }
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -107,13 +107,13 @@ fn from_config() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn from_config_relative() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -125,18 +125,18 @@ fn from_config_relative() {
             "#,
         )
         .file(
-            "../.cargo/config.toml",
+            "../.crabgo/config.toml",
             r#"
                 [patch.crates-io]
                 bar = { path = 'foo/bar' }
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -148,13 +148,13 @@ fn from_config_relative() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn from_config_precedence() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -169,18 +169,18 @@ fn from_config_precedence() {
             "#,
         )
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [patch.crates-io]
                 bar = { path = 'bar' }
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -192,13 +192,13 @@ fn from_config_precedence() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn nonexistent() {
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -216,11 +216,11 @@ fn nonexistent() {
             "src/lib.rs",
             "extern crate bar; pub fn foo() { bar::bar(); }",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -230,19 +230,19 @@ fn nonexistent() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_git() {
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -263,11 +263,11 @@ fn patch_git() {
             "src/lib.rs",
             "extern crate bar; pub fn foo() { bar::bar(); }",
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "pub fn bar() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]`
@@ -277,13 +277,13 @@ fn patch_git() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_to_git() {
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "pub fn bar() {}")
         .build();
 
@@ -291,7 +291,7 @@ fn patch_to_git() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -314,7 +314,7 @@ fn patch_to_git() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]`
@@ -325,16 +325,16 @@ fn patch_to_git() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -349,11 +349,11 @@ fn unused() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.2.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.2.0"))
         .file("bar/src/lib.rs", "not rust code")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -370,7 +370,7 @@ version. [..]
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] Patch `bar v0.2.0 ([CWD]/bar)` was not used in the crate graph.
@@ -394,14 +394,14 @@ version. [..]
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_with_mismatch_source_being_patched() {
     registry::alt_init();
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -419,13 +419,13 @@ fn unused_with_mismatch_source_being_patched() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.2.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.2.0"))
         .file("bar/src/lib.rs", "not rust code")
-        .file("baz/Cargo.toml", &basic_manifest("bar", "0.3.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("bar", "0.3.0"))
         .file("baz/src/lib.rs", "not rust code")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -448,13 +448,13 @@ version. [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn prefer_patch_version() {
     Package::new("bar", "0.1.2").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -469,11 +469,11 @@ fn prefer_patch_version() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -483,7 +483,7 @@ fn prefer_patch_version() {
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [FINISHED] [..]
@@ -497,13 +497,13 @@ fn prefer_patch_version() {
     assert!(toml.get("patch").is_none());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_from_config() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -515,18 +515,18 @@ fn unused_from_config() {
             "#,
         )
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [patch.crates-io]
                 bar = { path = "bar" }
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.2.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.2.0"))
         .file("bar/src/lib.rs", "not rust code")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -543,7 +543,7 @@ version. [..]
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] Patch `bar v0.2.0 ([CWD]/bar)` was not used in the crate graph.
@@ -567,18 +567,18 @@ version. [..]
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_git() {
     Package::new("bar", "0.1.0").publish();
 
     let foo = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.2.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.2.0"))
         .file("src/lib.rs", "")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -598,7 +598,7 @@ fn unused_git() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]`
@@ -616,7 +616,7 @@ version. [..]
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] Patch `bar v0.2.0 ([..])` was not used in the crate graph.
@@ -630,13 +630,13 @@ version. [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_patch() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -648,11 +648,11 @@ fn add_patch() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -664,10 +664,10 @@ fn add_patch() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -682,7 +682,7 @@ fn add_patch() {
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.0 ([CWD]/bar)
@@ -691,16 +691,16 @@ fn add_patch() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_patch_from_config() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -712,11 +712,11 @@ fn add_patch_from_config() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -728,17 +728,17 @@ fn add_patch_from_config() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     p.change_file(
-        ".cargo/config.toml",
+        ".crabgo/config.toml",
         r#"
             [patch.crates-io]
             bar = { path = 'bar' }
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.0 ([CWD]/bar)
@@ -747,16 +747,16 @@ fn add_patch_from_config() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_ignored_patch() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -768,11 +768,11 @@ fn add_ignored_patch() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -784,10 +784,10 @@ fn add_ignored_patch() {
 ",
         )
         .run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -802,7 +802,7 @@ fn add_ignored_patch() {
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] Patch `bar v0.1.1 ([CWD]/bar)` was not used in the crate graph.
@@ -813,7 +813,7 @@ version. [..]
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] Patch `bar v0.1.1 ([CWD]/bar)` was not used in the crate graph.
@@ -825,8 +825,8 @@ version. [..]
         )
         .run();
 
-    p.cargo("update").run();
-    p.cargo("check")
+    p.crabgo("update").run();
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] bar v0.1.1 ([CWD]/bar)
@@ -837,13 +837,13 @@ version. [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_patch_with_features() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -858,11 +858,11 @@ fn add_patch_with_features() {
         "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] patch for `bar` uses the features mechanism. \
@@ -874,7 +874,7 @@ default-features and features will not take effect because the patch dependency 
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] patch for `bar` uses the features mechanism. \
@@ -885,13 +885,13 @@ default-features and features will not take effect because the patch dependency 
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn add_patch_with_setting_default_features() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -906,11 +906,11 @@ fn add_patch_with_setting_default_features() {
         "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] patch for `bar` uses the features mechanism. \
@@ -922,7 +922,7 @@ default-features and features will not take effect because the patch dependency 
 ",
         )
         .run();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [WARNING] patch for `bar` uses the features mechanism. \
@@ -933,7 +933,7 @@ default-features and features will not take effect because the patch dependency 
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_warn_ws_patch() {
     Package::new("c", "0.1.0").publish();
 
@@ -941,7 +941,7 @@ fn no_warn_ws_patch() {
     // partially building a workspace.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b", "c"]
@@ -950,10 +950,10 @@ fn no_warn_ws_patch() {
                 c = { path = "c" }
             "#,
         )
-        .file("a/Cargo.toml", &basic_manifest("a", "0.1.0"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.1.0"))
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -963,11 +963,11 @@ fn no_warn_ws_patch() {
             "#,
         )
         .file("b/src/lib.rs", "")
-        .file("c/Cargo.toml", &basic_manifest("c", "0.1.0"))
+        .file("c/Crabgo.toml", &basic_manifest("c", "0.1.0"))
         .file("c/src/lib.rs", "")
         .build();
 
-    p.cargo("check -p a")
+    p.crabgo("check -p a")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -977,13 +977,13 @@ fn no_warn_ws_patch() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn new_minor() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -998,11 +998,11 @@ fn new_minor() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1014,13 +1014,13 @@ fn new_minor() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn transitive_new_minor() {
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1036,7 +1036,7 @@ fn transitive_new_minor() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1048,11 +1048,11 @@ fn transitive_new_minor() {
             "#,
         )
         .file("bar/src/lib.rs", r#""#)
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.1.1"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.1.1"))
         .file("baz/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1065,13 +1065,13 @@ fn transitive_new_minor() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn new_major() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1086,11 +1086,11 @@ fn new_major() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.2.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.2.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1102,13 +1102,13 @@ fn new_major() {
         .run();
 
     Package::new("bar", "0.2.0").publish();
-    p.cargo("update").run();
-    p.cargo("check")
+    p.crabgo("update").run();
+    p.crabgo("check")
         .with_stderr("[FINISHED] dev [unoptimized + debuginfo] target(s) in [..]")
         .run();
 
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1119,7 +1119,7 @@ fn new_major() {
             bar = "0.2.0"
         "#,
     );
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1133,13 +1133,13 @@ fn new_major() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn transitive_new_major() {
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1155,7 +1155,7 @@ fn transitive_new_major() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1167,11 +1167,11 @@ fn transitive_new_major() {
             "#,
         )
         .file("bar/src/lib.rs", r#""#)
-        .file("baz/Cargo.toml", &basic_manifest("baz", "0.2.0"))
+        .file("baz/Crabgo.toml", &basic_manifest("baz", "0.2.0"))
         .file("baz/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1184,18 +1184,18 @@ fn transitive_new_major() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn shared_by_transitive() {
     Package::new("baz", "0.1.1").publish();
 
     let baz = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("baz", "0.1.2"))
+        .file("Crabgo.toml", &basic_manifest("baz", "0.1.2"))
         .file("src/lib.rs", "")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1214,7 +1214,7 @@ fn shared_by_transitive() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1227,7 +1227,7 @@ fn shared_by_transitive() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] git repository `file://[..]`
@@ -1241,14 +1241,14 @@ fn shared_by_transitive() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn remove_patch() {
     Package::new("foo", "0.1.0").publish();
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1264,19 +1264,19 @@ fn remove_patch() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", r#""#)
         .build();
 
     // Generate a lock file where `foo` is unused
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lock_file1 = p.read_lockfile();
 
     // Remove `foo` and generate a new lock file form the old one
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1290,12 +1290,12 @@ fn remove_patch() {
             bar = { path = 'bar' }
         "#,
     );
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lock_file2 = p.read_lockfile();
 
     // Remove the lock file and build from scratch
-    fs::remove_file(p.root().join("Cargo.lock")).unwrap();
-    p.cargo("check").run();
+    fs::remove_file(p.root().join("Crabgo.lock")).unwrap();
+    p.crabgo("check").run();
     let lock_file3 = p.read_lockfile();
 
     assert!(lock_file1.contains("foo"));
@@ -1303,13 +1303,13 @@ fn remove_patch() {
     assert_ne!(lock_file1, lock_file2);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn non_crates_io() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1321,11 +1321,11 @@ fn non_crates_io() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1341,13 +1341,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replace_with_crates_io() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1359,11 +1359,11 @@ fn replace_with_crates_io() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1378,13 +1378,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_in_virtual() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["foo"]
@@ -1393,10 +1393,10 @@ fn patch_in_virtual() {
                 bar = { path = "bar" }
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", r#""#)
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1410,11 +1410,11 @@ fn patch_in_virtual() {
         .file("foo/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check").run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_depends_on_another_patch() {
     Package::new("bar", "0.1.0")
         .file("src/lib.rs", "broken code")
@@ -1427,7 +1427,7 @@ fn patch_depends_on_another_patch() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1444,10 +1444,10 @@ fn patch_depends_on_another_patch() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", r#""#)
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -1461,18 +1461,18 @@ fn patch_depends_on_another_patch() {
         .file("baz/src/lib.rs", r#""#)
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Nothing should be rebuilt, no registry should be updated.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn replace_prerelease() {
     Package::new("baz", "1.1.0-pre.1").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
@@ -1482,7 +1482,7 @@ fn replace_prerelease() {
             "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1498,7 +1498,7 @@ fn replace_prerelease() {
             "extern crate baz; fn main() { baz::baz() }",
         )
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -1510,16 +1510,16 @@ fn replace_prerelease() {
         .file("baz/src/lib.rs", "pub fn baz() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_older() {
     Package::new("baz", "1.0.2").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1535,7 +1535,7 @@ fn patch_older() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1548,7 +1548,7 @@ fn patch_older() {
         )
         .file("bar/src/lib.rs", "")
         .file(
-            "baz/Cargo.toml",
+            "baz/Crabgo.toml",
             r#"
                 [package]
                 name = "baz"
@@ -1559,7 +1559,7 @@ fn patch_older() {
         .file("baz/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -1572,13 +1572,13 @@ fn patch_older() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cycle() {
     Package::new("a", "1.0.0").publish();
     Package::new("b", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["a", "b"]
@@ -1589,7 +1589,7 @@ fn cycle() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1601,7 +1601,7 @@ fn cycle() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -1614,7 +1614,7 @@ fn cycle() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1628,13 +1628,13 @@ package `[..]`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multipatch() {
     Package::new("a", "1.0.0").publish();
     Package::new("a", "2.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1651,7 +1651,7 @@ fn multipatch() {
         )
         .file("src/lib.rs", "pub fn foo() { a1::f1(); a2::f2(); }")
         .file(
-            "a1/Cargo.toml",
+            "a1/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1660,7 +1660,7 @@ fn multipatch() {
         )
         .file("a1/src/lib.rs", "pub fn f1() {}")
         .file(
-            "a2/Cargo.toml",
+            "a2/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -1670,21 +1670,21 @@ fn multipatch() {
         .file("a2/src/lib.rs", "pub fn f2() {}")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_same_version() {
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "")
         .build();
 
-    cargo_test_support::registry::init();
+    crabgo_test_support::registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1701,7 +1701,7 @@ fn patch_same_version() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1711,7 +1711,7 @@ fn patch_same_version() {
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1722,18 +1722,18 @@ error: cannot have two `[patch]` entries which both resolve to `bar v0.1.0`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn two_semver_compatible() {
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("src/lib.rs", "")
         .build();
 
-    cargo_test_support::registry::init();
+    crabgo_test_support::registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1750,7 +1750,7 @@ fn two_semver_compatible() {
         )
         .file("src/lib.rs", "pub fn foo() { bar::foo() }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1763,8 +1763,8 @@ fn two_semver_compatible() {
     // assert the build succeeds and doesn't panic anywhere, and then afterwards
     // assert that the build succeeds again without updating anything or
     // building anything else.
-    p.cargo("check").run();
-    p.cargo("check")
+    p.crabgo("check").run();
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: Patch `bar v0.1.1 [..]` was not used in the crate graph.
@@ -1776,18 +1776,18 @@ Possible URLs for `[patch.<URL>]`:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn multipatch_select_big() {
     let bar = git::repo(&paths::root().join("override"))
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("src/lib.rs", "")
         .build();
 
-    cargo_test_support::registry::init();
+    crabgo_test_support::registry::init();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1804,7 +1804,7 @@ fn multipatch_select_big() {
         )
         .file("src/lib.rs", "pub fn foo() { bar::foo() }")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -1817,8 +1817,8 @@ fn multipatch_select_big() {
     // assert the build succeeds, which is only possible if 0.2.0 is selected
     // since 0.1.0 is missing the function we need. Afterwards assert that the
     // build succeeds again without updating anything or building anything else.
-    p.cargo("check").run();
-    p.cargo("check")
+    p.crabgo("check").run();
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: Patch `bar v0.1.0 [..]` was not used in the crate graph.
@@ -1830,16 +1830,16 @@ Possible URLs for `[patch.<URL>]`:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn canonicalize_a_bunch() {
     let base = git::repo(&paths::root().join("base"))
-        .file("Cargo.toml", &basic_manifest("base", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("base", "0.1.0"))
         .file("src/lib.rs", "")
         .build();
 
     let intermediate = git::repo(&paths::root().join("intermediate"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1857,13 +1857,13 @@ fn canonicalize_a_bunch() {
         .build();
 
     let newbase = git::repo(&paths::root().join("newbase"))
-        .file("Cargo.toml", &basic_manifest("base", "0.1.0"))
+        .file("Crabgo.toml", &basic_manifest("base", "0.1.0"))
         .file("src/lib.rs", "pub fn f() {}")
         .build();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -1887,25 +1887,25 @@ fn canonicalize_a_bunch() {
         .build();
 
     // Once to make sure it actually works
-    p.cargo("check").run();
+    p.crabgo("check").run();
 
     // Then a few more times for good measure to ensure no weird warnings about
     // `[patch]` are printed.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn update_unused_new_version() {
     // If there is an unused patch entry, and then you update the patch,
-    // make sure `cargo update` will be able to fix the lock file.
+    // make sure `crabgo update` will be able to fix the lock file.
     Package::new("bar", "0.1.5").publish();
 
     // Start with a lock file to 0.1.5, and an "unused" patch because the
     // version is too old.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1924,11 +1924,11 @@ fn update_unused_new_version() {
     // Patch is too old.
     let bar = project()
         .at("bar")
-        .file("Cargo.toml", &basic_manifest("bar", "0.1.4"))
+        .file("Crabgo.toml", &basic_manifest("bar", "0.1.4"))
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains("[WARNING] Patch `bar v0.1.4 [..] was not used in the crate graph.")
         .run();
     // unused patch should be in the lock file
@@ -1942,13 +1942,13 @@ fn update_unused_new_version() {
     );
 
     // Oh, OK, let's update to the latest version.
-    bar.change_file("Cargo.toml", &basic_manifest("bar", "0.1.6"));
+    bar.change_file("Crabgo.toml", &basic_manifest("bar", "0.1.6"));
 
     // Create a backup so we can test it with different options.
-    fs::copy(p.root().join("Cargo.lock"), p.root().join("Cargo.lock.bak")).unwrap();
+    fs::copy(p.root().join("Crabgo.lock"), p.root().join("Crabgo.lock.bak")).unwrap();
 
-    // Try to build again, this should automatically update Cargo.lock.
-    p.cargo("check")
+    // Try to build again, this should automatically update Crabgo.lock.
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1959,14 +1959,14 @@ fn update_unused_new_version() {
         )
         .run();
     // This should not update any registry.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
     assert!(!p.read_lockfile().contains("unused"));
 
     // Restore the lock file, and see if `update` will work, too.
-    fs::copy(p.root().join("Cargo.lock.bak"), p.root().join("Cargo.lock")).unwrap();
+    fs::copy(p.root().join("Crabgo.lock.bak"), p.root().join("Crabgo.lock")).unwrap();
 
     // Try `update -p`.
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1976,9 +1976,9 @@ fn update_unused_new_version() {
         )
         .run();
 
-    // Try with bare `cargo update`.
-    fs::copy(p.root().join("Cargo.lock.bak"), p.root().join("Cargo.lock")).unwrap();
-    p.cargo("update")
+    // Try with bare `crabgo update`.
+    fs::copy(p.root().join("Crabgo.lock.bak"), p.root().join("Crabgo.lock")).unwrap();
+    p.crabgo("update")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1989,7 +1989,7 @@ fn update_unused_new_version() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn too_many_matches() {
     // The patch locations has multiple versions that match.
     registry::alt_init();
@@ -1999,7 +1999,7 @@ fn too_many_matches() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2016,7 +2016,7 @@ fn too_many_matches() {
         .build();
 
     // Picks 0.1.1, the most recent version.
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -2036,12 +2036,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_matches() {
     // A patch to a location that does not contain the named package.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                  [package]
                  name = "foo"
@@ -2055,11 +2055,11 @@ fn no_matches() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("abc", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("abc", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -2075,12 +2075,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn mismatched_version() {
     // A patch to a location that has an old version.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                  [package]
                  name = "foo"
@@ -2094,11 +2094,11 @@ fn mismatched_version() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -2117,14 +2117,14 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_walks_backwards() {
     // Starting with a locked patch, change the patch so it points to an older version.
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2138,11 +2138,11 @@ fn patch_walks_backwards() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2154,9 +2154,9 @@ fn patch_walks_backwards() {
         .run();
 
     // Somehow the user changes the version backwards.
-    p.change_file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"));
+    p.change_file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"));
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2168,7 +2168,7 @@ fn patch_walks_backwards() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_walks_backwards_restricted() {
     // This is the same as `patch_walks_backwards`, but the patch contains a
     // `version` qualifier. This is unusual, just checking a strange edge case.
@@ -2176,7 +2176,7 @@ fn patch_walks_backwards_restricted() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2190,11 +2190,11 @@ fn patch_walks_backwards_restricted() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2206,9 +2206,9 @@ fn patch_walks_backwards_restricted() {
         .run();
 
     // Somehow the user changes the version backwards.
-    p.change_file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"));
+    p.change_file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"));
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -2225,7 +2225,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patched_dep_new_version() {
     // What happens when a patch is locked, and then one of the patched
     // dependencies needs to be updated. In this case, the baz requirement
@@ -2235,7 +2235,7 @@ fn patched_dep_new_version() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2250,7 +2250,7 @@ fn patched_dep_new_version() {
         )
         .file("src/lib.rs", "")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -2264,7 +2264,7 @@ fn patched_dep_new_version() {
         .build();
 
     // Lock everything.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2281,11 +2281,11 @@ fn patched_dep_new_version() {
     Package::new("baz", "0.1.1").publish();
 
     // Just the presence of the new version should not have changed anything.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     // Modify the patch so it requires the new version.
     p.change_file(
-        "bar/Cargo.toml",
+        "bar/Crabgo.toml",
         r#"
             [package]
             name = "bar"
@@ -2297,7 +2297,7 @@ fn patched_dep_new_version() {
     );
 
     // Should unlock and update cleanly.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2312,7 +2312,7 @@ fn patched_dep_new_version() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn patch_update_doesnt_update_other_sources() {
     // Very extreme edge case, make sure a patch update doesn't update other
     // sources.
@@ -2322,7 +2322,7 @@ fn patch_update_doesnt_update_other_sources() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -2337,11 +2337,11 @@ fn patch_update_doesnt_update_other_sources() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.0"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.0"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_unordered(
             "\
 [UPDATING] `dummy-registry` index
@@ -2361,13 +2361,13 @@ fn patch_update_doesnt_update_other_sources() {
     Package::new("bar", "0.1.1").alternative(true).publish();
 
     // Since it is locked, nothing should change.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     // Require new version on crates.io.
-    p.change_file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"));
+    p.change_file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"));
 
     // This should not update bar_alt.
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -2379,7 +2379,7 @@ fn patch_update_doesnt_update_other_sources() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn can_update_with_alt_reg() {
     // A patch to an alt reg can update.
     registry::alt_init();
@@ -2389,7 +2389,7 @@ fn can_update_with_alt_reg() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2405,7 +2405,7 @@ fn can_update_with_alt_reg() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -2422,10 +2422,10 @@ fn can_update_with_alt_reg() {
     Package::new("bar", "0.1.2").alternative(true).publish();
 
     // Should remain locked.
-    p.cargo("check").with_stderr("[FINISHED] [..]").run();
+    p.crabgo("check").with_stderr("[FINISHED] [..]").run();
 
     // This does nothing, due to `=` requirement.
-    p.cargo("update -p bar")
+    p.crabgo("update -p bar")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -2436,7 +2436,7 @@ fn can_update_with_alt_reg() {
 
     // Bump to 0.1.2.
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -2450,7 +2450,7 @@ fn can_update_with_alt_reg() {
         "#,
     );
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `alternative` index
@@ -2465,16 +2465,16 @@ fn can_update_with_alt_reg() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn gitoxide_clones_shallow_old_git_patch() {
     perform_old_git_patch(true)
 }
 
 fn perform_old_git_patch(shallow: bool) {
-    // Example where an old lockfile with an explicit branch="master" in Cargo.toml.
+    // Example where an old lockfile with an explicit branch="master" in Crabgo.toml.
     Package::new("bar", "1.0.0").publish();
     let (bar, bar_repo) = git::new_repo("bar", |p| {
-        p.file("Cargo.toml", &basic_manifest("bar", "1.0.0"))
+        p.file("Crabgo.toml", &basic_manifest("bar", "1.0.0"))
             .file("src/lib.rs", "")
     });
 
@@ -2482,7 +2482,7 @@ fn perform_old_git_patch(shallow: bool) {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -2499,10 +2499,10 @@ fn perform_old_git_patch(shallow: bool) {
             ),
         )
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             &format!(
                 r#"
-# This file is automatically @generated by Cargo.
+# This file is automatically @generated by Crabgo.
 # It is not intended for manual editing.
 [[package]]
 name = "bar"
@@ -2523,19 +2523,19 @@ dependencies = [
         .file("src/lib.rs", "")
         .build();
 
-    bar.change_file("Cargo.toml", &basic_manifest("bar", "2.0.0"));
+    bar.change_file("Crabgo.toml", &basic_manifest("bar", "2.0.0"));
     git::add(&bar_repo);
     git::commit(&bar_repo);
 
     // This *should* keep the old lock.
-    let mut cargo = p.cargo("tree");
+    let mut crabgo = p.crabgo("tree");
     if shallow {
-        cargo
+        crabgo
             .arg("-Zgitoxide=fetch,shallow-deps")
-            .masquerade_as_nightly_cargo(&["unstable features must be available for -Z gitoxide"]);
+            .masquerade_as_nightly_crabgo(&["unstable features must be available for -Z gitoxide"]);
     }
-    cargo
-        // .env("CARGO_LOG", "trace")
+    crabgo
+        // .env("CRABGO_LOG", "trace")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -2552,19 +2552,19 @@ foo v0.1.0 [..]
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn old_git_patch() {
     perform_old_git_patch(false)
 }
 
-// From https://github.com/rust-lang/cargo/issues/7463
-#[cargo_test]
+// From https://github.com/rust-lang/crabgo/issues/7463
+#[crabgo_test]
 fn patch_eq_conflict_panic() {
     Package::new("bar", "0.1.0").publish();
     Package::new("bar", "0.1.1").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -2581,11 +2581,11 @@ fn patch_eq_conflict_panic() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.1.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.1.1"))
         .file("bar/src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile")
+    p.crabgo("generate-lockfile")
         .with_status(101)
         .with_stderr(
             r#"[UPDATING] `dummy-registry` index
@@ -2604,8 +2604,8 @@ failed to select a version for `bar` which could resolve this conflict
         .run();
 }
 
-// From https://github.com/rust-lang/cargo/issues/11336
-#[cargo_test]
+// From https://github.com/rust-lang/crabgo/issues/11336
+#[crabgo_test]
 fn mismatched_version2() {
     Package::new("qux", "0.1.0-beta.1").publish();
     Package::new("qux", "0.1.0-beta.2").publish();
@@ -2614,7 +2614,7 @@ fn mismatched_version2() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                  [package]
                  name = "foo"
@@ -2630,7 +2630,7 @@ fn mismatched_version2() {
         )
         .file("src/lib.rs", "")
         .file(
-            "qux/Cargo.toml",
+            "qux/Crabgo.toml",
             r#"
                 [package]
                 name = "qux"
@@ -2640,7 +2640,7 @@ fn mismatched_version2() {
         .file("qux/src/lib.rs", "")
         .build();
 
-    p.cargo("generate-lockfile")
+    p.crabgo("generate-lockfile")
         .with_status(101)
         .with_stderr(
             r#"[UPDATING] `dummy-registry` index

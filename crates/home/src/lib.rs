@@ -4,15 +4,15 @@
 //! incorrect because it considers the `HOME` environment variable on
 //! Windows. This causes surprising situations where a Rust program
 //! will behave differently depending on whether it is run under a
-//! Unix emulation environment like Cygwin or MinGW. Neither Cargo nor
+//! Unix emulation environment like Cygwin or MinGW. Neither Crabgo nor
 //! rustup use the standard libraries definition - they use the
 //! definition here.
 //!
 //! This crate provides two additional functions, `cargo_home` and
 //! `rustup_home`, which are the canonical way to determine the
-//! location that Cargo and rustup use to store their data.
+//! location that Crabgo and rustup use to store their data.
 //! The `env` module contains utilities for mocking the process environment
-//! by Cargo and rustup.
+//! by Crabgo and rustup.
 //!
 //! See also this [discussion].
 //!
@@ -72,18 +72,18 @@ fn home_dir_inner() -> Option<PathBuf> {
     std::env::home_dir()
 }
 
-/// Returns the storage directory used by Cargo, often knowns as
-/// `.cargo` or `CARGO_HOME`.
+/// Returns the storage directory used by Crabgo, often knowns as
+/// `.crabgo` or `CRABGO_HOME`.
 ///
 /// It returns one of the following values, in this order of
 /// preference:
 ///
-/// - The value of the `CARGO_HOME` environment variable, if it is
+/// - The value of the `CRABGO_HOME` environment variable, if it is
 ///   an absolute path.
 /// - The value of the current working directory joined with the value
-///   of the `CARGO_HOME` environment variable, if `CARGO_HOME` is a
+///   of the `CRABGO_HOME` environment variable, if `CRABGO_HOME` is a
 ///   relative directory.
-/// - The `.cargo` directory in the user's home directory, as reported
+/// - The `.crabgo` directory in the user's home directory, as reported
 ///   by the `home_dir` function.
 ///
 /// # Errors
@@ -96,14 +96,14 @@ fn home_dir_inner() -> Option<PathBuf> {
 /// ```
 /// match home::cargo_home() {
 ///     Ok(path) => println!("{}", path.display()),
-///     Err(err) => eprintln!("Cannot get your cargo home dir: {:?}", err),
+///     Err(err) => eprintln!("Cannot get your crabgo home dir: {:?}", err),
 /// }
 /// ```
 pub fn cargo_home() -> io::Result<PathBuf> {
     env::cargo_home_with_env(&env::OS_ENV)
 }
 
-/// Returns the storage directory used by Cargo within `cwd`.
+/// Returns the storage directory used by Crabgo within `cwd`.
 /// For more details, see [`cargo_home`](fn.cargo_home.html).
 pub fn cargo_home_with_cwd(cwd: &Path) -> io::Result<PathBuf> {
     env::cargo_home_with_cwd_env(&env::OS_ENV, cwd)

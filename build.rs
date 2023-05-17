@@ -10,7 +10,7 @@ fn main() {
     // ALLOWED: Accessing environment during build time shouldn't be prohibited.
     #[allow(clippy::disallowed_methods)]
     let target = std::env::var("TARGET").unwrap();
-    println!("cargo:rustc-env=RUST_HOST_TARGET={target}");
+    println!("crabgo:rustc-env=RUST_HOST_TARGET={target}");
 }
 
 fn compress_man() {
@@ -34,7 +34,7 @@ fn compress_man() {
             if path.extension() != Some(extension) {
                 continue;
             }
-            println!("cargo:rerun-if-changed={}", path.display());
+            println!("crabgo:rerun-if-changed={}", path.display());
             ar.append_path_with_name(&path, path.file_name().unwrap())
                 .unwrap();
         }
@@ -64,7 +64,7 @@ fn commit_info() {
     let stdout = String::from_utf8(output.stdout).unwrap();
     let mut parts = stdout.split_whitespace();
     let mut next = || parts.next().unwrap();
-    println!("cargo:rustc-env=CARGO_COMMIT_HASH={}", next());
-    println!("cargo:rustc-env=CARGO_COMMIT_SHORT_HASH={}", next());
-    println!("cargo:rustc-env=CARGO_COMMIT_DATE={}", next())
+    println!("crabgo:rustc-env=CRABGO_COMMIT_HASH={}", next());
+    println!("crabgo:rustc-env=CRABGO_COMMIT_SHORT_HASH={}", next());
+    println!("crabgo:rustc-env=CRABGO_COMMIT_DATE={}", next())
 }

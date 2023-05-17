@@ -9,7 +9,7 @@ then
     exit 1
 fi
 
-if [ ! -f Cargo.toml ]; then
+if [ ! -f Crabgo.toml ]; then
     echo "Must be run from root of project."
     exit 1
 fi
@@ -21,7 +21,7 @@ if [[ $(rustc -Vv | grep host:) != *windows* ]]; then
     export LIBZ_SYS_STATIC=1
 fi
 
-cargo build --features "$FEATURES"
-export CARGO_HOME=$RUNNER_TEMP/chome
-target/debug/cargo fetch
-rm -rf $CARGO_HOME
+crabgo build --features "$FEATURES"
+export CRABGO_HOME=$RUNNER_TEMP/chome
+target/debug/crabgo fetch
+rm -rf $CRABGO_HOME

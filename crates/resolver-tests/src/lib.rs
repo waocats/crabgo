@@ -10,12 +10,12 @@ use std::rc::Rc;
 use std::task::Poll;
 use std::time::Instant;
 
-use cargo::core::dependency::DepKind;
-use cargo::core::resolver::{self, ResolveOpts, VersionPreferences};
-use cargo::core::source::{GitReference, QueryKind, SourceId};
-use cargo::core::Resolve;
-use cargo::core::{Dependency, PackageId, Registry, Summary};
-use cargo::util::{CargoResult, Config, Graph, IntoUrl};
+use crabgo::core::dependency::DepKind;
+use crabgo::core::resolver::{self, ResolveOpts, VersionPreferences};
+use crabgo::core::source::{GitReference, QueryKind, SourceId};
+use crabgo::core::Resolve;
+use crabgo::core::{Dependency, PackageId, Registry, Summary};
+use crabgo::util::{CrabgoResult, Config, Graph, IntoUrl};
 
 use proptest::collection::{btree_map, vec};
 use proptest::prelude::*;
@@ -23,7 +23,7 @@ use proptest::sample::Index;
 use proptest::string::string_regex;
 use varisat::{self, ExtendFormula};
 
-pub fn resolve(deps: Vec<Dependency>, registry: &[Summary]) -> CargoResult<Vec<PackageId>> {
+pub fn resolve(deps: Vec<Dependency>, registry: &[Summary]) -> CrabgoResult<Vec<PackageId>> {
     resolve_with_config(deps, registry, &Config::default().unwrap())
 }
 
@@ -31,7 +31,7 @@ pub fn resolve_and_validated(
     deps: Vec<Dependency>,
     registry: &[Summary],
     sat_resolve: Option<SatResolve>,
-) -> CargoResult<Vec<PackageId>> {
+) -> CrabgoResult<Vec<PackageId>> {
     let resolve = resolve_with_config_raw(deps.clone(), registry, &Config::default().unwrap());
 
     match resolve {
@@ -110,7 +110,7 @@ pub fn resolve_with_config(
     deps: Vec<Dependency>,
     registry: &[Summary],
     config: &Config,
-) -> CargoResult<Vec<PackageId>> {
+) -> CrabgoResult<Vec<PackageId>> {
     let resolve = resolve_with_config_raw(deps, registry, config)?;
     Ok(resolve.sort())
 }
@@ -119,7 +119,7 @@ pub fn resolve_with_config_raw(
     deps: Vec<Dependency>,
     registry: &[Summary],
     config: &Config,
-) -> CargoResult<Resolve> {
+) -> CrabgoResult<Resolve> {
     struct MyRegistry<'a> {
         list: &'a [Summary],
         used: HashSet<PackageId>,
@@ -130,7 +130,7 @@ pub fn resolve_with_config_raw(
             dep: &Dependency,
             kind: QueryKind,
             f: &mut dyn FnMut(Summary),
-        ) -> Poll<CargoResult<()>> {
+        ) -> Poll<CrabgoResult<()>> {
             for summary in self.list.iter() {
                 let matched = match kind {
                     QueryKind::Exact => dep.matches(summary),
@@ -152,7 +152,7 @@ pub fn resolve_with_config_raw(
             false
         }
 
-        fn block_until_ready(&mut self) -> CargoResult<()> {
+        fn block_until_ready(&mut self) -> CrabgoResult<()> {
             Ok(())
         }
     }

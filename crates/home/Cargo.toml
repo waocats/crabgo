@@ -6,14 +6,14 @@ documentation = "https://docs.rs/home"
 edition = "2018"
 include = [
     "/src",
-    "/Cargo.toml",
+    "/Crabgo.toml",
     "/CHANGELOG",
     "/LICENSE-*",
     "/README.md",
 ]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/rust-lang/cargo"
+repository = "https://github.com/rust-lang/crabgo"
 description = "Shared definitions of home directories."
 
 [target.'cfg(windows)'.dependencies]

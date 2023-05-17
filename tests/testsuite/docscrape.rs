@@ -1,12 +1,12 @@
-//! Tests for the `cargo doc` command with `-Zrustdoc-scrape-examples`.
+//! Tests for the `crabgo doc` command with `-Zrustdoc-scrape-examples`.
 
-use cargo_test_support::project;
+use crabgo_test_support::project;
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn basic() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -18,8 +18,8 @@ fn basic() {
         .file("src/lib.rs", "pub fn foo() {}\npub fn bar() { foo(); }")
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -30,8 +30,8 @@ fn basic() {
         )
         .run();
 
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr("[FINISHED] [..]")
         .run();
 
@@ -43,12 +43,12 @@ fn basic() {
     assert!(p.build_dir().join("doc/src/ex/ex.rs.html").exists());
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn avoid_build_script_cycle() {
     let p = project()
         // package with build dependency
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -67,7 +67,7 @@ fn avoid_build_script_cycle() {
         .file("build.rs", "fn main(){}")
         // dependency
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
                 [package]
                 name = "bar"
@@ -80,16 +80,16 @@ fn avoid_build_script_cycle() {
         .file("bar/build.rs", "fn main(){}")
         .build();
 
-    p.cargo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn complex_reverse_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -107,7 +107,7 @@ fn complex_reverse_dependencies() {
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "fn main() {}")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
                 [package]
                 name = "a"
@@ -126,7 +126,7 @@ fn complex_reverse_dependencies() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -137,16 +137,16 @@ fn complex_reverse_dependencies() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --workspace --examples -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc --workspace --examples -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn crate_with_dash() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "da-sh"
@@ -158,19 +158,19 @@ fn crate_with_dash() {
         .file("examples/a.rs", "fn main() { da_sh::foo(); }")
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 
     let doc_html = p.read_file("target/doc/da_sh/fn.foo.html");
     assert!(doc_html.contains("Examples found in repository"));
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn configure_target() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -203,8 +203,8 @@ fn configure_target() {
         )
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 
     let doc_html = p.read_file("target/doc/foo/fn.foo.html");
@@ -213,11 +213,11 @@ fn configure_target() {
     assert!(!doc_html.contains("example_must_not_appear"));
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn configure_profile_issue_10500() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -232,19 +232,19 @@ fn configure_profile_issue_10500() {
         .file("src/lib.rs", "pub fn foo() {}\npub fn bar() { foo(); }")
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 
     let doc_html = p.read_file("target/doc/foo/fn.foo.html");
     assert!(doc_html.contains("Examples found in repository"));
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn issue_10545() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 resolver = "2"
@@ -252,7 +252,7 @@ fn issue_10545() {
             "#,
         )
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -267,7 +267,7 @@ fn issue_10545() {
         )
         .file("a/src/lib.rs", "")
         .file(
-            "b/Cargo.toml",
+            "b/Crabgo.toml",
             r#"
                 [package]
                 name = "b"
@@ -282,16 +282,16 @@ fn issue_10545() {
         .file("b/src/lib.rs", "")
         .build();
 
-    p.cargo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn cache() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -303,8 +303,8 @@ fn cache() {
         .file("src/lib.rs", "pub fn foo() {}\npub fn bar() { foo(); }")
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -315,8 +315,8 @@ fn cache() {
         )
         .run();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr(
             "\
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]
@@ -325,11 +325,11 @@ fn cache() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn no_fail_bad_lib() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -342,23 +342,23 @@ fn no_fail_bad_lib() {
         .file("examples/ex2.rs", "fn main() { foo::foo(); }")
         .build();
 
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr_unordered(
         "\
 [CHECKING] foo v0.0.1 ([CWD])
 [SCRAPING] foo v0.0.1 ([CWD])
 warning: failed to check lib in package `foo` as a prerequisite for scraping examples from: example \"ex\", example \"ex2\"
     Try running with `--verbose` to see the error message.
-    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Cargo.toml
+    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Crabgo.toml
 warning: `foo` (lib) generated 1 warning
 warning: failed to scan example \"ex\" in package `foo` for example code usage
     Try running with `--verbose` to see the error message.
-    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Cargo.toml
+    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Crabgo.toml
 warning: `foo` (example \"ex\") generated 1 warning
 warning: failed to scan example \"ex2\" in package `foo` for example code usage
     Try running with `--verbose` to see the error message.
-    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Cargo.toml
+    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Crabgo.toml
 warning: `foo` (example \"ex2\") generated 1 warning
 [DOCUMENTING] foo v0.0.1 ([CWD])
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]",
@@ -366,12 +366,12 @@ warning: `foo` (example \"ex2\") generated 1 warning
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn fail_bad_build_script() {
-    // See rust-lang/cargo#11623
+    // See rust-lang/crabgo#11623
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -383,25 +383,25 @@ fn fail_bad_build_script() {
         .file("examples/ex.rs", "fn main() {}")
         .build();
 
-    // `cargo doc` fails
-    p.cargo("doc")
+    // `crabgo doc` fails
+    p.crabgo("doc")
         .with_status(101)
         .with_stderr_contains("[..]You shall not pass[..]")
         .run();
 
-    // scrape examples should fail whenever `cargo doc` fails.
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    // scrape examples should fail whenever `crabgo doc` fails.
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_status(101)
         .with_stderr_contains("[..]You shall not pass[..]")
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn no_fail_bad_example() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -414,25 +414,25 @@ fn no_fail_bad_example() {
         .file("src/lib.rs", "pub fn foo(){}")
         .build();
 
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
 [SCRAPING] foo v0.0.1 ([CWD])
 warning: failed to scan example \"ex1\" in package `foo` for example code usage
     Try running with `--verbose` to see the error message.
-    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Cargo.toml
+    If an example should not be scanned, then consider adding `doc-scrape-examples = false` to its `[[example]]` definition in Crabgo.toml
 warning: `foo` (example \"ex1\") generated 1 warning
 [DOCUMENTING] foo v0.0.1 ([CWD])
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]",
         )
         .run();
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
 
-    p.cargo("doc -v -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -v -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr_unordered(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -456,7 +456,7 @@ error: expected one of `!` or `::`, found `NOT`
     assert!(doc_html.contains("Examples found in repository"));
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn no_scrape_with_dev_deps() {
     // Tests that a crate with dev-dependencies does not have its examples
     // scraped unless explicitly prompted to check them. See
@@ -464,7 +464,7 @@ fn no_scrape_with_dev_deps() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -478,7 +478,7 @@ fn no_scrape_with_dev_deps() {
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "fn main() { a::f(); }")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -491,8 +491,8 @@ fn no_scrape_with_dev_deps() {
 
     // If --examples is not provided, then the example is not scanned, and a warning
     // should be raised.
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr(
             "\
 warning: Rustdoc did not scrape the following examples because they require dev-dependencies: ex
@@ -504,8 +504,8 @@ warning: Rustdoc did not scrape the following examples because they require dev-
         .run();
 
     // If --examples is provided, then the example is scanned.
-    p.cargo("doc --examples -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc --examples -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr_unordered(
             "\
 [CHECKING] a v0.0.1 ([CWD]/a)
@@ -518,11 +518,11 @@ warning: Rustdoc did not scrape the following examples because they require dev-
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn use_dev_deps_if_explicitly_enabled() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -540,7 +540,7 @@ fn use_dev_deps_if_explicitly_enabled() {
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "fn main() { a::f(); }")
         .file(
-            "a/Cargo.toml",
+            "a/Crabgo.toml",
             r#"
             [package]
             name = "a"
@@ -552,8 +552,8 @@ fn use_dev_deps_if_explicitly_enabled() {
         .build();
 
     // If --examples is not provided, then the example is never scanned.
-    p.cargo("doc -Zunstable-options -Z rustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Z rustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .with_stderr_unordered(
             "\
 [CHECKING] foo v0.0.1 ([CWD])
@@ -565,12 +565,12 @@ fn use_dev_deps_if_explicitly_enabled() {
         .run();
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn only_scrape_documented_targets() {
     // package bar has doc = false and should not be eligible for documtation.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
             [package]
@@ -592,7 +592,7 @@ fn only_scrape_documented_targets() {
         .file("src/lib.rs", "")
         .file("examples/ex.rs", "pub fn main() { foo::foo(); }")
         .file(
-            "foo/Cargo.toml",
+            "foo/Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -603,8 +603,8 @@ fn only_scrape_documented_targets() {
         .file("foo/src/lib.rs", "pub fn foo() {}")
         .build();
 
-    p.cargo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc --workspace -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 
     let doc_html = p.read_file("target/doc/foo/fn.foo.html");
@@ -612,11 +612,11 @@ fn only_scrape_documented_targets() {
     assert!(!example_found);
 }
 
-#[cargo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
+#[crabgo_test(nightly, reason = "rustdoc scrape examples flags are unstable")]
 fn issue_11496() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "repro"
@@ -631,7 +631,7 @@ fn issue_11496() {
         .file("examples/ex.rs", "fn main(){}")
         .build();
 
-    p.cargo("doc -Zunstable-options -Zrustdoc-scrape-examples")
-        .masquerade_as_nightly_cargo(&["rustdoc-scrape-examples"])
+    p.crabgo("doc -Zunstable-options -Zrustdoc-scrape-examples")
+        .masquerade_as_nightly_crabgo(&["rustdoc-scrape-examples"])
         .run();
 }

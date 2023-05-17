@@ -1,22 +1,22 @@
 <!-- homu-ignore:start -->
 <!--
-NOTICE: Due to limited review capacity, the Cargo team is not accepting new
+NOTICE: Due to limited review capacity, the Crabgo team is not accepting new
 features or major changes at this time. Please consult with the team before
 opening a new PR. Only issues that have been explicitly marked as accepted
 will be reviewed.
 
 Thanks for submitting a pull request 🎉! Here are some tips for you:
 
-* If this is your first contribution, read "Cargo Contribution Guide":
+* If this is your first contribution, read "Crabgo Contribution Guide":
   https://doc.crates.io/contrib/
-* Run `cargo fmt --all` to format your code changes.
+* Run `crabgo fmt --all` to format your code changes.
 * Small commits and pull requests are always preferable and easy to review.
 * If your idea is large and needs feedback from the community, read how:
   https://doc.crates.io/contrib/process/#working-on-large-features
-* Cargo takes care of compatibility. Read our design principles:
+* Crabgo takes care of compatibility. Read our design principles:
   https://doc.crates.io/contrib/design.html
-* When changing help text of cargo commands, follow the steps to generate docs:
-  https://github.com/rust-lang/cargo/tree/master/src/doc#building-the-man-pages
+* When changing help text of crabgo commands, follow the steps to generate docs:
+  https://github.com/rust-lang/crabgo/tree/master/src/doc#building-the-man-pages
 * If your PR is not finished, set it as "draft" PR or add "WIP" in its title.
 * It's ok to use the CI resources to test your PR, but please don't abuse them.
 

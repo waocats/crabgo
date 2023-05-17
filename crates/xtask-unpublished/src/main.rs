@@ -1,15 +1,15 @@
 mod xtask;
 
 fn main() {
-    env_logger::init_from_env("CARGO_LOG");
+    env_logger::init_from_env("CRABGO_LOG");
     let cli = xtask::cli();
     let matches = cli.get_matches();
 
-    let mut config = cargo::util::config::Config::default().unwrap_or_else(|e| {
-        let mut eval = cargo::core::shell::Shell::new();
-        cargo::exit_with_error(e.into(), &mut eval)
+    let mut config = crabgo::util::config::Config::default().unwrap_or_else(|e| {
+        let mut eval = crabgo::core::shell::Shell::new();
+        crabgo::exit_with_error(e.into(), &mut eval)
     });
     if let Err(e) = xtask::exec(&matches, &mut config) {
-        cargo::exit_with_error(e, &mut config.shell())
+        crabgo::exit_with_error(e, &mut config.shell())
     }
 }

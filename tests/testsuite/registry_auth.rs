@@ -1,11 +1,11 @@
 //! Tests for registry authentication.
 
-use cargo_test_support::registry::{Package, RegistryBuilder};
-use cargo_test_support::{project, Execs, Project};
+use crabgo_test_support::registry::{Package, RegistryBuilder};
+use crabgo_test_support::{project, Execs, Project};
 
-fn cargo(p: &Project, s: &str) -> Execs {
-    let mut e = p.cargo(s);
-    e.masquerade_as_nightly_cargo(&["registry-auth"])
+fn crabgo(p: &Project, s: &str) -> Execs {
+    let mut e = p.crabgo(s);
+    e.masquerade_as_nightly_crabgo(&["registry-auth"])
         .arg("-Zregistry-auth");
     e
 }
@@ -13,7 +13,7 @@ fn cargo(p: &Project, s: &str) -> Execs {
 fn make_project() -> Project {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -40,7 +40,7 @@ static SUCCESS_OUTPUT: &'static str = "\
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]s
 ";
 
-#[cargo_test]
+#[crabgo_test]
 fn requires_nightly() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -49,7 +49,7 @@ fn requires_nightly() {
         .build();
 
     let p = make_project();
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             r#"[UPDATING] `alternative` index
@@ -65,7 +65,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -74,23 +74,23 @@ fn simple() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build").with_stderr(SUCCESS_OUTPUT).run();
+    crabgo(&p, "build").with_stderr(SUCCESS_OUTPUT).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn simple_with_asymmetric() {
     let _registry = RegistryBuilder::new()
         .alternative()
         .auth_required()
         .http_index()
-        .token(cargo_test_support::registry::Token::rfc_key())
+        .token(crabgo_test_support::registry::Token::rfc_key())
         .build();
 
     let p = make_project();
-    cargo(&p, "build").with_stderr(SUCCESS_OUTPUT).run();
+    crabgo(&p, "build").with_stderr(SUCCESS_OUTPUT).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn environment_config() {
     let registry = RegistryBuilder::new()
         .alternative()
@@ -100,17 +100,17 @@ fn environment_config() {
         .http_index()
         .build();
     let p = make_project();
-    cargo(&p, "build")
+    crabgo(&p, "build")
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE_INDEX",
+            "CRABGO_REGISTRIES_ALTERNATIVE_INDEX",
             registry.index_url().as_str(),
         )
-        .env("CARGO_REGISTRIES_ALTERNATIVE_TOKEN", registry.token())
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_TOKEN", registry.token())
         .with_stderr(SUCCESS_OUTPUT)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn environment_token() {
     let registry = RegistryBuilder::new()
         .alternative()
@@ -120,20 +120,20 @@ fn environment_token() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_TOKEN", registry.token())
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_TOKEN", registry.token())
         .with_stderr(SUCCESS_OUTPUT)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn environment_token_with_asymmetric() {
     let registry = RegistryBuilder::new()
         .alternative()
         .auth_required()
         .no_configure_token()
         .http_index()
-        .token(cargo_test_support::registry::Token::Keys(
+        .token(crabgo_test_support::registry::Token::Keys(
             "k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36"
                 .to_string(),
             None,
@@ -141,13 +141,13 @@ fn environment_token_with_asymmetric() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
         .with_stderr(SUCCESS_OUTPUT)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_both_asymmetric_and_token() {
     let _server = RegistryBuilder::new()
         .alternative()
@@ -155,7 +155,7 @@ fn warn_both_asymmetric_and_token() {
         .build();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [registries.alternative]
                 token = "sekrit"
@@ -163,7 +163,7 @@ fn warn_both_asymmetric_and_token() {
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -177,8 +177,8 @@ fn warn_both_asymmetric_and_token() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
-        .masquerade_as_nightly_cargo(&["credential-process", "registry-auth"])
+    p.crabgo("publish --no-verify --registry alternative")
+        .masquerade_as_nightly_crabgo(&["credential-process", "registry-auth"])
         .arg("-Zregistry-auth")
         .with_status(101)
         .with_stderr(
@@ -191,7 +191,7 @@ Only one of these values may be set, remove one or the other to proceed.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_both_asymmetric_and_credential_process() {
     let _server = RegistryBuilder::new()
         .alternative()
@@ -199,7 +199,7 @@ fn warn_both_asymmetric_and_credential_process() {
         .build();
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [registries.alternative]
                 credential-process = "false"
@@ -207,7 +207,7 @@ fn warn_both_asymmetric_and_credential_process() {
             "#,
         )
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -221,8 +221,8 @@ fn warn_both_asymmetric_and_credential_process() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify --registry alternative")
-        .masquerade_as_nightly_cargo(&["credential-process", "registry-auth"])
+    p.crabgo("publish --no-verify --registry alternative")
+        .masquerade_as_nightly_crabgo(&["credential-process", "registry-auth"])
         .arg("-Zcredential-process")
         .arg("-Zregistry-auth")
         .with_status(101)
@@ -236,14 +236,14 @@ Only one of these values may be set, remove one or the other to proceed.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_environment_token_with_asymmetric_subject() {
     let registry = RegistryBuilder::new()
         .alternative()
         .auth_required()
         .no_configure_token()
         .http_index()
-        .token(cargo_test_support::registry::Token::Keys(
+        .token(crabgo_test_support::registry::Token::Keys(
             "k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36"
                 .to_string(),
             None,
@@ -251,51 +251,51 @@ fn bad_environment_token_with_asymmetric_subject() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY_SUBJECT",
+            "CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY_SUBJECT",
             "incorrect",
         )
         .with_stderr_contains(
-            "  token rejected for `alternative`, please run `cargo login --registry alternative`",
+            "  token rejected for `alternative`, please run `crabgo login --registry alternative`",
         )
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_environment_token_with_asymmetric_incorrect_subject() {
     let registry = RegistryBuilder::new()
         .alternative()
         .auth_required()
         .no_configure_token()
         .http_index()
-        .token(cargo_test_support::registry::Token::rfc_key())
+        .token(crabgo_test_support::registry::Token::rfc_key())
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY", registry.key())
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY_SUBJECT",
+            "CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY_SUBJECT",
             "incorrect",
         )
         .with_stderr_contains(
-            "  token rejected for `alternative`, please run `cargo login --registry alternative`",
+            "  token rejected for `alternative`, please run `crabgo login --registry alternative`",
         )
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_environment_token_with_incorrect_asymmetric() {
     let _registry = RegistryBuilder::new()
         .alternative()
         .auth_required()
         .no_configure_token()
         .http_index()
-        .token(cargo_test_support::registry::Token::Keys(
+        .token(crabgo_test_support::registry::Token::Keys(
             "k3.secret.fNYVuMvBgOlljt9TDohnaYLblghqaHoQquVZwgR6X12cBFHZLFsaU3q7X3k1Zn36"
                 .to_string(),
             None,
@@ -303,19 +303,19 @@ fn bad_environment_token_with_incorrect_asymmetric() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
+    crabgo(&p, "build")
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE_SECRET_KEY",
+            "CRABGO_REGISTRIES_ALTERNATIVE_SECRET_KEY",
             "k3.secret.9Vxr5hVlI_g_orBZN54vPz20bmB4O76wB_MVqUSuJJJqHFLwP8kdn_RY5g6J6pQG",
         )
         .with_stderr_contains(
-            "  token rejected for `alternative`, please run `cargo login --registry alternative`",
+            "  token rejected for `alternative`, please run `crabgo login --registry alternative`",
         )
         .with_status(101)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn missing_token() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -325,7 +325,7 @@ fn missing_token() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
+    crabgo(&p, "build")
         .with_status(101)
         .with_stderr(
             "\
@@ -333,13 +333,13 @@ fn missing_token() {
 [ERROR] failed to get `bar` as a dependency of package `foo v0.0.1 ([..])`
 
 Caused by:
-  no token found for `alternative`, please run `cargo login --registry alternative`
-  or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN",
+  no token found for `alternative`, please run `crabgo login --registry alternative`
+  or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn missing_token_git() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -348,7 +348,7 @@ fn missing_token_git() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
+    crabgo(&p, "build")
         .with_status(101)
         .with_stderr(
             "\
@@ -359,13 +359,13 @@ Caused by:
   unable to get packages from source
 
 Caused by:
-  no token found for `alternative`, please run `cargo login --registry alternative`
-  or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN",
+  no token found for `alternative`, please run `crabgo login --registry alternative`
+  or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn incorrect_token() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -375,8 +375,8 @@ fn incorrect_token() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_TOKEN", "incorrect")
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_TOKEN", "incorrect")
         .with_status(101)
         .with_stderr(
             "\
@@ -384,8 +384,8 @@ fn incorrect_token() {
 [ERROR] failed to get `bar` as a dependency of package `foo v0.0.1 ([..])`
 
 Caused by:
-  token rejected for `alternative`, please run `cargo login --registry alternative`
-  or use environment variable CARGO_REGISTRIES_ALTERNATIVE_TOKEN
+  token rejected for `alternative`, please run `crabgo login --registry alternative`
+  or use environment variable CRABGO_REGISTRIES_ALTERNATIVE_TOKEN
 
 Caused by:
   failed to get successful HTTP response from `http://[..]/index/config.json`, got 401
@@ -395,7 +395,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn incorrect_token_git() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -405,8 +405,8 @@ fn incorrect_token_git() {
         .build();
 
     let p = make_project();
-    cargo(&p, "build")
-        .env("CARGO_REGISTRIES_ALTERNATIVE_TOKEN", "incorrect")
+    crabgo(&p, "build")
+        .env("CRABGO_REGISTRIES_ALTERNATIVE_TOKEN", "incorrect")
         .with_status(101)
         .with_stderr(
             "\
@@ -422,7 +422,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn anonymous_alt_registry() {
     // An alternative registry that requires auth, but is not in the config.
     let registry = RegistryBuilder::new()
@@ -434,14 +434,14 @@ fn anonymous_alt_registry() {
         .build();
 
     let p = make_project();
-    cargo(&p, &format!("install --index {} bar", registry.index_url()))
+    crabgo(&p, &format!("install --index {} bar", registry.index_url()))
         .with_status(101)
         .with_stderr(
             "\
 [UPDATING] `[..]` index
 [ERROR] no token found for `[..]`
-consider setting up an alternate registry in Cargo's configuration
-as described by https://doc.rust-lang.org/cargo/reference/registries.html
+consider setting up an alternate registry in Crabgo's configuration
+as described by https://doc.rust-lang.org/crabgo/reference/registries.html
 
 [registries]
 my-registry = { index = \"[..]\" }
@@ -451,7 +451,7 @@ my-registry = { index = \"[..]\" }
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -461,13 +461,13 @@ fn login() {
         .build();
 
     let p = make_project();
-    cargo(&p, "login --registry alternative")
+    crabgo(&p, "login --registry alternative")
         .with_stdout("please paste the token found on https://test-registry-login/me below")
         .with_stdin("sekrit")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn login_existing_token() {
     let _registry = RegistryBuilder::new()
         .alternative()
@@ -476,13 +476,13 @@ fn login_existing_token() {
         .build();
 
     let p = make_project();
-    cargo(&p, "login --registry alternative")
+    crabgo(&p, "login --registry alternative")
         .with_stdout("please paste the token found on file://[..]/me below")
         .with_stdin("sekrit")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_index() {
     let server = RegistryBuilder::new()
         .alternative()
@@ -492,13 +492,13 @@ fn duplicate_index() {
     let p = make_project();
 
     // Two alternative registries with the same index.
-    cargo(&p, "build")
+    crabgo(&p, "build")
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE1_INDEX",
+            "CRABGO_REGISTRIES_ALTERNATIVE1_INDEX",
             server.index_url().as_str(),
         )
         .env(
-            "CARGO_REGISTRIES_ALTERNATIVE2_INDEX",
+            "CRABGO_REGISTRIES_ALTERNATIVE2_INDEX",
             server.index_url().as_str(),
         )
         .with_status(101)

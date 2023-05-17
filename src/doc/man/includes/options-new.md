@@ -22,14 +22,14 @@ Set the package name. Defaults to the directory name.
 Initialize a new VCS repository for the given version control system (git,
 hg, pijul, or fossil) or do not initialize any version control at all
 (none). If not specified, defaults to `git` or the configuration value
-`cargo-new.vcs`, or `none` if already inside a VCS repository.
+`crabgo-new.vcs`, or `none` if already inside a VCS repository.
 {{/option}}
 
 {{#option "`--registry` _registry_" }}
-This sets the `publish` field in `Cargo.toml` to the given registry name
+This sets the `publish` field in `Crabgo.toml` to the given registry name
 which will restrict publishing only to that registry.
 
-Registry names are defined in [Cargo config files](../reference/config.html).
+Registry names are defined in [Crabgo config files](../reference/config.html).
 If not specified, the default registry defined by the `registry.default`
 config key is used. If the default registry is not set and `--registry` is not
 used, the `publish` field will not be set which means that publishing will not

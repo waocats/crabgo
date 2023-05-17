@@ -25,7 +25,7 @@ pub trait Env {
 ///
 /// Implementations should be provided by whatever testing framework the caller
 /// is using. Code that is not performing in-process threaded testing requiring
-/// isolated rustup/cargo directories does not need this trait or the _from
+/// isolated rustup/crabgo directories does not need this trait or the _from
 /// functions.
 pub struct OsEnv;
 impl Env for OsEnv {
@@ -61,7 +61,7 @@ pub fn cargo_home_with_env(env: &dyn Env) -> io::Result<PathBuf> {
 /// as environment variables and user home metadata are normally process global
 /// state. See the OsEnv trait.
 pub fn cargo_home_with_cwd_env(env: &dyn Env, cwd: &Path) -> io::Result<PathBuf> {
-    match env.var_os("CARGO_HOME").filter(|h| !h.is_empty()) {
+    match env.var_os("CRABGO_HOME").filter(|h| !h.is_empty()) {
         Some(home) => {
             let home = PathBuf::from(home);
             if home.is_absolute() {
@@ -71,8 +71,8 @@ pub fn cargo_home_with_cwd_env(env: &dyn Env, cwd: &Path) -> io::Result<PathBuf>
             }
         }
         _ => home_dir_with_env(env)
-            .map(|p| p.join(".cargo"))
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "could not find cargo home dir")),
+            .map(|p| p.join(".crabgo"))
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "could not find crabgo home dir")),
     }
 }
 

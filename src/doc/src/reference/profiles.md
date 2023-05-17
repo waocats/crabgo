@@ -3,12 +3,12 @@
 Profiles provide a way to alter the compiler settings, influencing things like
 optimizations and debugging symbols.
 
-Cargo has 4 built-in profiles: `dev`, `release`, `test`, and `bench`. The
+Crabgo has 4 built-in profiles: `dev`, `release`, `test`, and `bench`. The
 profile is automatically chosen based on which command is being run if a
 profile is not specified on the command-line. In addition to the built-in
 profiles, custom user-defined profiles can also be specified.
 
-Profile settings can be changed in [`Cargo.toml`](manifest.md) with the
+Profile settings can be changed in [`Crabgo.toml`](manifest.md) with the
 `[profile]` table. Within each named profile, individual settings can be changed
 with key/value pairs like this:
 
@@ -18,13 +18,13 @@ opt-level = 1               # Use slightly better optimizations.
 overflow-checks = false     # Disable integer overflow checks.
 ```
 
-Cargo only looks at the profile settings in the `Cargo.toml` manifest at the
+Crabgo only looks at the profile settings in the `Crabgo.toml` manifest at the
 root of the workspace. Profile settings defined in dependencies will be
 ignored.
 
 Additionally, profiles can be overridden from a [config] definition.
 Specifying a profile in a config file or environment variable will override
-the settings from `Cargo.toml`.
+the settings from `Crabgo.toml`.
 
 [config]: config.md
 
@@ -93,7 +93,7 @@ This option is a string and acceptable values are the same as those the
 is `unpacked` on macOS for profiles that have debug information otherwise
 enabled. Otherwise the default for this option is [documented with rustc][`-C
 split-debuginfo` flag] and is platform-specific. Some options are only
-available on the [nightly channel]. The Cargo default may change in the future
+available on the [nightly channel]. The Crabgo default may change in the future
 once more testing has been performed, and support for DWARF is stabilized.
 
 [nightly channel]: ../../book/appendix-07-nightly-rust.html
@@ -218,7 +218,7 @@ The valid options are:
 Incremental compilation is only used for workspace members and "path"
 dependencies.
 
-The incremental value can be overridden globally with the `CARGO_INCREMENTAL`
+The incremental value can be overridden globally with the `CRABGO_INCREMENTAL`
 [environment variable] or the [`build.incremental`] config variable.
 
 [`-C incremental` flag]: ../../rustc/codegen-options/index.html#incremental
@@ -252,7 +252,7 @@ whether or not [`rpath`] is enabled.
 #### dev
 
 The `dev` profile is used for normal development and debugging. It is the
-default for build commands like [`cargo build`], and is used for `cargo install --debug`.
+default for build commands like [`crabgo build`], and is used for `crabgo install --debug`.
 
 The default settings for the `dev` profile are:
 
@@ -274,7 +274,7 @@ rpath = false
 
 The `release` profile is intended for optimized artifacts used for releases
 and in production. This profile is used when the `--release` flag is used, and
-is the default for [`cargo install`].
+is the default for [`crabgo install`].
 
 The default settings for the `release` profile are:
 
@@ -294,12 +294,12 @@ rpath = false
 
 #### test
 
-The `test` profile is the default profile used by [`cargo test`].
+The `test` profile is the default profile used by [`crabgo test`].
 The `test` profile inherits the settings from the [`dev`](#dev) profile.
 
 #### bench
 
-The `bench` profile is the default profile used by [`cargo bench`].
+The `bench` profile is the default profile used by [`crabgo bench`].
 The `bench` profile inherits the settings from the [`release`](#release) profile.
 
 #### Build Dependencies
@@ -340,7 +340,7 @@ setting is not specified.
 
 For example, let's say you want to compare a normal release build with a
 release build with [LTO](#lto) optimizations, you can specify something like
-the following in `Cargo.toml`:
+the following in `Crabgo.toml`:
 
 ```toml
 [profile.release-lto]
@@ -351,7 +351,7 @@ lto = true
 The `--profile` flag can then be used to choose this custom profile:
 
 ```console
-cargo build --profile release-lto
+crabgo build --profile release-lto
 ```
 
 The output for each profile will be placed in a directory of the same name
@@ -368,31 +368,31 @@ The profile used depends on the command, the command-line flags like
 
 | Command | Default Profile |
 |---------|-----------------|
-| [`cargo run`], [`cargo build`],<br>[`cargo check`], [`cargo rustc`] | [`dev` profile](#dev) |
-| [`cargo test`] | [`test` profile](#test)
-| [`cargo bench`] | [`bench` profile](#bench)
-| [`cargo install`] | [`release` profile](#release)
+| [`crabgo run`], [`crabgo build`],<br>[`crabgo check`], [`crabgo rustc`] | [`dev` profile](#dev) |
+| [`crabgo test`] | [`test` profile](#test)
+| [`crabgo bench`] | [`bench` profile](#bench)
+| [`crabgo install`] | [`release` profile](#release)
 
 You can switch to a different profile using the `--profile=NAME` option which will used the given profile.
 The `--release` flag is equivalent to `--profile=release`.
 
-The selected profile applies to all Cargo targets, 
-including [library](./cargo-targets.md#library),
-[binary](./cargo-targets.md#binaries), 
-[example](./cargo-targets.md#examples), 
-[test](./cargo-targets.md#tests), 
-and [benchmark](./cargo-targets.md#benchmarks).
+The selected profile applies to all Crabgo targets, 
+including [library](./crabgo-targets.md#library),
+[binary](./crabgo-targets.md#binaries), 
+[example](./crabgo-targets.md#examples), 
+[test](./crabgo-targets.md#tests), 
+and [benchmark](./crabgo-targets.md#benchmarks).
 
 The profile for specific packages can be specified with
 [overrides](#overrides), described below.
 
-[`cargo bench`]: ../commands/cargo-bench.md
-[`cargo build`]: ../commands/cargo-build.md
-[`cargo check`]: ../commands/cargo-check.md
-[`cargo install`]: ../commands/cargo-install.md
-[`cargo run`]: ../commands/cargo-run.md
-[`cargo rustc`]: ../commands/cargo-rustc.md
-[`cargo test`]: ../commands/cargo-test.md
+[`crabgo bench`]: ../commands/crabgo-bench.md
+[`crabgo build`]: ../commands/crabgo-build.md
+[`crabgo check`]: ../commands/crabgo-check.md
+[`crabgo install`]: ../commands/crabgo-install.md
+[`crabgo run`]: ../commands/crabgo-run.md
+[`crabgo rustc`]: ../commands/crabgo-rustc.md
+[`crabgo test`]: ../commands/crabgo-test.md
 
 ### Overrides
 
@@ -429,7 +429,7 @@ opt-level = 3
 ```
 
 > Note: When a dependency is both a normal dependency and a build dependency,
-> Cargo will try to only build it once when `--target` is not specified. When
+> Crabgo will try to only build it once when `--target` is not specified. When
 > using `build-override`, the dependency may need to be built twice, once as a
 > normal dependency and once with the overridden build settings. This may
 > increase initial build times.
@@ -441,8 +441,8 @@ match wins):
 2. `[profile.dev.package."*"]` --- For any non-workspace member.
 3. `[profile.dev.build-override]` --- Only for build scripts, proc macros, and
    their dependencies.
-4. `[profile.dev]` --- Settings in `Cargo.toml`.
-5. Default values built-in to Cargo.
+4. `[profile.dev]` --- Settings in `Crabgo.toml`.
+5. Default values built-in to Crabgo.
 
 Overrides cannot specify the `panic`, `lto`, or `rpath` settings.
 

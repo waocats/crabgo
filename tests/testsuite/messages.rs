@@ -2,15 +2,15 @@
 //!
 //! Tests for message caching can be found in `cache_messages`.
 
-use cargo_test_support::{process, project, Project};
-use cargo_util::ProcessError;
+use crabgo_test_support::{process, project, Project};
+use crabgo_util::ProcessError;
 
 /// Captures the actual diagnostics displayed by rustc. This is done to avoid
 /// relying on the exact message formatting in rustc.
 pub fn raw_rustc_output(project: &Project, path: &str, extra: &[&str]) -> String {
     let mut proc = process("rustc");
     if cfg!(windows) {
-        // Sanitize in case the caller wants to do direct string comparison with Cargo's output.
+        // Sanitize in case the caller wants to do direct string comparison with Crabgo's output.
         proc.arg(path.replace('/', "\\"));
     } else {
         proc.arg(path);
@@ -45,7 +45,7 @@ pub fn raw_rustc_output(project: &Project, path: &str, extra: &[&str]) -> String
     result
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deduplicate_messages_basic() {
     let p = project()
         .file(
@@ -60,23 +60,23 @@ fn deduplicate_messages_basic() {
     let rustc_message = raw_rustc_output(&p, "src/lib.rs", &[]);
     let expected_output = format!(
         "{}\
-warning: `foo` (lib) generated 1 warning (run `cargo fix --lib -p foo` to apply 1 suggestion)
+warning: `foo` (lib) generated 1 warning (run `crabgo fix --lib -p foo` to apply 1 suggestion)
 warning: `foo` (lib test) generated 1 warning (1 duplicate)
 [FINISHED] [..]
 [EXECUTABLE] unittests src/lib.rs (target/debug/deps/foo-[..][EXE])
 ",
         rustc_message
     );
-    p.cargo("test --no-run -j1")
+    p.crabgo("test --no-run -j1")
         .with_stderr(&format!("[COMPILING] foo [..]\n{}", expected_output))
         .run();
     // Run again, to check for caching behavior.
-    p.cargo("test --no-run -j1")
+    p.crabgo("test --no-run -j1")
         .with_stderr(expected_output)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deduplicate_messages_mismatched_warnings() {
     // One execution prints 1 warning, the other prints 2 where there is an overlap.
     let p = project()
@@ -103,7 +103,7 @@ fn deduplicate_messages_mismatched_warnings() {
     let expected_output = format!(
         "\
 {}\
-warning: `foo` (lib) generated 1 warning (run `cargo fix --lib -p foo` to apply 1 suggestion)
+warning: `foo` (lib) generated 1 warning (run `crabgo fix --lib -p foo` to apply 1 suggestion)
 {}\
 warning: `foo` (lib test) generated 2 warnings (1 duplicate)
 [FINISHED] [..]
@@ -111,16 +111,16 @@ warning: `foo` (lib test) generated 2 warnings (1 duplicate)
 ",
         lib_output, lib_test_output
     );
-    p.cargo("test --no-run -j1")
+    p.crabgo("test --no-run -j1")
         .with_stderr(&format!("[COMPILING] foo v0.0.1 [..]\n{}", expected_output))
         .run();
     // Run again, to check for caching behavior.
-    p.cargo("test --no-run -j1")
+    p.crabgo("test --no-run -j1")
         .with_stderr(expected_output)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deduplicate_errors() {
     let p = project()
         .file(
@@ -131,7 +131,7 @@ fn deduplicate_errors() {
         )
         .build();
     let rustc_message = raw_rustc_output(&p, "src/lib.rs", &[]);
-    p.cargo("test -j1")
+    p.crabgo("test -j1")
         .with_status(101)
         .with_stderr(&format!(
             "\

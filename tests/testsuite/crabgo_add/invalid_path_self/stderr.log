@@ -1,0 +1,2 @@
+      Adding crabgo-list-test-fixture (local) to dependencies.
+error: cannot add `crabgo-list-test-fixture` as a dependency to itself

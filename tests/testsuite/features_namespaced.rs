@@ -1,10 +1,10 @@
 //! Tests for namespaced features.
 
 use super::features2::switch_to_resolver_2;
-use cargo_test_support::registry::{Dependency, Package, RegistryBuilder};
-use cargo_test_support::{project, publish};
+use crabgo_test_support::registry::{Dependency, Package, RegistryBuilder};
+use crabgo_test_support::{project, publish};
 
-#[cargo_test]
+#[crabgo_test]
 fn dependency_with_crate_syntax() {
     // Registry dependency uses dep: syntax.
     Package::new("baz", "1.0.0").publish();
@@ -14,7 +14,7 @@ fn dependency_with_crate_syntax() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -27,7 +27,7 @@ fn dependency_with_crate_syntax() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -43,12 +43,12 @@ fn dependency_with_crate_syntax() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_invalid_feature() {
     // Specifies a feature that doesn't exist.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -62,7 +62,7 @@ fn namespaced_invalid_feature() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -75,12 +75,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_invalid_dependency() {
     // Specifies a dep:name that doesn't exist.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -93,7 +93,7 @@ fn namespaced_invalid_dependency() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -106,12 +106,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_non_optional_dependency() {
     // Specifies a dep:name for a dependency that is not optional.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -127,7 +127,7 @@ fn namespaced_non_optional_dependency() {
         .file("src/main.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
 
         .with_status(101)
         .with_stderr(
@@ -142,14 +142,14 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_implicit_feature() {
     // Backwards-compatible with old syntax.
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -165,7 +165,7 @@ fn namespaced_implicit_feature() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -174,7 +174,7 @@ fn namespaced_implicit_feature() {
 ",
         )
         .run();
-    p.cargo("check --features baz")
+    p.crabgo("check --features baz")
         .with_stderr(
             "\
 [DOWNLOADING] crates ...
@@ -187,13 +187,13 @@ fn namespaced_implicit_feature() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_shadowed_dep() {
     // An optional dependency is not listed in the features table, and its
     // implicit feature is overridden.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -209,7 +209,7 @@ fn namespaced_shadowed_dep() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -223,13 +223,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_shadowed_non_optional() {
     // Able to specify a feature with the same name as a required dependency.
     Package::new("baz", "0.1.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -245,15 +245,15 @@ fn namespaced_shadowed_non_optional() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_implicit_non_optional() {
     // Includes a non-optional dependency in [features] table.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -269,7 +269,7 @@ fn namespaced_implicit_non_optional() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check").with_status(101).with_stderr(
+    p.crabgo("check").with_status(101).with_stderr(
         "\
 [ERROR] failed to parse manifest at `[..]`
 
@@ -280,14 +280,14 @@ Caused by:
     ).run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_same_name() {
     // Explicitly listing an optional dependency in the [features] table.
     Package::new("baz", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -310,7 +310,7 @@ fn namespaced_same_name() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -322,7 +322,7 @@ fn namespaced_same_name() {
         .with_stdout("")
         .run();
 
-    p.cargo("run --features baz")
+    p.crabgo("run --features baz")
         .with_stderr(
             "\
 [DOWNLOADING] crates ...
@@ -337,7 +337,7 @@ fn namespaced_same_name() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn no_implicit_feature() {
     // Using `dep:` will not create an implicit feature.
     Package::new("regex", "1.0.0").publish();
@@ -345,7 +345,7 @@ fn no_implicit_feature() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -370,7 +370,7 @@ fn no_implicit_feature() {
         )
         .build();
 
-    p.cargo("run")
+    p.crabgo("run")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -382,7 +382,7 @@ fn no_implicit_feature() {
         .with_stdout("")
         .run();
 
-    p.cargo("run --features regex")
+    p.crabgo("run --features regex")
         .with_stderr_unordered(
             "\
 [DOWNLOADING] crates ...
@@ -398,7 +398,7 @@ fn no_implicit_feature() {
         .with_stdout("regex")
         .run();
 
-    p.cargo("run --features lazy_static")
+    p.crabgo("run --features lazy_static")
         .with_stderr(
             "\
 [ERROR] Package `foo v0.1.0 [..]` does not have feature `lazy_static`. \
@@ -410,13 +410,13 @@ syntax in the features table, so it does not have an implicit feature with that 
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_syntax_bad_name() {
     // "dep:bar" = []
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -432,11 +432,11 @@ fn crate_syntax_bad_name() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check --features dep:bar")
+    p.crabgo("check --features dep:bar")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at [..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at [..]/foo/Crabgo.toml`
 
 Caused by:
   feature named `dep:bar` is not allowed to start with `dep:`
@@ -445,7 +445,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_syntax_in_dep() {
     // features = ["dep:baz"]
     Package::new("baz", "1.0.0").publish();
@@ -454,7 +454,7 @@ fn crate_syntax_in_dep() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -467,11 +467,11 @@ fn crate_syntax_in_dep() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[CWD]/Cargo.toml`
+error: failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   feature `dep:baz` in dependency `bar` is not allowed to use explicit `dep:` syntax
@@ -481,13 +481,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_syntax_cli() {
     // --features dep:bar
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -500,7 +500,7 @@ fn crate_syntax_cli() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check --features dep:bar")
+    p.crabgo("check --features dep:bar")
         .with_status(101)
         .with_stderr(
             "\
@@ -510,7 +510,7 @@ fn crate_syntax_cli() {
         .run();
 
     switch_to_resolver_2(&p);
-    p.cargo("check --features dep:bar")
+    p.crabgo("check --features dep:bar")
         .with_status(101)
         .with_stderr(
             "\
@@ -520,13 +520,13 @@ fn crate_syntax_cli() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_required_features() {
     // required-features = ["dep:bar"]
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -543,7 +543,7 @@ fn crate_required_features() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -555,13 +555,13 @@ fn crate_required_features() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn json_exposed() {
     // Checks that the implicit dep: values are exposed in JSON.
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -574,7 +574,7 @@ fn json_exposed() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("metadata --no-deps")
+    p.crabgo("metadata --no-deps")
         .with_json(
             r#"
                 {
@@ -594,7 +594,7 @@ fn json_exposed() {
                       "features": {
                         "bar": ["dep:bar"]
                       },
-                      "manifest_path": "[..]foo/Cargo.toml",
+                      "manifest_path": "[..]foo/Crabgo.toml",
                       "metadata": null,
                       "publish": null,
                       "authors": [],
@@ -620,7 +620,7 @@ fn json_exposed() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn crate_feature_with_explicit() {
     // crate_name/feat_name syntax where crate_name already has a feature defined.
     // NOTE: I don't know if this is actually ideal behavior.
@@ -636,7 +636,7 @@ fn crate_feature_with_explicit() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -663,7 +663,7 @@ fn crate_feature_with_explicit() {
         )
         .build();
 
-    p.cargo("check --features f1")
+    p.crabgo("check --features f1")
         .with_stderr(
             "\
 [UPDATING] [..]
@@ -677,14 +677,14 @@ fn crate_feature_with_explicit() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn optional_explicit_without_crate() {
     // "feat" syntax when there is no implicit "feat" feature because it is
     // explicitly listed elsewhere.
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -701,7 +701,7 @@ fn optional_explicit_without_crate() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -715,7 +715,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn tree() {
     Package::new("baz", "1.0.0").publish();
     Package::new("bar", "1.0.0")
@@ -725,7 +725,7 @@ fn tree() {
         .publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -742,11 +742,11 @@ fn tree() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout("foo v0.1.0 ([ROOT]/foo)")
         .run();
 
-    p.cargo("tree -e features --features a")
+    p.crabgo("tree -e features --features a")
         .with_stdout(
             "\
 foo v0.1.0 ([ROOT]/foo)
@@ -760,7 +760,7 @@ foo v0.1.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features a -i bar")
+    p.crabgo("tree -e features --features a -i bar")
         .with_stdout(
             "\
 bar v1.0.0
@@ -778,7 +778,7 @@ bar v1.0.0
         )
         .run();
 
-    p.cargo("tree -e features --features bar")
+    p.crabgo("tree -e features --features bar")
         .with_stdout(
             "\
 foo v0.1.0 ([ROOT]/foo)
@@ -792,7 +792,7 @@ foo v0.1.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features --features bar -i bar")
+    p.crabgo("tree -e features --features bar -i bar")
         .with_stdout(
             "\
 bar v1.0.0
@@ -807,13 +807,13 @@ bar v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn tree_no_implicit() {
     // tree without an implicit feature
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -829,11 +829,11 @@ fn tree_no_implicit() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("tree -e features")
+    p.crabgo("tree -e features")
         .with_stdout("foo v0.1.0 ([ROOT]/foo)")
         .run();
 
-    p.cargo("tree -e features --all-features")
+    p.crabgo("tree -e features --all-features")
         .with_stdout(
             "\
 foo v0.1.0 ([ROOT]/foo)
@@ -843,7 +843,7 @@ foo v0.1.0 ([ROOT]/foo)
         )
         .run();
 
-    p.cargo("tree -e features -i bar --all-features")
+    p.crabgo("tree -e features -i bar --all-features")
         .with_stdout(
             "\
 bar v1.0.0
@@ -856,7 +856,7 @@ bar v1.0.0
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish_no_implicit() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -866,7 +866,7 @@ fn publish_no_implicit() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -886,7 +886,7 @@ fn publish_no_implicit() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish --no-verify")
+    p.crabgo("publish --no-verify")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -947,9 +947,9 @@ You may press ctrl-c [..]
           }
         "#,
         "foo-0.1.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "src/lib.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "src/lib.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -970,13 +970,13 @@ optional = true
 [features]
 feat = ["opt-dep1"]
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn publish() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -984,7 +984,7 @@ fn publish() {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1005,7 +1005,7 @@ fn publish() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -1063,9 +1063,9 @@ You may press ctrl-c [..]
           }
         "#,
         "foo-0.1.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "src/lib.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "src/lib.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -1084,13 +1084,13 @@ feat1 = []
 feat2 = ["dep:bar"]
 feat3 = ["feat2"]
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn namespaced_feature_together() {
     // Check for an error when `dep:` is used with `/`
     Package::new("bar", "1.0.0")
@@ -1100,7 +1100,7 @@ fn namespaced_feature_together() {
     // Non-optional shouldn't have extra err.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1115,11 +1115,11 @@ fn namespaced_feature_together() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   feature `f1` includes `dep:bar/bar-feat` with both `dep:` and `/`
@@ -1130,7 +1130,7 @@ Caused by:
 
     // Weak dependency shouldn't have extra err.
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1143,11 +1143,11 @@ Caused by:
             f1 = ["dep:bar?/bar-feat"]
         "#,
     );
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   feature `f1` includes `dep:bar?/bar-feat` with both `dep:` and `/`
@@ -1158,7 +1158,7 @@ Caused by:
 
     // If dep: is already specified, shouldn't have extra err.
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1171,11 +1171,11 @@ Caused by:
             f1 = ["dep:bar", "dep:bar/bar-feat"]
         "#,
     );
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   feature `f1` includes `dep:bar/bar-feat` with both `dep:` and `/`
@@ -1186,7 +1186,7 @@ Caused by:
 
     // Only when the other 3 cases aren't true should it give some extra help.
     p.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1199,11 +1199,11 @@ Caused by:
             f1 = ["dep:bar/bar-feat"]
         "#,
     );
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: failed to parse manifest at `[ROOT]/foo/Cargo.toml`
+error: failed to parse manifest at `[ROOT]/foo/Crabgo.toml`
 
 Caused by:
   feature `f1` includes `dep:bar/bar-feat` with both `dep:` and `/`

@@ -1,0 +1,8 @@
+[workspace]
+
+[package]
+name = "crabgo-list-test-fixture"
+version = "0.0.0"
+
+[dependencies]
+crabgo-list-test-fixture-dependency = { optional = true, version = "20.0" }

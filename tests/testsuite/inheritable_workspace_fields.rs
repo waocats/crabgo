@@ -1,14 +1,14 @@
-//! Tests for inheriting Cargo.toml fields with field.workspace = true
-use cargo_test_support::registry::{Dependency, Package, RegistryBuilder};
-use cargo_test_support::{
+//! Tests for inheriting Crabgo.toml fields with field.workspace = true
+use crabgo_test_support::registry::{Dependency, Package, RegistryBuilder};
+use crabgo_test_support::{
     basic_lib_manifest, basic_manifest, git, path2url, paths, project, publish, registry,
 };
 
-#[cargo_test]
+#[crabgo_test]
 fn permit_additional_workspace_fields() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -28,7 +28,7 @@ fn permit_additional_workspace_fields() {
             edition = "2018"
             rust-version = "1.60"
             exclude = ["foo.txt"]
-            include = ["bar.txt", "**/*.rs", "Cargo.toml", "LICENSE", "README.md"]
+            include = ["bar.txt", "**/*.rs", "Crabgo.toml", "LICENSE", "README.md"]
 
             [workspace.package.badges]
             gitlab = { repository = "https://gitlab.com/rust-lang/rust", branch = "master" }
@@ -38,7 +38,7 @@ fn permit_additional_workspace_fields() {
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
               [package]
               name = "bar"
@@ -50,7 +50,7 @@ fn permit_additional_workspace_fields() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         // Should not warn about unused fields.
         .with_stderr(
             "\
@@ -60,16 +60,16 @@ fn permit_additional_workspace_fields() {
         )
         .run();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lockfile = p.read_lockfile();
     assert!(!lockfile.contains("dep"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn deny_optional_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -80,7 +80,7 @@ fn deny_optional_dependencies() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
               [package]
               name = "bar"
@@ -92,11 +92,11 @@ fn deny_optional_dependencies() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]foo/Crabgo.toml`
 
 Caused by:
   dep1 is optional, but workspace dependencies cannot be optional
@@ -105,7 +105,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_own_workspace_fields() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -113,7 +113,7 @@ fn inherit_own_workspace_fields() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             badges.workspace = true
 
@@ -150,7 +150,7 @@ fn inherit_own_workspace_fields() {
             edition = "2018"
             rust-version = "1.60"
             exclude = ["foo.txt"]
-            include = ["bar.txt", "**/*.rs", "Cargo.toml"]
+            include = ["bar.txt", "**/*.rs", "Crabgo.toml"]
             [workspace.package.badges]
             gitlab = { repository = "https://gitlab.com/rust-lang/rust", branch = "master" }
             "#,
@@ -160,7 +160,7 @@ fn inherit_own_workspace_fields() {
         .file("bar.txt", "") // should be included when packaging
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -207,15 +207,15 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         "#,
         "foo-1.2.3.crate",
         &[
-            "Cargo.lock",
-            "Cargo.toml",
-            "Cargo.toml.orig",
+            "Crabgo.lock",
+            "Crabgo.toml",
+            "Crabgo.toml.orig",
             "src/main.rs",
-            ".cargo_vcs_info.json",
+            ".crabgo_vcs_info.json",
             "bar.txt",
         ],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -228,7 +228,7 @@ exclude = ["foo.txt"]
 include = [
     "bar.txt",
     "**/*.rs",
-    "Cargo.toml",
+    "Crabgo.toml",
 ]
 publish = true
 description = "This is a crate"
@@ -243,18 +243,18 @@ repository = "https://github.com/example/example"
 branch = "master"
 repository = "https://gitlab.com/rust-lang/rust"
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_own_dependencies() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -286,7 +286,7 @@ fn inherit_own_dependencies() {
     Package::new("dep-build", "0.8.2").publish();
     Package::new("dep-dev", "0.5.2").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         // Unordered because the download order is nondeterministic.
         .with_stderr_unordered(
             "\
@@ -301,13 +301,13 @@ fn inherit_own_dependencies() {
         )
         .run();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lockfile = p.read_lockfile();
     assert!(lockfile.contains("dep"));
     assert!(lockfile.contains("dep-dev"));
     assert!(lockfile.contains("dep-build"));
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -382,9 +382,9 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
           }
         "#,
         "bar-0.2.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "Cargo.lock", "src/main.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "Crabgo.lock", "src/main.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -401,18 +401,18 @@ version = "0.5.2"
 [build-dependencies.dep-build]
 version = "0.8"
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_own_detailed_dependencies() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -436,7 +436,7 @@ fn inherit_own_detailed_dependencies() {
         .feature("testing", &vec![])
         .publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -449,11 +449,11 @@ fn inherit_own_detailed_dependencies() {
         )
         .run();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lockfile = p.read_lockfile();
     assert!(lockfile.contains("dep"));
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .with_stderr(
             "\
@@ -510,9 +510,9 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
           }
         "#,
         "bar-0.2.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "Cargo.lock", "src/main.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "Crabgo.lock", "src/main.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -524,13 +524,13 @@ authors = []
 version = "0.1.2"
 features = ["testing"]
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_from_own_undefined_field() {
     registry::init();
 
@@ -538,7 +538,7 @@ fn inherit_from_own_undefined_field() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -553,11 +553,11 @@ fn inherit_from_own_undefined_field() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[CWD]/Cargo.toml`
+[ERROR] failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   error inheriting `description` from workspace root manifest's `workspace.package.description`
@@ -569,7 +569,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherited_dependencies_union_features() {
     Package::new("dep", "0.1.0")
         .feature("fancy", &["fancy_dep"])
@@ -584,7 +584,7 @@ fn inherited_dependencies_union_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -602,7 +602,7 @@ fn inherited_dependencies_union_features() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -625,7 +625,7 @@ fn inherited_dependencies_union_features() {
     assert!(lockfile.contains("dancy_dep"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_workspace_fields() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
 
@@ -633,7 +633,7 @@ fn inherit_workspace_fields() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -653,14 +653,14 @@ fn inherit_workspace_fields() {
             edition = "2018"
             rust-version = "1.60"
             exclude = ["foo.txt"]
-            include = ["bar.txt", "**/*.rs", "Cargo.toml", "LICENSE", "README.md"]
+            include = ["bar.txt", "**/*.rs", "Crabgo.toml", "LICENSE", "README.md"]
             [workspace.package.badges]
             gitlab = { repository = "https://gitlab.com/rust-lang/rust", branch = "master" }
             "#,
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             badges.workspace = true
             [package]
@@ -691,7 +691,7 @@ fn inherit_workspace_fields() {
         .file("bar/bar.txt", "") // should be included when packaging
         .build();
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .cwd("bar")
         .with_stderr(
@@ -743,17 +743,17 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
         "#,
         "bar-1.2.3.crate",
         &[
-            "Cargo.lock",
-            "Cargo.toml",
-            "Cargo.toml.orig",
+            "Crabgo.lock",
+            "Crabgo.toml",
+            "Crabgo.toml.orig",
             "src/main.rs",
             "README.md",
             "LICENSE",
-            ".cargo_vcs_info.json",
+            ".crabgo_vcs_info.json",
             "bar.txt",
         ],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -766,7 +766,7 @@ exclude = ["foo.txt"]
 include = [
     "bar.txt",
     "**/*.rs",
-    "Cargo.toml",
+    "Crabgo.toml",
     "LICENSE",
     "README.md",
 ]
@@ -785,18 +785,18 @@ repository = "https://github.com/example/example"
 branch = "master"
 repository = "https://gitlab.com/rust-lang/rust"
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_dependencies() {
     let registry = RegistryBuilder::new().http_api().http_index().build();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -807,7 +807,7 @@ fn inherit_dependencies() {
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             workspace = ".."
@@ -829,7 +829,7 @@ fn inherit_dependencies() {
     Package::new("dep-build", "0.8.2").publish();
     Package::new("dep-dev", "0.5.2").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         // Unordered because the download order is nondeterministic.
         .with_stderr_unordered(
             "\
@@ -844,13 +844,13 @@ fn inherit_dependencies() {
         )
         .run();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
     let lockfile = p.read_lockfile();
     assert!(lockfile.contains("dep"));
     assert!(lockfile.contains("dep-dev"));
     assert!(lockfile.contains("dep-build"));
 
-    p.cargo("publish")
+    p.crabgo("publish")
         .replace_crates_io(registry.index_url())
         .cwd("bar")
         .with_stderr(
@@ -926,9 +926,9 @@ You may press ctrl-c to skip waiting; the crate should be available shortly.
           }
         "#,
         "bar-0.2.0.crate",
-        &["Cargo.toml", "Cargo.toml.orig", "Cargo.lock", "src/main.rs"],
+        &["Crabgo.toml", "Crabgo.toml.orig", "Crabgo.lock", "src/main.rs"],
         &[(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"{}
 [package]
@@ -945,17 +945,17 @@ version = "0.5.2"
 [build-dependencies.dep-build]
 version = "0.8"
 "#,
-                cargo::core::package::MANIFEST_PREAMBLE
+                crabgo::core::package::MANIFEST_PREAMBLE
             ),
         )],
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_target_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -964,7 +964,7 @@ fn inherit_target_dependencies() {
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             workspace = ".."
@@ -982,7 +982,7 @@ fn inherit_target_dependencies() {
 
     Package::new("dep", "0.1.2").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -999,13 +999,13 @@ fn inherit_target_dependencies() {
     assert!(lockfile.contains("dep"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_dependency_override_optional() {
     Package::new("dep", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -1014,7 +1014,7 @@ fn inherit_dependency_override_optional() {
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             workspace = ".."
@@ -1028,7 +1028,7 @@ fn inherit_dependency_override_optional() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1039,7 +1039,7 @@ fn inherit_dependency_override_optional() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_dependency_features() {
     Package::new("dep", "0.1.0")
         .feature("fancy", &["fancy_dep"])
@@ -1052,7 +1052,7 @@ fn inherit_dependency_features() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1070,7 +1070,7 @@ fn inherit_dependency_features() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -1090,11 +1090,11 @@ fn inherit_dependency_features() {
     assert!(lockfile.contains("fancy_dep"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_detailed_dependencies() {
     let git_project = git::new("detailed", |project| {
         project
-            .file("Cargo.toml", &basic_lib_manifest("detailed"))
+            .file("Crabgo.toml", &basic_lib_manifest("detailed"))
             .file(
                 "src/detailed.rs",
                 r#"
@@ -1113,7 +1113,7 @@ fn inherit_detailed_dependencies() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
             [workspace]
@@ -1125,7 +1125,7 @@ fn inherit_detailed_dependencies() {
             ),
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             workspace = ".."
@@ -1141,7 +1141,7 @@ fn inherit_detailed_dependencies() {
 
     let git_root = git_project.root();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(&format!(
             "\
 [UPDATING] git repository `{}`\n\
@@ -1154,11 +1154,11 @@ fn inherit_detailed_dependencies() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_path_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -1167,7 +1167,7 @@ fn inherit_path_dependencies() {
         "#,
         )
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             workspace = ".."
@@ -1179,11 +1179,11 @@ fn inherit_path_dependencies() {
         "#,
         )
         .file("bar/src/main.rs", "fn main() {}")
-        .file("dep/Cargo.toml", &basic_manifest("dep", "0.9.0"))
+        .file("dep/Crabgo.toml", &basic_manifest("dep", "0.9.0"))
         .file("dep/src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [CHECKING] dep v0.9.0 ([CWD]/dep)
@@ -1197,7 +1197,7 @@ fn inherit_path_dependencies() {
     assert!(lockfile.contains("dep"));
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_workspace_false() {
     registry::init();
 
@@ -1205,7 +1205,7 @@ fn error_workspace_false() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -1213,7 +1213,7 @@ fn error_workspace_false() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1226,12 +1226,12 @@ fn error_workspace_false() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("bar")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[CWD]/Cargo.toml`
+[ERROR] failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   `workspace` cannot be false
@@ -1241,7 +1241,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_workspace_dependency_looked_for_workspace_itself() {
     registry::init();
 
@@ -1249,7 +1249,7 @@ fn error_workspace_dependency_looked_for_workspace_itself() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1269,12 +1269,12 @@ fn error_workspace_dependency_looked_for_workspace_itself() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: unused manifest key: workspace.dependencies.dep.workspace
-[WARNING] [CWD]/Cargo.toml: dependency (dep) specified without providing a local path, Git repository, version, \
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: workspace.dependencies.dep.workspace
+[WARNING] [CWD]/Crabgo.toml: dependency (dep) specified without providing a local path, Git repository, version, \
 or workspace dependency to use. \
 This will be considered an error in future versions
 [UPDATING] `dummy-registry` index
@@ -1286,7 +1286,7 @@ required by package `bar v1.2.3 ([CWD])`
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_malformed_workspace_root() {
     registry::init();
 
@@ -1294,7 +1294,7 @@ fn error_malformed_workspace_root() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = [invalid toml
@@ -1302,7 +1302,7 @@ fn error_malformed_workspace_root() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1314,12 +1314,12 @@ fn error_malformed_workspace_root() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("bar")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   [..]
@@ -1336,7 +1336,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_no_root_workspace() {
     registry::init();
 
@@ -1344,7 +1344,7 @@ fn error_no_root_workspace() {
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1358,30 +1358,30 @@ fn error_no_root_workspace() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("bar")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[..]/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/Crabgo.toml`
 
 Caused by:
   error inheriting `description` from workspace root manifest's `workspace.package.description`
 
 Caused by:
-  root of a workspace inferred but wasn't a root: [..]/Cargo.toml
+  root of a workspace inferred but wasn't a root: [..]/Crabgo.toml
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn error_inherit_unspecified_dependency() {
     let p = project().build();
 
     let _ = git::repo(&paths::root().join("foo"))
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = ["bar"]
@@ -1389,7 +1389,7 @@ fn error_inherit_unspecified_dependency() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            "bar/Cargo.toml",
+            "bar/Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1403,12 +1403,12 @@ fn error_inherit_unspecified_dependency() {
         .file("bar/src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .cwd("bar")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse manifest at `[CWD]/Cargo.toml`
+[ERROR] failed to parse manifest at `[CWD]/Crabgo.toml`
 
 Caused by:
   error inheriting `foo` from workspace root manifest's `workspace.dependencies.foo`
@@ -1420,7 +1420,7 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_inherit_def_feat_true_member_def_feat_false() {
     Package::new("dep", "0.1.0")
         .feature("default", &["fancy_dep"])
@@ -1432,7 +1432,7 @@ fn warn_inherit_def_feat_true_member_def_feat_false() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1450,10 +1450,10 @@ fn warn_inherit_def_feat_true_member_def_feat_false() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: `default-features` is ignored for dep, since `default-features` was \
+[WARNING] [CWD]/Crabgo.toml: `default-features` is ignored for dep, since `default-features` was \
 true for `workspace.dependencies.dep`, this could become a hard error in the future
 [UPDATING] `dummy-registry` index
 [DOWNLOADING] crates ...
@@ -1468,7 +1468,7 @@ true for `workspace.dependencies.dep`, this could become a hard error in the fut
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_inherit_simple_member_def_feat_false() {
     Package::new("dep", "0.1.0")
         .feature("default", &["fancy_dep"])
@@ -1480,7 +1480,7 @@ fn warn_inherit_simple_member_def_feat_false() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1498,10 +1498,10 @@ fn warn_inherit_simple_member_def_feat_false() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: `default-features` is ignored for dep, since `default-features` was \
+[WARNING] [CWD]/Crabgo.toml: `default-features` is ignored for dep, since `default-features` was \
 not specified for `workspace.dependencies.dep`, this could become a hard error in the future
 [UPDATING] `dummy-registry` index
 [DOWNLOADING] crates ...
@@ -1516,7 +1516,7 @@ not specified for `workspace.dependencies.dep`, this could become a hard error i
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn inherit_def_feat_false_member_def_feat_true() {
     Package::new("dep", "0.1.0")
         .feature("default", &["fancy_dep"])
@@ -1528,7 +1528,7 @@ fn inherit_def_feat_false_member_def_feat_true() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "bar"
@@ -1546,7 +1546,7 @@ fn inherit_def_feat_false_member_def_feat_true() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 [UPDATING] `dummy-registry` index
@@ -1562,13 +1562,13 @@ fn inherit_def_feat_false_member_def_feat_true() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn cannot_inherit_in_patch() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = []
@@ -1591,12 +1591,12 @@ fn cannot_inherit_in_patch() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: unused manifest key: patch.crates-io.bar.workspace
-[WARNING] [CWD]/Cargo.toml: dependency (bar) specified without providing a local path, Git repository, version, \
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: patch.crates-io.bar.workspace
+[WARNING] [CWD]/Crabgo.toml: dependency (bar) specified without providing a local path, Git repository, version, \
 or workspace dependency to use. \
 This will be considered an error in future versions
 [UPDATING] `dummy-registry` index
@@ -1609,13 +1609,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_inherit_unused_manifest_key_dep() {
     Package::new("dep", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [workspace]
             members = []
@@ -1634,11 +1634,11 @@ fn warn_inherit_unused_manifest_key_dep() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: unused manifest key: workspace.dependencies.dep.wxz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: dependencies.dep.wxz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: workspace.dependencies.dep.wxz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: dependencies.dep.wxz
 [UPDATING] `[..]` index
 [DOWNLOADING] crates ...
 [DOWNLOADED] dep v0.1.0 ([..])
@@ -1650,13 +1650,13 @@ fn warn_inherit_unused_manifest_key_dep() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_inherit_unused_manifest_key_package() {
     Package::new("dep", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             badges = { workspace = true, xyz = "abc"}
 
@@ -1676,7 +1676,7 @@ fn warn_inherit_unused_manifest_key_package() {
             edition = "2018"
             rust-version = "1.60"
             exclude = ["foo.txt"]
-            include = ["bar.txt", "**/*.rs", "Cargo.toml"]
+            include = ["bar.txt", "**/*.rs", "Crabgo.toml"]
             [workspace.package.badges]
             gitlab = { repository = "https://gitlab.com/rust-lang/rust", branch = "master" }
 
@@ -1701,23 +1701,23 @@ fn warn_inherit_unused_manifest_key_package() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.authors.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.categories.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.description.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.documentation.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.edition.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.exclude.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.homepage.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.include.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.keywords.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.license.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.publish.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.repository.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.rust-version.xyz
-[WARNING] [CWD]/Cargo.toml: unused manifest key: package.version.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.authors.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.categories.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.description.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.documentation.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.edition.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.exclude.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.homepage.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.include.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.keywords.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.license.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.publish.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.repository.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.rust-version.xyz
+[WARNING] [CWD]/Crabgo.toml: unused manifest key: package.version.xyz
 [CHECKING] bar v1.2.3 ([CWD])
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]
 ",

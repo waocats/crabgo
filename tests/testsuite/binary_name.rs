@@ -1,13 +1,13 @@
-use cargo_test_support::install::{
+use crabgo_test_support::install::{
     assert_has_installed_exe, assert_has_not_installed_exe, cargo_home,
 };
-use cargo_test_support::project;
+use crabgo_test_support::project;
 
-#[cargo_test]
+#[crabgo_test]
 fn gated() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name =  "foo"
@@ -22,27 +22,27 @@ fn gated() {
         .file("src/main.rs", "fn main() { assert!(true) }")
         .build();
 
-    // Run cargo build.
-    p.cargo("build")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo build.
+    p.crabgo("build")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_status(101)
         .with_stderr_contains("[..]feature `different-binary-name` is required")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 // This test checks if:
 // 1. The correct binary is produced
 // 2. The deps file has the correct content
 // 3. Fingerprinting works
-// 4. `cargo clean` command works
+// 4. `crabgo clean` command works
 fn binary_name1() {
     // Create the project.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["different-binary-name"]
+                crabgo-features = ["different-binary-name"]
 
                 [package]
                 name =  "foo"
@@ -57,12 +57,12 @@ fn binary_name1() {
         .file("src/main.rs", "fn main() { assert!(true) }")
         .build();
 
-    // Run cargo build.
-    p.cargo("build")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo build.
+    p.crabgo("build")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
 
-    // Check the name of the binary that cargo has generated.
+    // Check the name of the binary that crabgo has generated.
     // A binary with the name of the crate should NOT be created.
     let foo_path = p.bin("foo");
     assert!(!foo_path.is_file());
@@ -90,9 +90,9 @@ fn binary_name1() {
         deps_path.to_string_lossy()
     );
 
-    // Run cargo second time, to verify fingerprint.
-    p.cargo("build -p foo -v")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo second time, to verify fingerprint.
+    p.crabgo("build -p foo -v")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_stderr(
             "\
 [FRESH] foo [..]
@@ -101,30 +101,30 @@ fn binary_name1() {
         )
         .run();
 
-    // Run cargo clean.
-    p.cargo("clean -p foo")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo clean.
+    p.crabgo("clean -p foo")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
 
     // Check if the appropriate file was removed.
     assert!(
         !bar_path.is_file(),
-        "`cargo clean` did not remove the correct files"
+        "`crabgo clean` did not remove the correct files"
     );
 }
 
-#[cargo_test]
+#[crabgo_test]
 // This test checks if:
-// 1. Check `cargo run`
-// 2. Check `cargo test`
-// 3. Check `cargo install/uninstall`
+// 1. Check `crabgo run`
+// 2. Check `crabgo test`
+// 3. Check `crabgo install/uninstall`
 fn binary_name2() {
     // Create the project.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["different-binary-name"]
+                crabgo-features = ["different-binary-name"]
 
                 [package]
                 name =  "foo"
@@ -159,12 +159,12 @@ fn binary_name2() {
         )
         .build();
 
-    // Run cargo build.
-    p.cargo("build")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo build.
+    p.crabgo("build")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
 
-    // Check the name of the binary that cargo has generated.
+    // Check the name of the binary that crabgo has generated.
     // A binary with the name of the crate should NOT be created.
     let foo_path = p.bin("foo");
     assert!(!foo_path.is_file());
@@ -172,9 +172,9 @@ fn binary_name2() {
     let bar_path = p.bin("007bar");
     assert!(bar_path.is_file());
 
-    // Check if `cargo test` works
-    p.cargo("test")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Check if `crabgo test` works
+    p.crabgo("test")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([CWD])
@@ -184,33 +184,33 @@ fn binary_name2() {
         .with_stdout_contains("test tests::check_crabs ... ok")
         .run();
 
-    // Check if `cargo run` is able to execute the binary
-    p.cargo("run")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Check if `crabgo run` is able to execute the binary
+    p.crabgo("run")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_stdout("Hello, crabs!")
         .run();
 
-    p.cargo("install")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    p.crabgo("install")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
 
     assert_has_installed_exe(cargo_home(), "007bar");
 
-    p.cargo("uninstall")
-        .with_stderr("[REMOVING] [ROOT]/home/.cargo/bin/007bar[EXE]")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    p.crabgo("uninstall")
+        .with_stderr("[REMOVING] [ROOT]/home/.crabgo/bin/007bar[EXE]")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
 
     assert_has_not_installed_exe(cargo_home(), "007bar");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_env_vars() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["different-binary-name"]
+                crabgo-features = ["different-binary-name"]
 
                 [package]
                 name =  "foo"
@@ -225,7 +225,7 @@ fn check_env_vars() {
             "src/main.rs",
             r#"
                 fn main() {
-                    println!("{}", option_env!("CARGO_BIN_NAME").unwrap());
+                    println!("{}", option_env!("CRABGO_BIN_NAME").unwrap());
                 }
             "#,
         )
@@ -234,35 +234,35 @@ fn check_env_vars() {
             r#"
                 #[test]
                 fn check_env_vars2() {
-                    let value = option_env!("CARGO_BIN_EXE_007bar").expect("Could not find environment variable.");
+                    let value = option_env!("CRABGO_BIN_EXE_007bar").expect("Could not find environment variable.");
                     assert!(value.contains("007bar"));
                 }
             "#
         )
         .build();
 
-    // Run cargo build.
-    p.cargo("build")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo build.
+    p.crabgo("build")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .run();
-    p.cargo("run")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    p.crabgo("run")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_stdout("007bar")
         .run();
-    p.cargo("test")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    p.crabgo("test")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_status(0)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn check_msg_format_json() {
     // Create the project.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["different-binary-name"]
+                crabgo-features = ["different-binary-name"]
 
                 [package]
                 name =  "foo"
@@ -281,7 +281,7 @@ fn check_msg_format_json() {
 {
     "reason": "compiler-artifact",
     "package_id": "foo 0.0.1 [..]",
-    "manifest_path": "[CWD]/Cargo.toml",
+    "manifest_path": "[CWD]/Crabgo.toml",
     "target": "{...}",
     "profile": "{...}",
     "features": [],
@@ -293,9 +293,9 @@ fn check_msg_format_json() {
 {"reason":"build-finished", "success":true}
 "#;
 
-    // Run cargo build.
-    p.cargo("build --message-format=json")
-        .masquerade_as_nightly_cargo(&["different-binary-name"])
+    // Run crabgo build.
+    p.crabgo("build --message-format=json")
+        .masquerade_as_nightly_crabgo(&["different-binary-name"])
         .with_json(output)
         .run();
 }

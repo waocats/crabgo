@@ -5,7 +5,7 @@ dependencies in the [overriding dependencies] section of this
 documentation.
 
 A *source* is a provider that contains crates that may be included as
-dependencies for a package. Cargo supports the ability to **replace one source
+dependencies for a package. Crabgo supports the ability to **replace one source
 with another** to express strategies such as:
 
 * Vendoring --- custom sources can be defined which represent crates on the local
@@ -15,18 +15,18 @@ with another** to express strategies such as:
 * Mirroring --- sources can be replaced with an equivalent version which acts as a
   cache for crates.io itself.
 
-Cargo has a core assumption about source replacement that the source code is
+Crabgo has a core assumption about source replacement that the source code is
 exactly the same from both sources. Note that this also means that
 a replacement source is not allowed to have crates which are not present in the
 original source.
 
 As a consequence, source replacement is not appropriate for situations such as
-patching a dependency or a private registry. Cargo supports patching
+patching a dependency or a private registry. Crabgo supports patching
 dependencies through the usage of [the `[patch]` key][overriding
 dependencies], and private registry support is described in [the Registries
 chapter][registries].
 
-When using source replacement, running commands like `cargo publish` that need to
+When using source replacement, running commands like `crabgo publish` that need to
 contact the registry require passing the `--registry` option. This helps avoid
 any ambiguity about which registry to contact, and will use the authentication
 token for the specified registry.
@@ -36,7 +36,7 @@ token for the specified registry.
 
 ### Configuration
 
-Configuration of replacement sources is done through [`.cargo/config.toml`][config]
+Configuration of replacement sources is done through [`.crabgo/config.toml`][config]
 and the full set of available keys are:
 
 ```toml
@@ -47,7 +47,7 @@ and the full set of available keys are:
 # Under the `source` table are a number of other tables whose keys are a
 # name for the relevant source. For example this section defines a new
 # source, called `my-vendor-source`, which comes from a directory
-# located at `vendor` relative to the directory containing this `.cargo/config.toml`
+# located at `vendor` relative to the directory containing this `.crabgo/config.toml`
 # file
 [source.my-vendor-source]
 directory = "vendor"
@@ -96,15 +96,15 @@ crates.io. Stay tuned though!
 
 A "local registry source" is intended to be a subset of another registry
 source, but available on the local filesystem (aka vendoring). Local registries
-are downloaded ahead of time, typically sync'd with a `Cargo.lock`, and are
+are downloaded ahead of time, typically sync'd with a `Crabgo.lock`, and are
 made up of a set of `*.crate` files and an index like the normal registry is.
 
 The primary way to manage and create local registry sources is through the
-[`cargo-local-registry`][cargo-local-registry] subcommand,
-[available on crates.io][cargo-local-registry] and can be installed with
-`cargo install cargo-local-registry`.
+[`crabgo-local-registry`][crabgo-local-registry] subcommand,
+[available on crates.io][crabgo-local-registry] and can be installed with
+`crabgo install crabgo-local-registry`.
 
-[cargo-local-registry]: https://crates.io/crates/cargo-local-registry
+[crabgo-local-registry]: https://crates.io/crates/crabgo-local-registry
 
 Local registries are contained within one directory and contain a number of
 `*.crate` files downloaded from crates.io as well as an `index` directory with
@@ -115,7 +115,7 @@ the crates that are present).
 
 A "directory source" is similar to a local registry source where it contains a
 number of crates available on the local filesystem, suitable for vendoring
-dependencies. Directory sources are primarily managed by the `cargo vendor`
+dependencies. Directory sources are primarily managed by the `crabgo vendor`
 subcommand.
 
 Directory sources are distinct from local registries though in that they contain

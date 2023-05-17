@@ -1,6 +1,6 @@
-## Working on an Existing Cargo Package
+## Working on an Existing Crabgo Package
 
-If you download an existing [package][def-package] that uses Cargo, it’s
+If you download an existing [package][def-package] that uses Crabgo, it’s
 really easy to get going.
 
 First, get the package from somewhere. In this example, we’ll use `regex`
@@ -11,10 +11,10 @@ $ git clone https://github.com/rust-lang/regex.git
 $ cd regex
 ```
 
-To build, use `cargo build`:
+To build, use `crabgo build`:
 
 ```console
-$ cargo build
+$ crabgo build
    Compiling regex v1.5.0 (file:///path/to/package/regex)
 ```
 

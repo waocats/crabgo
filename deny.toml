@@ -12,7 +12,7 @@
 # Root options
 
 # If 1 or more target triples (and optionally, target_features) are specified,
-# only the specified targets will be checked when running `cargo deny check`.
+# only the specified targets will be checked when running `crabgo deny check`.
 # This means, if a particular package is only ever used as a target specific
 # dependency, such as, for example, the `nix` crate only being used via the
 # `target_family = "unix"` configuration, that only having windows targets in
@@ -30,11 +30,11 @@ targets = [
 ]
 # When creating the dependency graph used as the source of truth when checks are
 # executed, this field can be used to prune crates from the graph, removing them
-# from the view of cargo-deny. This is an extremely heavy hammer, as if a crate
+# from the view of crabgo-deny. This is an extremely heavy hammer, as if a crate
 # is pruned from the graph, all of its dependencies will also be pruned unless
 # they are connected to another crate in the graph that hasn't been pruned,
 # so it should be used with care. The identifiers are [Package ID Specifications]
-# (https://doc.rust-lang.org/cargo/reference/pkgid-spec.html)
+# (https://doc.rust-lang.org/crabgo/reference/pkgid-spec.html)
 #exclude = []
 # If true, metadata will be collected with `--all-features`. Note that this can't
 # be toggled off if true, if you want to conditionally enable `--all-features` it
@@ -53,12 +53,12 @@ no-default-features = false
 # This option can be overridden via `--feature-depth` on the cmd line
 feature-depth = 1
 
-# This section is considered when running `cargo deny check advisories`
+# This section is considered when running `crabgo deny check advisories`
 # More documentation for the advisories section can be found here:
-# https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
+# https://embarkstudios.github.io/crabgo-deny/checks/advisories/cfg.html
 [advisories]
 # The path where the advisory database is cloned/fetched into
-db-path = "~/.cargo/advisory-db"
+db-path = "~/.crabgo/advisory-db"
 # The url(s) of the advisory databases to use
 db-urls = ["https://github.com/rustsec/advisory-db"]
 # The lint level for security vulnerabilities
@@ -86,15 +86,15 @@ ignore = [
 # * Critical - CVSS Score 9.0 - 10.0
 #severity-threshold =
 
-# If this is true, then cargo deny will use the git executable to fetch advisory database.
+# If this is true, then crabgo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
-# Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
+# Setting this to true can be helpful if you have special authentication requirements that crabgo-deny does not support.
 # See Git Authentication for more information about setting up git authentication.
 #git-fetch-with-cli = true
 
-# This section is considered when running `cargo deny check licenses`
+# This section is considered when running `crabgo deny check licenses`
 # More documentation for the licenses section can be found here:
-# https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html
+# https://embarkstudios.github.io/crabgo-deny/checks/licenses/cfg.html
 [licenses]
 # The lint level for crates which do not have a detectable license
 unlicensed = "deny"
@@ -167,7 +167,7 @@ exceptions = [
 # If true, ignores workspace crates that aren't published, or are only
 # published to private registries.
 # To see how to mark a crate as unpublished (to the official registry),
-# visit https://doc.rust-lang.org/cargo/reference/manifest.html#the-publish-field.
+# visit https://doc.rust-lang.org/crabgo/reference/manifest.html#the-publish-field.
 ignore = false
 # One or more private registries that you might publish crates to, if a crate
 # is only published to private registries, and ignore is true, the crate will
@@ -176,9 +176,9 @@ registries = [
     #"https://sekretz.com/registry
 ]
 
-# This section is considered when running `cargo deny check bans`.
+# This section is considered when running `crabgo deny check bans`.
 # More documentation about the 'bans' section can be found here:
-# https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
+# https://embarkstudios.github.io/crabgo-deny/checks/bans/cfg.html
 [bans]
 # Lint level for when multiple versions of the same crate are detected
 multiple-versions = "warn"
@@ -248,9 +248,9 @@ skip-tree = [
     #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
 ]
 
-# This section is considered when running `cargo deny check sources`.
+# This section is considered when running `crabgo deny check sources`.
 # More documentation about the 'sources' section can be found here:
-# https://embarkstudios.github.io/cargo-deny/checks/sources/cfg.html
+# https://embarkstudios.github.io/crabgo-deny/checks/sources/cfg.html
 [sources]
 # Lint level for what to happen when a crate from a crate registry that is not
 # in the allow list is encountered

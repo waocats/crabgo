@@ -1,13 +1,13 @@
 //! Tests for edition setting.
 
-use cargo::core::Edition;
-use cargo_test_support::{basic_lib_manifest, project};
+use crabgo::core::Edition;
+use crabgo_test_support::{basic_lib_manifest, project};
 
-#[cargo_test]
+#[crabgo_test]
 fn edition_works_for_build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = 'foo'
@@ -27,14 +27,14 @@ fn edition_works_for_build_script() {
                 }
             "#,
         )
-        .file("a/Cargo.toml", &basic_lib_manifest("a"))
+        .file("a/Crabgo.toml", &basic_lib_manifest("a"))
         .file("a/src/lib.rs", "pub fn foo() {}")
         .build();
 
-    p.cargo("check -v").run();
+    p.crabgo("check -v").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn edition_unstable_gated() {
     // During the period where a new edition is coming up, but not yet stable,
     // this test will verify that it cannot be used on stable. If there is no
@@ -48,7 +48,7 @@ fn edition_unstable_gated() {
     };
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -62,19 +62,19 @@ fn edition_unstable_gated() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(&format!(
             "\
-[ERROR] failed to parse manifest at `[..]/foo/Cargo.toml`
+[ERROR] failed to parse manifest at `[..]/foo/Crabgo.toml`
 
 Caused by:
   feature `edition{next}` is required
 
-  The package requires the Cargo feature called `edition{next}`, \
-  but that feature is not stabilized in this version of Cargo (1.[..]).
-  Consider trying a newer version of Cargo (this may require the nightly release).
-  See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#edition-{next} \
+  The package requires the Crabgo feature called `edition{next}`, \
+  but that feature is not stabilized in this version of Crabgo (1.[..]).
+  Consider trying a newer version of Crabgo (this may require the nightly release).
+  See https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#edition-{next} \
   for more information about the status of this feature.
 ",
             next = next
@@ -82,10 +82,10 @@ Caused by:
         .run();
 }
 
-#[cargo_test(nightly, reason = "fundamentally always nightly")]
+#[crabgo_test(nightly, reason = "fundamentally always nightly")]
 fn edition_unstable() {
     // During the period where a new edition is coming up, but not yet stable,
-    // this test will verify that it can be used with `cargo-features`. If
+    // this test will verify that it can be used with `crabgo-features`. If
     // there is no next edition, it does nothing.
     let next = match Edition::LATEST_UNSTABLE {
         Some(next) => next,
@@ -96,10 +96,10 @@ fn edition_unstable() {
     };
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
-                cargo-features = ["edition{next}"]
+                crabgo-features = ["edition{next}"]
 
                 [package]
                 name = "foo"
@@ -112,8 +112,8 @@ fn edition_unstable() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
-        .masquerade_as_nightly_cargo(&["always_nightly"])
+    p.crabgo("check")
+        .masquerade_as_nightly_crabgo(&["always_nightly"])
         .with_stderr(
             "\
 [CHECKING] foo [..]

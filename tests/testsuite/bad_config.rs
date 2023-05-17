@@ -1,22 +1,22 @@
-//! Tests for some invalid .cargo/config files.
+//! Tests for some invalid .crabgo/config files.
 
-use cargo_test_support::git::cargo_uses_gitoxide;
-use cargo_test_support::registry::{self, Package};
-use cargo_test_support::{basic_manifest, project, rustc_host};
+use crabgo_test_support::git::crabgo_uses_gitoxide;
+use crabgo_test_support::registry::{self, Package};
+use crabgo_test_support::{basic_manifest, project, rustc_host};
 
-#[cargo_test]
+#[crabgo_test]
 fn bad1() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                   [target]
                   nonexistent-target = "foo"
             "#,
         )
         .build();
-    p.cargo("check -v --target=nonexistent-target")
+    p.crabgo("check -v --target=nonexistent-target")
         .with_status(101)
         .with_stderr(
             "\
@@ -27,23 +27,23 @@ but found string in [..]/config
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad2() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                   [http]
                     proxy = 3.0
             "#,
         )
         .build();
-    p.cargo("publish -v")
+    p.crabgo("publish -v")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] could not load Cargo configuration
+[ERROR] could not load Crabgo configuration
 
 Caused by:
   failed to load TOML configuration from `[..]config`
@@ -61,13 +61,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad3() {
     let registry = registry::init();
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [http]
                   proxy = true
@@ -76,7 +76,7 @@ fn bad3() {
         .build();
     Package::new("foo", "1.0.0").publish();
 
-    p.cargo("publish -v")
+    p.crabgo("publish -v")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -90,37 +90,37 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad4() {
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
-                [cargo-new]
+                [crabgo-new]
                   vcs = false
             "#,
         )
         .build();
-    p.cargo("new -v foo")
+    p.crabgo("new -v foo")
         .with_status(101)
         .with_stderr(
             "\
 [ERROR] Failed to create package `foo` at `[..]`
 
 Caused by:
-  error in [..]config: `cargo-new.vcs` expected a string, but found a boolean
+  error in [..]config: `crabgo-new.vcs` expected a string, but found a boolean
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad6() {
     let registry = registry::init();
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [http]
                   user-agent = true
@@ -129,7 +129,7 @@ fn bad6() {
         .build();
     Package::new("foo", "1.0.0").publish();
 
-    p.cargo("publish -v")
+    p.crabgo("publish -v")
         .replace_crates_io(registry.index_url())
         .with_status(101)
         .with_stderr(
@@ -143,11 +143,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_global_config() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -158,15 +158,15 @@ fn invalid_global_config() {
                 foo = "0.1.0"
             "#,
         )
-        .file(".cargo/config", "4")
+        .file(".crabgo/config", "4")
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] could not load Cargo configuration
+[ERROR] could not load Crabgo configuration
 
 Caused by:
   could not parse TOML configuration in `[..]`
@@ -185,18 +185,18 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn bad_cargo_lock() {
+#[crabgo_test]
+fn bad_crabgo_lock() {
     let p = project()
-        .file("Cargo.lock", "[[package]]\nfoo = 92")
+        .file("Crabgo.lock", "[[package]]\nfoo = 92")
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] failed to parse lock file at: [..]Cargo.lock
+[ERROR] failed to parse lock file at: [..]Crabgo.lock
 
 Caused by:
   missing field `name`
@@ -206,13 +206,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn duplicate_packages_in_cargo_lock() {
+#[crabgo_test]
+fn duplicate_packages_in_crabgo_lock() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -225,7 +225,7 @@ fn duplicate_packages_in_cargo_lock() {
         )
         .file("src/lib.rs", "")
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             r#"
                 [[package]]
                 name = "foo"
@@ -247,7 +247,7 @@ fn duplicate_packages_in_cargo_lock() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -260,13 +260,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
-fn bad_source_in_cargo_lock() {
+#[crabgo_test]
+fn bad_source_in_crabgo_lock() {
     Package::new("bar", "0.1.0").publish();
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -279,7 +279,7 @@ fn bad_source_in_cargo_lock() {
         )
         .file("src/lib.rs", "")
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             r#"
                 [[package]]
                 name = "foo"
@@ -296,7 +296,7 @@ fn bad_source_in_cargo_lock() {
         )
         .build();
 
-    p.cargo("check --verbose")
+    p.crabgo("check --verbose")
         .with_status(101)
         .with_stderr(
             "\
@@ -310,12 +310,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_dependency_in_lockfile() {
     let p = project()
         .file("src/lib.rs", "")
         .file(
-            "Cargo.lock",
+            "Crabgo.lock",
             r#"
                 [[package]]
                 name = "foo"
@@ -327,14 +327,14 @@ fn bad_dependency_in_lockfile() {
         )
         .build();
 
-    p.cargo("check").run();
+    p.crabgo("check").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_git_dependency() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                 [package]
@@ -345,7 +345,7 @@ fn bad_git_dependency() {
                 [dependencies]
                 foo = {{ git = "{url}" }}
             "#,
-                url = if cargo_uses_gitoxide() {
+                url = if crabgo_uses_gitoxide() {
                     "git://host.xz"
                 } else {
                     "file:.."
@@ -355,7 +355,7 @@ fn bad_git_dependency() {
         .file("src/lib.rs", "")
         .build();
 
-    let expected_stderr = if cargo_uses_gitoxide() {
+    let expected_stderr = if crabgo_uses_gitoxide() {
         "\
 [UPDATING] git repository `git://host.xz`
 [ERROR] failed to get `foo` as a dependency of package `foo v0.0.0 [..]`
@@ -390,17 +390,17 @@ Caused by:
   [..]'file:///' is not a valid local file URI[..]
 "
     };
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(expected_stderr)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_crate_type() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -414,7 +414,7 @@ fn bad_crate_type() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr_contains(
             "error: failed to run `rustc` to learn about crate-type bad_type information",
@@ -422,11 +422,11 @@ fn bad_crate_type() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn malformed_override() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -442,7 +442,7 @@ fn malformed_override() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -463,11 +463,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_binary_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "qqq"
@@ -487,7 +487,7 @@ fn duplicate_binary_names() {
         .file("b.rs", r#"fn main() -> () {}"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -500,11 +500,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_example_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "qqq"
@@ -524,7 +524,7 @@ fn duplicate_example_names() {
         .file("examples/ex2.rs", r#"fn main () -> () {}"#)
         .build();
 
-    p.cargo("check --example ex")
+    p.crabgo("check --example ex")
         .with_status(101)
         .with_stderr(
             "\
@@ -537,11 +537,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_bench_names() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "qqq"
@@ -561,7 +561,7 @@ fn duplicate_bench_names() {
         .file("benches/ex2.rs", r#"fn main () {}"#)
         .build();
 
-    p.cargo("bench")
+    p.crabgo("bench")
         .with_status(101)
         .with_stderr(
             "\
@@ -574,15 +574,15 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_deps() {
     let p = project()
-        .file("shim-bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("shim-bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("shim-bar/src/lib.rs", "pub fn a() {}")
-        .file("linux-bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("linux-bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("linux-bar/src/lib.rs", "pub fn a() {}")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "qqq"
@@ -599,7 +599,7 @@ fn duplicate_deps() {
         .file("src/main.rs", r#"fn main () {}"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -613,15 +613,15 @@ have a single canonical source path irrespective of build target.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn duplicate_deps_diff_sources() {
     let p = project()
-        .file("shim-bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("shim-bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("shim-bar/src/lib.rs", "pub fn a() {}")
-        .file("linux-bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("linux-bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("linux-bar/src/lib.rs", "pub fn a() {}")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "qqq"
@@ -638,7 +638,7 @@ fn duplicate_deps_diff_sources() {
         .file("src/main.rs", r#"fn main () {}"#)
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -652,11 +652,11 @@ have a single canonical source path irrespective of build target.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_keys() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                [package]
                name = "foo"
@@ -670,7 +670,7 @@ fn unused_keys() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: unused manifest key: target.foo.bar
@@ -682,7 +682,7 @@ warning: unused manifest key: target.foo.bar
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -694,7 +694,7 @@ warning: unused manifest key: target.foo.bar
         )
         .file("src/lib.rs", "pub fn foo() {}")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: unused manifest key: package.bulid
@@ -707,7 +707,7 @@ warning: unused manifest key: package.bulid
     let p = project()
         .at("bar")
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
 
@@ -721,7 +721,7 @@ warning: unused manifest key: package.bulid
         )
         .file("src/lib.rs", "pub fn foo() {}")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr(
             "\
 warning: unused manifest key: lib.build
@@ -732,24 +732,24 @@ warning: unused manifest key: lib.build
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn unused_keys_in_virtual_manifest() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = ["bar"]
                 bulid = "foo"
             "#,
         )
-        .file("bar/Cargo.toml", &basic_manifest("bar", "0.0.1"))
+        .file("bar/Crabgo.toml", &basic_manifest("bar", "0.0.1"))
         .file("bar/src/lib.rs", "")
         .build();
-    p.cargo("check --workspace")
+    p.crabgo("check --workspace")
         .with_stderr(
             "\
-[WARNING] [..]/foo/Cargo.toml: unused manifest key: workspace.bulid
+[WARNING] [..]/foo/Crabgo.toml: unused manifest key: workspace.bulid
 [CHECKING] bar [..]
 [FINISHED] dev [unoptimized + debuginfo] target(s) in [..]
 ",
@@ -757,11 +757,11 @@ fn unused_keys_in_virtual_manifest() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn empty_dependencies() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -777,7 +777,7 @@ fn empty_dependencies() {
 
     Package::new("bar", "0.0.1").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains(
             "\
 warning: dependency (bar) specified without providing a local path, Git repository, version, \
@@ -787,18 +787,18 @@ or workspace dependency to use. This will be considered an error in future versi
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn invalid_toml_historically_allowed_fails() {
     let p = project()
-        .file(".cargo/config", "[bar] baz = 2")
+        .file(".crabgo/config", "[bar] baz = 2")
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-error: could not load Cargo configuration
+error: could not load Crabgo configuration
 
 Caused by:
   could not parse TOML configuration in `[..]`
@@ -818,11 +818,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ambiguous_git_reference() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -838,7 +838,7 @@ fn ambiguous_git_reference() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -851,11 +851,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn fragment_in_git_url() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -869,7 +869,7 @@ fn fragment_in_git_url() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check -v")
+    p.crabgo("check -v")
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -881,24 +881,24 @@ use `rev = \"foo\"` in the dependency declaration.
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config1() {
     let p = project()
         .file("src/lib.rs", "")
-        .file(".cargo/config", "[source.foo]")
+        .file(".crabgo/config", "[source.foo]")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr("error: no source location specified for `source.foo`, need [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config2() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -911,7 +911,7 @@ fn bad_source_config2() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.crates-io]
                 registry = 'http://example.com'
@@ -920,7 +920,7 @@ fn bad_source_config2() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -940,11 +940,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config3() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -957,7 +957,7 @@ fn bad_source_config3() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.crates-io]
                 registry = 'https://example.com'
@@ -966,7 +966,7 @@ fn bad_source_config3() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -985,11 +985,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config4() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1002,7 +1002,7 @@ fn bad_source_config4() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.crates-io]
                 replace-with = 'bar'
@@ -1014,7 +1014,7 @@ fn bad_source_config4() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1034,11 +1034,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config5() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1051,7 +1051,7 @@ fn bad_source_config5() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.crates-io]
                 registry = 'https://example.com'
@@ -1063,7 +1063,7 @@ fn bad_source_config5() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1076,11 +1076,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn both_git_and_path_specified() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1095,7 +1095,7 @@ fn both_git_and_path_specified() {
         .file("src/lib.rs", "")
         .build();
 
-    foo.cargo("check -v")
+    foo.crabgo("check -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -1108,11 +1108,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config6() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1125,7 +1125,7 @@ fn bad_source_config6() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.crates-io]
                 registry = 'https://example.com'
@@ -1134,24 +1134,24 @@ fn bad_source_config6() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] error in [..]/foo/.cargo/config: could not load config key `source.crates-io.replace-with`
+[ERROR] error in [..]/foo/.crabgo/config: could not load config key `source.crates-io.replace-with`
 
 Caused by:
-  error in [..]/foo/.cargo/config: `source.crates-io.replace-with` expected a string, but found a array
+  error in [..]/foo/.crabgo/config: `source.crates-io.replace-with` expected a string, but found a array
 "
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn ignored_git_revision() {
     let foo = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1172,14 +1172,14 @@ error: failed to parse manifest at `[..]`
 Caused by:
   key `branch` is ignored for dependency (bar).
 ";
-    foo.cargo("check -v")
+    foo.crabgo("check -v")
         .with_status(101)
         .with_stderr(err_msg)
         .run();
 
     // #11540, check that [target] dependencies fail the same way.
     foo.change_file(
-        "Cargo.toml",
+        "Crabgo.toml",
         r#"
             [package]
             name = "foo"
@@ -1189,17 +1189,17 @@ Caused by:
             bar = { path = "bar", branch = "spam" }
         "#,
     );
-    foo.cargo("check")
+    foo.crabgo("check")
         .with_status(101)
         .with_stderr(err_msg)
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config7() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1212,7 +1212,7 @@ fn bad_source_config7() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.foo]
                 registry = 'https://example.com'
@@ -1223,17 +1223,17 @@ fn bad_source_config7() {
 
     Package::new("bar", "0.1.0").publish();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr("error: more than one source location specified for `source.foo`")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_source_config8() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1246,7 +1246,7 @@ fn bad_source_config8() {
         )
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [source.foo]
                 branch = "somebranch"
@@ -1254,20 +1254,20 @@ fn bad_source_config8() {
         )
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "[ERROR] source definition `source.foo` specifies `branch`, \
-             but that requires a `git` key to be specified (in [..]/foo/.cargo/config)",
+             but that requires a `git` key to be specified (in [..]/foo/.crabgo/config)",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_dependency() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1281,7 +1281,7 @@ fn bad_dependency() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1295,11 +1295,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_debuginfo() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1313,7 +1313,7 @@ fn bad_debuginfo() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1327,11 +1327,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_debuginfo2() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1345,7 +1345,7 @@ fn bad_debuginfo2() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1359,11 +1359,11 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_opt_level() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -1375,7 +1375,7 @@ fn bad_opt_level() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1389,12 +1389,12 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn warn_semver_metadata() {
     Package::new("bar", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -1406,12 +1406,12 @@ fn warn_semver_metadata() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("check")
+    p.crabgo("check")
         .with_stderr_contains("[WARNING] version requirement `1.0.0+1234` for dependency `bar`[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_target_cfg() {
     // Invalid type in a StringList.
     //
@@ -1422,7 +1422,7 @@ fn bad_target_cfg() {
     // the message.
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [target.'cfg(not(target_os = "none"))']
             runner = false
@@ -1431,27 +1431,27 @@ fn bad_target_cfg() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] error in [..]/foo/.cargo/config: \
+[ERROR] error in [..]/foo/.crabgo/config: \
 could not load config key `target.\"cfg(not(target_os = \\\"none\\\"))\".runner`
 
 Caused by:
-  error in [..]/foo/.cargo/config: \
+  error in [..]/foo/.crabgo/config: \
   could not load config key `target.\"cfg(not(target_os = \\\"none\\\"))\".runner`
 
 Caused by:
   invalid configuration for key `target.\"cfg(not(target_os = \\\"none\\\"))\".runner`
   expected a string or array of strings, but found a boolean for \
-  `target.\"cfg(not(target_os = \\\"none\\\"))\".runner` in [..]/foo/.cargo/config
+  `target.\"cfg(not(target_os = \\\"none\\\"))\".runner` in [..]/foo/.crabgo/config
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn bad_target_links_overrides() {
     // Invalid parsing of links overrides.
     //
@@ -1461,7 +1461,7 @@ fn bad_target_links_overrides() {
     // currently is designed with serde.
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             &format!(
                 r#"
                 [target.{}.somelib]
@@ -1473,16 +1473,16 @@ fn bad_target_links_overrides() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "[ERROR] Only `-l` and `-L` flags are allowed in target config \
-             `target.[..].rustc-flags` (in [..]foo/.cargo/config): `foo`",
+             `target.[..].rustc-flags` (in [..]foo/.crabgo/config): `foo`",
         )
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         &format!(
             "[target.{}.somelib]
             warning = \"foo\"
@@ -1490,18 +1490,18 @@ fn bad_target_links_overrides() {
             rustc_host(),
         ),
     );
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr("[ERROR] `warning` is not supported in build script overrides")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn redefined_sources() {
     // Cannot define a source multiple times.
     let p = project()
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [source.foo]
             registry = "https://github.com/rust-lang/crates.io-index"
@@ -1510,7 +1510,7 @@ fn redefined_sources() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\
@@ -1522,7 +1522,7 @@ note: Sources are not allowed to be defined multiple times.
         .run();
 
     p.change_file(
-        ".cargo/config",
+        ".crabgo/config",
         r#"
         [source.one]
         directory = "index"
@@ -1533,7 +1533,7 @@ note: Sources are not allowed to be defined multiple times.
     );
 
     // Name is `[..]` because we can't guarantee the order.
-    p.cargo("check")
+    p.crabgo("check")
         .with_status(101)
         .with_stderr(
             "\

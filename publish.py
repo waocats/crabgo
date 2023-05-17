@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# This script is used to publish Cargo to crates.io.
+# This script is used to publish Crabgo to crates.io.
 
 import os
 import re
@@ -11,8 +11,8 @@ from urllib.error import HTTPError
 
 
 TO_PUBLISH = [
-    'crates/cargo-platform',
-    'crates/cargo-util',
+    'crates/crabgo-platform',
+    'crates/crabgo-util',
     'crates/crates-io',
     '.',
 ]
@@ -29,13 +29,13 @@ def already_published(name, version):
 
 
 def maybe_publish(path):
-    content = open(os.path.join(path, 'Cargo.toml')).read()
+    content = open(os.path.join(path, 'Crabgo.toml')).read()
     name = re.search('^name = "([^"]+)"', content, re.M).group(1)
     version = re.search('^version = "([^"]+)"', content, re.M).group(1)
     if already_published(name, version):
         print('%s %s is already published, skipping' % (name, version))
         return False
-    subprocess.check_call(['cargo', 'publish', '--no-verify'], cwd=path)
+    subprocess.check_call(['crabgo', 'publish', '--no-verify'], cwd=path)
     return True
 
 

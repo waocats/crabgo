@@ -1,9 +1,9 @@
 //! Tests for public/private dependencies.
 
-use cargo_test_support::project;
-use cargo_test_support::registry::Package;
+use crabgo_test_support::project;
+use crabgo_test_support::registry::Package;
 
-#[cargo_test(nightly, reason = "exported_private_dependencies lint is unstable")]
+#[crabgo_test(nightly, reason = "exported_private_dependencies lint is unstable")]
 fn exported_priv_warning() {
     Package::new("priv_dep", "0.1.0")
         .file("src/lib.rs", "pub struct FromPriv;")
@@ -11,9 +11,9 @@ fn exported_priv_warning() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["public-dependency"]
+                crabgo-features = ["public-dependency"]
 
                 [package]
                 name = "foo"
@@ -32,8 +32,8 @@ fn exported_priv_warning() {
         )
         .build();
 
-    p.cargo("check --message-format=short")
-        .masquerade_as_nightly_cargo(&["public-dependency"])
+    p.crabgo("check --message-format=short")
+        .masquerade_as_nightly_crabgo(&["public-dependency"])
         .with_stderr_contains(
             "\
 src/lib.rs:3:13: warning: type `[..]FromPriv` from private dependency 'priv_dep' in public interface
@@ -42,7 +42,7 @@ src/lib.rs:3:13: warning: type `[..]FromPriv` from private dependency 'priv_dep'
         .run()
 }
 
-#[cargo_test(nightly, reason = "exported_private_dependencies lint is unstable")]
+#[crabgo_test(nightly, reason = "exported_private_dependencies lint is unstable")]
 fn exported_pub_dep() {
     Package::new("pub_dep", "0.1.0")
         .file("src/lib.rs", "pub struct FromPub;")
@@ -50,9 +50,9 @@ fn exported_pub_dep() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["public-dependency"]
+                crabgo-features = ["public-dependency"]
 
                 [package]
                 name = "foo"
@@ -71,8 +71,8 @@ fn exported_pub_dep() {
         )
         .build();
 
-    p.cargo("check --message-format=short")
-        .masquerade_as_nightly_cargo(&["public-dependency"])
+    p.crabgo("check --message-format=short")
+        .masquerade_as_nightly_crabgo(&["public-dependency"])
         .with_stderr(
             "\
 [UPDATING] `[..]` index
@@ -86,34 +86,34 @@ fn exported_pub_dep() {
         .run()
 }
 
-#[cargo_test]
-pub fn requires_nightly_cargo() {
+#[crabgo_test]
+pub fn requires_nightly_crabgo() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["public-dependency"]
+                crabgo-features = ["public-dependency"]
             "#,
         )
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check --message-format=short")
+    p.crabgo("check --message-format=short")
         .with_status(101)
         .with_stderr(
             "\
 error: failed to parse manifest at `[..]`
 
 Caused by:
-  the cargo feature `public-dependency` requires a nightly version of Cargo, but this is the `stable` channel
+  the crabgo feature `public-dependency` requires a nightly version of Crabgo, but this is the `stable` channel
   See https://doc.rust-lang.org/book/appendix-07-nightly-rust.html for more information about Rust release channels.
-  See https://doc.rust-lang.org/[..]cargo/reference/unstable.html#public-dependency for more information about using this feature.
+  See https://doc.rust-lang.org/[..]crabgo/reference/unstable.html#public-dependency for more information about using this feature.
 "
         )
         .run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn requires_feature() {
     Package::new("pub_dep", "0.1.0")
         .file("src/lib.rs", "")
@@ -121,7 +121,7 @@ fn requires_feature() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -134,8 +134,8 @@ fn requires_feature() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("check --message-format=short")
-        .masquerade_as_nightly_cargo(&["public-dependency"])
+    p.crabgo("check --message-format=short")
+        .masquerade_as_nightly_crabgo(&["public-dependency"])
         .with_status(101)
         .with_stderr(
             "\
@@ -144,18 +144,18 @@ error: failed to parse manifest at `[..]`
 Caused by:
   feature `public-dependency` is required
 
-  The package requires the Cargo feature called `public-dependency`, \
-  but that feature is not stabilized in this version of Cargo (1.[..]).
-  Consider adding `cargo-features = [\"public-dependency\"]` to the top of Cargo.toml \
-  (above the [package] table) to tell Cargo you are opting in to use this unstable feature.
-  See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#public-dependency \
+  The package requires the Crabgo feature called `public-dependency`, \
+  but that feature is not stabilized in this version of Crabgo (1.[..]).
+  Consider adding `crabgo-features = [\"public-dependency\"]` to the top of Crabgo.toml \
+  (above the [package] table) to tell Crabgo you are opting in to use this unstable feature.
+  See https://doc.rust-lang.org/nightly/crabgo/reference/unstable.html#public-dependency \
   for more information about the status of this feature.
 ",
         )
         .run()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn pub_dev_dependency() {
     Package::new("pub_dep", "0.1.0")
         .file("src/lib.rs", "pub struct FromPub;")
@@ -163,9 +163,9 @@ fn pub_dev_dependency() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
-                cargo-features = ["public-dependency"]
+                crabgo-features = ["public-dependency"]
 
                 [package]
                 name = "foo"
@@ -184,8 +184,8 @@ fn pub_dev_dependency() {
         )
         .build();
 
-    p.cargo("check --message-format=short")
-        .masquerade_as_nightly_cargo(&["public-dependency"])
+    p.crabgo("check --message-format=short")
+        .masquerade_as_nightly_crabgo(&["public-dependency"])
         .with_status(101)
         .with_stderr(
             "\

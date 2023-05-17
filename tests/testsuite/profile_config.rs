@@ -1,16 +1,16 @@
 //! Tests for profiles defined in config files.
 
-use cargo::util::toml::TomlDebugInfo;
-use cargo_test_support::paths::CargoPathExt;
-use cargo_test_support::registry::Package;
-use cargo_test_support::{basic_lib_manifest, paths, project};
+use crabgo::util::toml::TomlDebugInfo;
+use crabgo_test_support::paths::CrabgoPathExt;
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{basic_lib_manifest, paths, project};
 
 // TODO: this should be remove once -Zprofile-rustflags is stabilized
-#[cargo_test]
+#[crabgo_test]
 fn rustflags_works_with_zflag() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -19,7 +19,7 @@ fn rustflags_works_with_zflag() {
         )
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config.toml",
+            ".crabgo/config.toml",
             r#"
                 [profile.dev]
                 rustflags = ["-C", "link-dead-code=yes"]
@@ -27,14 +27,14 @@ fn rustflags_works_with_zflag() {
         )
         .build();
 
-    p.cargo("check -v")
-        .masquerade_as_nightly_cargo(&["profile-rustflags"])
+    p.crabgo("check -v")
+        .masquerade_as_nightly_crabgo(&["profile-rustflags"])
         .with_status(101)
         .with_stderr_contains("[..]feature `profile-rustflags` is required[..]")
         .run();
 
-    p.cargo("check -v -Zprofile-rustflags")
-        .masquerade_as_nightly_cargo(&["profile-rustflags"])
+    p.crabgo("check -v -Zprofile-rustflags")
+        .masquerade_as_nightly_crabgo(&["profile-rustflags"])
         .with_stderr(
             "\
 [CHECKING] foo [..]
@@ -45,7 +45,7 @@ fn rustflags_works_with_zflag() {
         .run();
 
     p.change_file(
-        ".cargo/config.toml",
+        ".crabgo/config.toml",
         r#"
             [unstable]
             profile-rustflags = true
@@ -55,8 +55,8 @@ fn rustflags_works_with_zflag() {
         "#,
     );
 
-    p.cargo("check -v")
-        .masquerade_as_nightly_cargo(&["profile-rustflags"])
+    p.crabgo("check -v")
+        .masquerade_as_nightly_crabgo(&["profile-rustflags"])
         .with_stderr(
             "\
 [FRESH] foo [..]
@@ -66,13 +66,13 @@ fn rustflags_works_with_zflag() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_validate_warnings() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.test]
                 opt-level = 3
@@ -92,12 +92,12 @@ fn profile_config_validate_warnings() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr_unordered(
             "\
-[WARNING] unused config key `profile.dev.bad-key` in `[..].cargo/config`
-[WARNING] unused config key `profile.dev.package.bar.bad-key-bar` in `[..].cargo/config`
-[WARNING] unused config key `profile.dev.build-override.bad-key-bo` in `[..].cargo/config`
+[WARNING] unused config key `profile.dev.bad-key` in `[..].crabgo/config`
+[WARNING] unused config key `profile.dev.package.bar.bad-key-bar` in `[..].crabgo/config`
+[WARNING] unused config key `profile.dev.build-override.bad-key-bo` in `[..].crabgo/config`
 [COMPILING] foo [..]
 [FINISHED] [..]
 ",
@@ -105,21 +105,21 @@ fn profile_config_validate_warnings() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_error_paths() {
     // Errors in config show where the error is located.
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev]
                 opt-level = 3
             "#,
         )
         .file(
-            paths::home().join(".cargo/config"),
+            paths::home().join(".crabgo/config"),
             r#"
             [profile.dev]
             rpath = "foo"
@@ -127,26 +127,26 @@ fn profile_config_error_paths() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] error in [..]/foo/.cargo/config: could not load config key `profile.dev`
+[ERROR] error in [..]/foo/.crabgo/config: could not load config key `profile.dev`
 
 Caused by:
-  error in [..]/home/.cargo/config: `profile.dev.rpath` expected true/false, but found a string
+  error in [..]/home/.crabgo/config: `profile.dev.rpath` expected true/false, but found a string
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_validate_errors() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev.package.foo]
                 panic = "abort"
@@ -154,11 +154,11 @@ fn profile_config_validate_errors() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] config profile `dev` is not valid (defined in `[..]/foo/.cargo/config`)
+[ERROR] config profile `dev` is not valid (defined in `[..]/foo/.crabgo/config`)
 
 Caused by:
   `panic` may not be specified in a `package` profile
@@ -167,13 +167,13 @@ Caused by:
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_syntax_errors() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev]
                 codegen-units = "foo"
@@ -181,24 +181,24 @@ fn profile_config_syntax_errors() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_status(101)
         .with_stderr(
             "\
-[ERROR] error in [..]/.cargo/config: could not load config key `profile.dev`
+[ERROR] error in [..]/.crabgo/config: could not load config key `profile.dev`
 
 Caused by:
-  error in [..]/foo/.cargo/config: `profile.dev.codegen-units` expected an integer, but found a string
+  error in [..]/foo/.crabgo/config: `profile.dev.codegen-units` expected an integer, but found a string
 ",
         )
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_override_spec_multiple() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -209,7 +209,7 @@ fn profile_config_override_spec_multiple() {
             "#,
         )
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev.package.bar]
                 opt-level = 3
@@ -219,13 +219,13 @@ fn profile_config_override_spec_multiple() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
         .build();
 
     // Unfortunately this doesn't tell you which file, hopefully it's not too
     // much of a problem.
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_status(101)
         .with_stderr(
             "\
@@ -235,13 +235,13 @@ found package specs: bar, bar@0.5.0",
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_all_options() {
     // Ensure all profile options are supported.
     let p = project()
         .file("src/main.rs", "fn main() {}")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
             [profile.release]
             opt-level = 1
@@ -257,8 +257,8 @@ fn profile_config_all_options() {
         )
         .build();
 
-    p.cargo("build --release -v")
-        .env_remove("CARGO_INCREMENTAL")
+    p.crabgo("build --release -v")
+        .env_remove("CRABGO_INCREMENTAL")
         .with_stderr(
             "\
 [COMPILING] foo [..]
@@ -278,12 +278,12 @@ fn profile_config_all_options() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_override_precedence() {
     // Config values take precedence over manifest values.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -300,10 +300,10 @@ fn profile_config_override_precedence() {
             "#,
         )
         .file("src/lib.rs", "")
-        .file("bar/Cargo.toml", &basic_lib_manifest("bar"))
+        .file("bar/Crabgo.toml", &basic_lib_manifest("bar"))
         .file("bar/src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev.package.bar]
                 opt-level = 2
@@ -311,7 +311,7 @@ fn profile_config_override_precedence() {
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] bar [..]
@@ -323,13 +323,13 @@ fn profile_config_override_precedence() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_no_warn_unknown_override() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev.package.bar]
                 codegen-units = 4
@@ -337,25 +337,25 @@ fn profile_config_no_warn_unknown_override() {
         )
         .build();
 
-    p.cargo("build")
+    p.crabgo("build")
         .with_stderr_does_not_contain("[..]warning[..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn profile_config_mixed_types() {
     let p = project()
-        .file("Cargo.toml", &basic_lib_manifest("foo"))
+        .file("Crabgo.toml", &basic_lib_manifest("foo"))
         .file("src/lib.rs", "")
         .file(
-            ".cargo/config",
+            ".crabgo/config",
             r#"
                 [profile.dev]
                 opt-level = 3
             "#,
         )
         .file(
-            paths::home().join(".cargo/config"),
+            paths::home().join(".crabgo/config"),
             r#"
             [profile.dev]
             opt-level = 's'
@@ -363,25 +363,25 @@ fn profile_config_mixed_types() {
         )
         .build();
 
-    p.cargo("build -v")
+    p.crabgo("build -v")
         .with_stderr_contains("[..]-C opt-level=3 [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn named_config_profile() {
     // Exercises config named profies.
     // foo -> middle -> bar -> dev
-    // middle exists in Cargo.toml, the others in .cargo/config
+    // middle exists in Crabgo.toml, the others in .crabgo/config
     use super::config::ConfigBuilder;
-    use cargo::core::compiler::CompileKind;
-    use cargo::core::profiles::{Profiles, UnitFor};
-    use cargo::core::{PackageId, Workspace};
-    use cargo::util::interning::InternedString;
+    use crabgo::core::compiler::CompileKind;
+    use crabgo::core::profiles::{Profiles, UnitFor};
+    use crabgo::core::{PackageId, Workspace};
+    use crabgo::util::interning::InternedString;
     use std::fs;
-    paths::root().join(".cargo").mkdir_p();
+    paths::root().join(".crabgo").mkdir_p();
     fs::write(
-        paths::root().join(".cargo/config"),
+        paths::root().join(".crabgo/config"),
         r#"
             [profile.foo]
             inherits = "middle"
@@ -403,7 +403,7 @@ fn named_config_profile() {
     )
     .unwrap();
     fs::write(
-        paths::root().join("Cargo.toml"),
+        paths::root().join("Crabgo.toml"),
         r#"
             [workspace]
 
@@ -424,10 +424,10 @@ fn named_config_profile() {
     .unwrap();
     let config = ConfigBuilder::new().build();
     let profile_name = InternedString::new("foo");
-    let ws = Workspace::new(&paths::root().join("Cargo.toml"), &config).unwrap();
+    let ws = Workspace::new(&paths::root().join("Crabgo.toml"), &config).unwrap();
     let profiles = Profiles::new(&ws, profile_name).unwrap();
 
-    let crates_io = cargo::core::source::SourceId::crates_io(&config).unwrap();
+    let crates_io = crabgo::core::source::SourceId::crates_io(&config).unwrap();
     let a_pkg = PackageId::new("a", "0.1.0", crates_io).unwrap();
     let dep_pkg = PackageId::new("dep", "0.1.0", crates_io).unwrap();
 
@@ -460,12 +460,12 @@ fn named_config_profile() {
     assert_eq!(po.overflow_checks, false); // "middle" package override from manifest
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn named_env_profile() {
     // Environment variables used to define a named profile.
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -475,21 +475,21 @@ fn named_env_profile() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build -v --profile=other")
-        .env("CARGO_PROFILE_OTHER_CODEGEN_UNITS", "1")
-        .env("CARGO_PROFILE_OTHER_INHERITS", "dev")
+    p.crabgo("build -v --profile=other")
+        .env("CRABGO_PROFILE_OTHER_CODEGEN_UNITS", "1")
+        .env("CRABGO_PROFILE_OTHER_INHERITS", "dev")
         .with_stderr_contains("[..]-C codegen-units=1 [..]")
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn test_with_dev_profile() {
     // The `test` profile inherits from `dev` for both local crates and
     // dependencies.
     Package::new("somedep", "1.0.0").publish();
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -501,8 +501,8 @@ fn test_with_dev_profile() {
         )
         .file("src/lib.rs", "")
         .build();
-    p.cargo("test --lib --no-run -v")
-        .env("CARGO_PROFILE_DEV_DEBUG", "0")
+    p.crabgo("test --lib --no-run -v")
+        .env("CRABGO_PROFILE_DEV_DEBUG", "0")
         .with_stderr(
             "\
 [UPDATING] [..]

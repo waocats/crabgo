@@ -1,18 +1,18 @@
-//! Tests for the `cargo logout` command.
+//! Tests for the `crabgo logout` command.
 
 use super::login::check_token;
-use cargo_test_support::paths::{self, CargoPathExt};
-use cargo_test_support::registry::TestRegistry;
-use cargo_test_support::{cargo_process, registry};
+use crabgo_test_support::paths::{self, CrabgoPathExt};
+use crabgo_test_support::registry::TestRegistry;
+use crabgo_test_support::{crabgo_process, registry};
 
 fn simple_logout_test(registry: &TestRegistry, reg: Option<&str>, flag: &str, note: &str) {
     let msg = reg.unwrap_or("crates-io");
     check_token(Some(registry.token()), reg);
-    let mut cargo = cargo_process(&format!("logout {}", flag));
+    let mut crabgo = crabgo_process(&format!("logout {}", flag));
     if reg.is_none() {
-        cargo.replace_crates_io(registry.index_url());
+        crabgo.replace_crates_io(registry.index_url());
     }
-    cargo
+    crabgo
         .with_stderr(&format!(
             "\
 [LOGOUT] token for `{msg}` has been removed from local storage
@@ -23,23 +23,23 @@ If you need to revoke the token, visit {note} and follow the instructions there.
         .run();
     check_token(None, reg);
 
-    let mut cargo = cargo_process(&format!("logout {}", flag));
+    let mut crabgo = crabgo_process(&format!("logout {}", flag));
     if reg.is_none() {
-        cargo.replace_crates_io(registry.index_url());
+        crabgo.replace_crates_io(registry.index_url());
     }
-    cargo
+    crabgo
         .with_stderr(&format!("[LOGOUT] not currently logged in to `{msg}`"))
         .run();
     check_token(None, reg);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_registry_unconfigured() {
     let registry = registry::init();
     simple_logout_test(&registry, None, "", "<https://crates.io/me>");
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn other_registry() {
     let registry = registry::alt_init();
     simple_logout_test(
@@ -52,13 +52,13 @@ fn other_registry() {
     check_token(Some("sekrit"), None);
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn default_registry_configured() {
     // When registry.default is set, logout should use that one when
     // --registry is not used.
-    let cargo_home = paths::home().join(".cargo");
+    let cargo_home = paths::home().join(".crabgo");
     cargo_home.mkdir_p();
-    cargo_util::paths::write(
+    crabgo_util::paths::write(
         &cargo_home.join("config.toml"),
         r#"
             [registry]
@@ -69,7 +69,7 @@ fn default_registry_configured() {
         "#,
     )
     .unwrap();
-    cargo_util::paths::write(
+    crabgo_util::paths::write(
         &cargo_home.join("credentials.toml"),
         r#"
         [registry]
@@ -83,8 +83,8 @@ fn default_registry_configured() {
     check_token(Some("dummy-token"), Some("dummy-registry"));
     check_token(Some("crates-io-token"), None);
 
-    cargo_process("logout -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["cargo-logout"])
+    crabgo_process("logout -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["crabgo-logout"])
         .with_stderr(
             "\
 [LOGOUT] token for `dummy-registry` has been removed from local storage
@@ -97,8 +97,8 @@ fn default_registry_configured() {
     check_token(None, Some("dummy-registry"));
     check_token(Some("crates-io-token"), None);
 
-    cargo_process("logout -Zunstable-options")
-        .masquerade_as_nightly_cargo(&["cargo-logout"])
+    crabgo_process("logout -Zunstable-options")
+        .masquerade_as_nightly_crabgo(&["crabgo-logout"])
         .with_stderr("[LOGOUT] not currently logged in to `dummy-registry`")
         .run();
 }

@@ -1,47 +1,47 @@
-//! Tests for the `cargo clean` command.
+//! Tests for the `crabgo clean` command.
 
-use cargo_test_support::registry::Package;
-use cargo_test_support::{
+use crabgo_test_support::registry::Package;
+use crabgo_test_support::{
     basic_bin_manifest, basic_manifest, git, main_file, project, project_in, rustc_host,
 };
 use glob::GlobError;
 use std::env;
 use std::path::{Path, PathBuf};
 
-#[cargo_test]
-fn cargo_clean_simple() {
+#[crabgo_test]
+fn crabgo_clean_simple() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.build_dir().is_dir());
 
-    p.cargo("clean").run();
+    p.crabgo("clean").run();
     assert!(!p.build_dir().is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn different_dir() {
     let p = project()
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .file("src/bar/a.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.build_dir().is_dir());
 
-    p.cargo("clean").cwd("src").with_stdout("").run();
+    p.crabgo("clean").cwd("src").with_stdout("").run();
     assert!(!p.build_dir().is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_multiple_packages() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -58,13 +58,13 @@ fn clean_multiple_packages() {
             "#,
         )
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
-        .file("d1/Cargo.toml", &basic_bin_manifest("d1"))
+        .file("d1/Crabgo.toml", &basic_bin_manifest("d1"))
         .file("d1/src/main.rs", "fn main() { println!(\"d1\"); }")
-        .file("d2/Cargo.toml", &basic_bin_manifest("d2"))
+        .file("d2/Crabgo.toml", &basic_bin_manifest("d2"))
         .file("d2/src/main.rs", "fn main() { println!(\"d2\"); }")
         .build();
 
-    p.cargo("build -p d1 -p d2 -p foo").run();
+    p.crabgo("build -p d1 -p d2 -p foo").run();
 
     let d1_path = &p
         .build_dir()
@@ -79,7 +79,7 @@ fn clean_multiple_packages() {
     assert!(d1_path.is_file());
     assert!(d2_path.is_file());
 
-    p.cargo("clean -p d1 -p d2")
+    p.crabgo("clean -p d1 -p d2")
         .cwd("src")
         .with_stdout("")
         .run();
@@ -88,10 +88,10 @@ fn clean_multiple_packages() {
     assert!(!d2_path.is_file());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_multiple_packages_in_glob_char_path() {
     let p = project_in("[d1]")
-        .file("Cargo.toml", &basic_bin_manifest("foo"))
+        .file("Crabgo.toml", &basic_bin_manifest("foo"))
         .file("src/foo.rs", &main_file(r#""i am foo""#, &[]))
         .build();
     let foo_path = &p.build_dir().join("debug").join("deps");
@@ -103,11 +103,11 @@ fn clean_multiple_packages_in_glob_char_path() {
     let file_glob = "foo.pdb";
 
     // Assert that build artifacts are produced
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert_ne!(get_build_artifacts(foo_path, file_glob).len(), 0);
 
     // Assert that build artifacts are destroyed
-    p.cargo("clean -p foo").run();
+    p.crabgo("clean -p foo").run();
     assert_eq!(get_build_artifacts(foo_path, file_glob).len(), 0);
 }
 
@@ -123,11 +123,11 @@ fn get_build_artifacts(path: &PathBuf, file_glob: &str) -> Vec<Result<PathBuf, G
         .collect::<Vec<Result<PathBuf, GlobError>>>()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_p_only_cleans_specified_package() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [workspace]
                 members = [
@@ -137,17 +137,17 @@ fn clean_p_only_cleans_specified_package() {
                 ]
             "#,
         )
-        .file("foo/Cargo.toml", &basic_manifest("foo", "0.1.0"))
+        .file("foo/Crabgo.toml", &basic_manifest("foo", "0.1.0"))
         .file("foo/src/lib.rs", "//! foo")
-        .file("foo_core/Cargo.toml", &basic_manifest("foo_core", "0.1.0"))
+        .file("foo_core/Crabgo.toml", &basic_manifest("foo_core", "0.1.0"))
         .file("foo_core/src/lib.rs", "//! foo_core")
-        .file("foo-base/Cargo.toml", &basic_manifest("foo-base", "0.1.0"))
+        .file("foo-base/Crabgo.toml", &basic_manifest("foo-base", "0.1.0"))
         .file("foo-base/src/lib.rs", "//! foo-base")
         .build();
 
     let fingerprint_path = &p.build_dir().join("debug").join(".fingerprint");
 
-    p.cargo("build -p foo -p foo_core -p foo-base").run();
+    p.crabgo("build -p foo -p foo_core -p foo-base").run();
 
     let mut fingerprint_names = get_fingerprints_without_hashes(fingerprint_path);
 
@@ -164,7 +164,7 @@ fn clean_p_only_cleans_specified_package() {
         .count();
     assert_ne!(num_foo_base_artifacts, 0);
 
-    p.cargo("clean -p foo").run();
+    p.crabgo("clean -p foo").run();
 
     fingerprint_names = get_fingerprints_without_hashes(fingerprint_path);
 
@@ -203,11 +203,11 @@ fn get_fingerprints_without_hashes(fingerprint_path: &Path) -> Vec<String> {
         .collect()
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_release() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -219,17 +219,17 @@ fn clean_release() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build --release").run();
+    p.crabgo("build --release").run();
 
-    p.cargo("clean -p foo").run();
-    p.cargo("build --release").with_stdout("").run();
+    p.crabgo("clean -p foo").run();
+    p.crabgo("build --release").with_stdout("").run();
 
-    p.cargo("clean -p foo --release").run();
-    p.cargo("build --release")
+    p.crabgo("clean -p foo --release").run();
+    p.crabgo("build --release")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -238,19 +238,19 @@ fn clean_release() {
         )
         .run();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
-    p.cargo("clean").arg("--release").run();
+    p.crabgo("clean").arg("--release").run();
     assert!(p.build_dir().is_dir());
     assert!(p.build_dir().join("debug").is_dir());
     assert!(!p.build_dir().join("release").is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_doc() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -262,27 +262,27 @@ fn clean_doc() {
             "#,
         )
         .file("src/main.rs", "fn main() {}")
-        .file("a/Cargo.toml", &basic_manifest("a", "0.0.1"))
+        .file("a/Crabgo.toml", &basic_manifest("a", "0.0.1"))
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("doc").run();
+    p.crabgo("doc").run();
 
     let doc_path = &p.build_dir().join("doc");
 
     assert!(doc_path.is_dir());
 
-    p.cargo("clean --doc").run();
+    p.crabgo("clean --doc").run();
 
     assert!(!doc_path.is_dir());
     assert!(p.build_dir().is_dir());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn build_script() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -311,9 +311,9 @@ fn build_script() {
         .file("a/src/lib.rs", "")
         .build();
 
-    p.cargo("build").env("FIRST", "1").run();
-    p.cargo("clean -p foo").run();
-    p.cargo("build -v")
+    p.crabgo("build").env("FIRST", "1").run();
+    p.crabgo("clean -p foo").run();
+    p.crabgo("build -v")
         .with_stderr(
             "\
 [COMPILING] foo v0.0.1 ([..])
@@ -326,17 +326,17 @@ fn build_script() {
         .run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_git() {
     let git = git::new("dep", |project| {
         project
-            .file("Cargo.toml", &basic_manifest("dep", "0.5.0"))
+            .file("Crabgo.toml", &basic_manifest("dep", "0.5.0"))
             .file("src/lib.rs", "")
     });
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             &format!(
                 r#"
                     [package]
@@ -353,16 +353,16 @@ fn clean_git() {
         .file("src/main.rs", "fn main() {}")
         .build();
 
-    p.cargo("build").run();
-    p.cargo("clean -p dep").with_stdout("").run();
-    p.cargo("build").run();
+    p.crabgo("build").run();
+    p.crabgo("clean -p dep").with_stdout("").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn registry() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -378,16 +378,16 @@ fn registry() {
 
     Package::new("bar", "0.1.0").publish();
 
-    p.cargo("build").run();
-    p.cargo("clean -p bar").with_stdout("").run();
-    p.cargo("build").run();
+    p.crabgo("build").run();
+    p.crabgo("clean -p bar").with_stdout("").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_verbose() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -402,7 +402,7 @@ fn clean_verbose() {
 
     Package::new("bar", "0.1.0").publish();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     let mut expected = String::from(
         "\
 [REMOVING] [..]target/debug/.fingerprint/bar[..]
@@ -417,17 +417,17 @@ fn clean_verbose() {
             expected.push_str(&format!("[REMOVING] [..]{}", obj.unwrap().display()));
         }
     }
-    p.cargo("clean -p bar --verbose")
+    p.crabgo("clean -p bar --verbose")
         .with_stderr_unordered(&expected)
         .run();
-    p.cargo("build").run();
+    p.crabgo("build").run();
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_remove_rlib_rmeta() {
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -437,16 +437,16 @@ fn clean_remove_rlib_rmeta() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
     assert!(p.target_debug_dir().join("libfoo.rlib").exists());
     let rmeta = p.glob("target/debug/deps/*.rmeta").next().unwrap().unwrap();
     assert!(rmeta.exists());
-    p.cargo("clean -p foo").run();
+    p.crabgo("clean -p foo").run();
     assert!(!p.target_debug_dir().join("libfoo.rlib").exists());
     assert!(!rmeta.exists());
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn package_cleans_all_the_things() {
     // -p cleans everything
     // Use dashes everywhere to make sure dash/underscore stuff is handled.
@@ -455,7 +455,7 @@ fn package_cleans_all_the_things() {
         // they are combined.
         let p = project()
             .file(
-                "Cargo.toml",
+                "Crabgo.toml",
                 &format!(
                     r#"
                     [package]
@@ -470,13 +470,13 @@ fn package_cleans_all_the_things() {
             )
             .file("src/lib.rs", "")
             .build();
-        p.cargo("build").run();
-        p.cargo("clean -p foo-bar").run();
+        p.crabgo("build").run();
+        p.crabgo("clean -p foo-bar").run();
         assert_all_clean(&p.build_dir());
     }
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo-bar"
@@ -512,23 +512,23 @@ fn package_cleans_all_the_things() {
         .file("build.rs", "fn main() {}")
         .build();
 
-    p.cargo("build --all-targets")
-        .env("CARGO_INCREMENTAL", "1")
+    p.crabgo("build --all-targets")
+        .env("CRABGO_INCREMENTAL", "1")
         .run();
-    p.cargo("test --all-targets")
-        .env("CARGO_INCREMENTAL", "1")
+    p.crabgo("test --all-targets")
+        .env("CRABGO_INCREMENTAL", "1")
         .run();
-    p.cargo("check --all-targets")
-        .env("CARGO_INCREMENTAL", "1")
+    p.crabgo("check --all-targets")
+        .env("CRABGO_INCREMENTAL", "1")
         .run();
-    p.cargo("clean -p foo-bar").run();
+    p.crabgo("clean -p foo-bar").run();
     assert_all_clean(&p.build_dir());
 
     // Try some targets.
-    p.cargo("build --all-targets --target")
+    p.crabgo("build --all-targets --target")
         .arg(rustc_host())
         .run();
-    p.cargo("clean -p foo-bar --target").arg(rustc_host()).run();
+    p.crabgo("clean -p foo-bar --target").arg(rustc_host()).run();
     assert_all_clean(&p.build_dir());
 }
 
@@ -557,7 +557,7 @@ fn assert_all_clean(build_dir: &Path) {
     }) {
         let entry = entry.unwrap();
         let path = entry.path();
-        if let ".rustc_info.json" | ".cargo-lock" | "CACHEDIR.TAG" =
+        if let ".rustc_info.json" | ".crabgo-lock" | "CACHEDIR.TAG" =
             path.file_name().unwrap().to_str().unwrap()
         {
             continue;
@@ -568,7 +568,7 @@ fn assert_all_clean(build_dir: &Path) {
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_spec_multiple() {
     // clean -p foo where foo matches multiple versions
     Package::new("bar", "1.0.0").publish();
@@ -576,7 +576,7 @@ fn clean_spec_multiple() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
             [package]
             name = "foo"
@@ -590,10 +590,10 @@ fn clean_spec_multiple() {
         .file("src/lib.rs", "")
         .build();
 
-    p.cargo("build").run();
+    p.crabgo("build").run();
 
     // Check suggestion for bad pkgid.
-    p.cargo("clean -p baz")
+    p.crabgo("clean -p baz")
         .with_status(101)
         .with_stderr(
             "\
@@ -604,7 +604,7 @@ error: package ID specification `baz` did not match any packages
         )
         .run();
 
-    p.cargo("clean -p bar:1.0.0")
+    p.crabgo("clean -p bar:1.0.0")
         .with_stderr(
             "warning: version qualifier in `-p bar:1.0.0` is ignored, \
             cleaning all versions of `bar` found",
@@ -622,7 +622,7 @@ error: package ID specification `baz` did not match any packages
     }
 }
 
-#[cargo_test]
+#[crabgo_test]
 fn clean_spec_reserved() {
     // Clean when a target (like a test) has a reserved name. In this case,
     // make sure `clean -p` doesn't delete the reserved directory `build` when
@@ -634,7 +634,7 @@ fn clean_spec_reserved() {
 
     let p = project()
         .file(
-            "Cargo.toml",
+            "Crabgo.toml",
             r#"
                 [package]
                 name = "foo"
@@ -648,19 +648,19 @@ fn clean_spec_reserved() {
         .file("tests/build.rs", "")
         .build();
 
-    p.cargo("build --all-targets").run();
+    p.crabgo("build --all-targets").run();
     assert!(p.target_debug_dir().join("build").is_dir());
     let build_test = p.glob("target/debug/deps/build-*").next().unwrap().unwrap();
     assert!(build_test.exists());
     // Tests are never "uplifted".
     assert!(p.glob("target/debug/build-*").next().is_none());
 
-    p.cargo("clean -p foo").run();
+    p.crabgo("clean -p foo").run();
     // Should not delete this.
     assert!(p.target_debug_dir().join("build").is_dir());
 
     // This should not rebuild bar.
-    p.cargo("build -v --all-targets")
+    p.crabgo("build -v --all-targets")
         .with_stderr(
             "\
 [FRESH] bar v1.0.0
