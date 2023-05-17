@@ -540,9 +540,9 @@ impl ProcessBuilder {
 
 /// Forces the command to use `@path` argfile.
 ///
-/// You should set `__CARGO_TEST_FORCE_ARGFILE` to enable this.
+/// You should set `__CRABGO_TEST_FORCE_ARGFILE` to enable this.
 fn debug_force_argfile(retry_enabled: bool) -> bool {
-    cfg!(debug_assertions) && env::var("__CARGO_TEST_FORCE_ARGFILE").is_ok() && retry_enabled
+    cfg!(debug_assertions) && env::var("__CRABGO_TEST_FORCE_ARGFILE").is_ok() && retry_enabled
 }
 
 /// Creates new pipes for stderr, stdout, and optionally stdin.

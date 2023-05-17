@@ -1,4 +1,4 @@
-CARGO-PKGID(1)
+CRABGO-PKGID(1)
 
 NAME
        crabgo-pkgid — Print a fully qualified package specification

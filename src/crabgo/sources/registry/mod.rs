@@ -207,7 +207,7 @@ const MAX_COMPRESSION_RATIO: usize = 20; // 20:1
 /// [`RegistryData`] trait referenced via the `ops` field.
 pub struct RegistrySource<'cfg> {
     source_id: SourceId,
-    /// The path where crate files are extracted (`$CARGO_HOME/registry/src/$REG-HASH`).
+    /// The path where crate files are extracted (`$CRABGO_HOME/registry/src/$REG-HASH`).
     src_path: Filesystem,
     /// Local reference to [`Config`] for convenience.
     config: &'cfg Config,
@@ -981,8 +981,8 @@ impl<'cfg> Source for RegistrySource<'cfg> {
 /// * <https://blog.cloudflare.com/results-experimenting-brotli/>
 /// * <https://tukaani.org/lzma/benchmarks.html>
 fn max_unpack_size(config: &Config, size: u64) -> u64 {
-    const SIZE_VAR: &str = "__CARGO_TEST_MAX_UNPACK_SIZE";
-    const RATIO_VAR: &str = "__CARGO_TEST_MAX_UNPACK_RATIO";
+    const SIZE_VAR: &str = "__CRABGO_TEST_MAX_UNPACK_SIZE";
+    const RATIO_VAR: &str = "__CRABGO_TEST_MAX_UNPACK_RATIO";
     let max_unpack_size = if cfg!(debug_assertions) && config.get_env(SIZE_VAR).is_ok() {
         // For integration test only.
         config

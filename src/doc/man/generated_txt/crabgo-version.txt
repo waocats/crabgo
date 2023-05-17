@@ -1,4 +1,4 @@
-CARGO-VERSION(1)
+CRABGO-VERSION(1)
 
 NAME
        crabgo-version — Show version information

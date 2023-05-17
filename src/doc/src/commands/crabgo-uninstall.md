@@ -20,9 +20,9 @@ By default all binaries are removed for a crate but the `--bin` and
 The installation root is determined, in order of precedence:
 
 - `--root` option
-- `CARGO_INSTALL_ROOT` environment variable
+- `CRABGO_INSTALL_ROOT` environment variable
 - `install.root` Crabgo [config value](../reference/config.html)
-- `CARGO_HOME` environment variable
+- `CRABGO_HOME` environment variable
 - `$HOME/.crabgo`
 
 

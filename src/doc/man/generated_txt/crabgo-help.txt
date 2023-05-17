@@ -1,4 +1,4 @@
-CARGO-HELP(1)
+CRABGO-HELP(1)
 
 NAME
        crabgo-help — Get help for a Crabgo command

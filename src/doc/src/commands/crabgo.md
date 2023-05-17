@@ -269,14 +269,14 @@ details on environment variables that Crabgo reads.
 
 `~/.crabgo/`\
 &nbsp;&nbsp;&nbsp;&nbsp;Default location for Crabgo's "home" directory where it
-stores various files. The location can be changed with the `CARGO_HOME`
+stores various files. The location can be changed with the `CRABGO_HOME`
 environment variable.
 
-`$CARGO_HOME/bin/`\
+`$CRABGO_HOME/bin/`\
 &nbsp;&nbsp;&nbsp;&nbsp;Binaries installed by [crabgo-install(1)](crabgo-install.html) will be located here. If using
 [rustup], executables distributed with Rust are also located here.
 
-`$CARGO_HOME/config.toml`\
+`$CRABGO_HOME/config.toml`\
 &nbsp;&nbsp;&nbsp;&nbsp;The global configuration file. See [the reference](../reference/config.html)
 for more information about configuration files.
 
@@ -285,17 +285,17 @@ for more information about configuration files.
 current directory, and all parent directories. These configuration files
 will be merged with the global configuration file.
 
-`$CARGO_HOME/credentials.toml`\
+`$CRABGO_HOME/credentials.toml`\
 &nbsp;&nbsp;&nbsp;&nbsp;Private authentication information for logging in to a registry.
 
-`$CARGO_HOME/registry/`\
+`$CRABGO_HOME/registry/`\
 &nbsp;&nbsp;&nbsp;&nbsp;This directory contains cached downloads of the registry index and any
 downloaded dependencies.
 
-`$CARGO_HOME/git/`\
+`$CRABGO_HOME/git/`\
 &nbsp;&nbsp;&nbsp;&nbsp;This directory contains cached downloads of git dependencies.
 
-Please note that the internal structure of the `$CARGO_HOME` directory is not
+Please note that the internal structure of the `$CRABGO_HOME` directory is not
 stable yet and may be subject to change.
 
 [rustup]: https://rust-lang.github.io/rustup/

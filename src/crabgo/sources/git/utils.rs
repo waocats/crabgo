@@ -1161,7 +1161,7 @@ fn maybe_gc_repo(repo: &mut git2::Repository, config: &Config) -> CrabgoResult<(
         }
     };
     let max = config
-        .get_env("__CARGO_PACKFILE_LIMIT")
+        .get_env("__CRABGO_PACKFILE_LIMIT")
         .ok()
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(100);

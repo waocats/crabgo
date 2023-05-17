@@ -73,14 +73,14 @@ fn env_no_crabgo_home() {
             ".crabgo/config",
             r#"
                 [env]
-                CARGO_HOME = "/"
+                CRABGO_HOME = "/"
             "#,
         )
         .build();
 
     p.crabgo("check")
         .with_status(101)
-        .with_stderr_contains("[..]setting the `CARGO_HOME` environment variable is not supported in the `[env]` configuration table")
+        .with_stderr_contains("[..]setting the `CRABGO_HOME` environment variable is not supported in the `[env]` configuration table")
         .run();
 }
 
@@ -163,7 +163,7 @@ fn env_no_override() {
             r#"
         use std::env;
         fn main() {
-            println!( "CARGO_PKG_NAME:{}", env!("CARGO_PKG_NAME") );
+            println!( "CRABGO_PKG_NAME:{}", env!("CRABGO_PKG_NAME") );
         }
         "#,
         )
@@ -171,13 +171,13 @@ fn env_no_override() {
             ".crabgo/config",
             r#"
                 [env]
-                CARGO_PKG_NAME = { value = "from-config", force = true }
+                CRABGO_PKG_NAME = { value = "from-config", force = true }
             "#,
         )
         .build();
 
     p.crabgo("run")
-        .with_stdout_contains("CARGO_PKG_NAME:unchanged")
+        .with_stdout_contains("CRABGO_PKG_NAME:unchanged")
         .run();
 }
 

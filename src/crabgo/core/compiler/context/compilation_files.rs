@@ -625,9 +625,9 @@ fn compute_metadata(
         }
     }
 
-    // Seed the contents of `__CARGO_DEFAULT_LIB_METADATA` to the hasher if present.
+    // Seed the contents of `__CRABGO_DEFAULT_LIB_METADATA` to the hasher if present.
     // This should be the release channel, to get a different hash for each channel.
-    if let Ok(ref channel) = cx.bcx.config.get_env("__CARGO_DEFAULT_LIB_METADATA") {
+    if let Ok(ref channel) = cx.bcx.config.get_env("__CRABGO_DEFAULT_LIB_METADATA") {
         channel.hash(&mut hasher);
     }
 
@@ -703,7 +703,7 @@ fn should_use_metadata(bcx: &BuildContext<'_, '_>, unit: &Unit) -> bool {
     // This is only done for local packages, as we don't expect to export
     // dependencies.
     //
-    // The __CARGO_DEFAULT_LIB_METADATA env var is used to override this to
+    // The __CRABGO_DEFAULT_LIB_METADATA env var is used to override this to
     // force metadata in the hash. This is only used for building libstd. For
     // example, if libstd is placed in a common location, we don't want a file
     // named /usr/lib/libstd.so which could conflict with other rustc
@@ -716,7 +716,7 @@ fn should_use_metadata(bcx: &BuildContext<'_, '_>, unit: &Unit) -> bool {
         || (unit.target.is_executable() && short_name == "wasm32-unknown-emscripten")
         || (unit.target.is_executable() && short_name.contains("msvc")))
         && unit.pkg.package_id().source_id().is_path()
-        && bcx.config.get_env("__CARGO_DEFAULT_LIB_METADATA").is_err()
+        && bcx.config.get_env("__CRABGO_DEFAULT_LIB_METADATA").is_err()
     {
         return false;
     }

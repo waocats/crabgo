@@ -23,9 +23,9 @@ installed, and all executables are installed into the installation root's
 The installation root is determined, in order of precedence:
 
 - `--root` option
-- `CARGO_INSTALL_ROOT` environment variable
+- `CRABGO_INSTALL_ROOT` environment variable
 - `install.root` Crabgo [config value](../reference/config.html)
-- `CARGO_HOME` environment variable
+- `CRABGO_HOME` environment variable
 - `$HOME/.crabgo`
 
 
@@ -58,7 +58,7 @@ force Crabgo to always reinstall the package.
 
 If the source is crates.io or `--git` then by default the crate will be built
 in a temporary target directory. To avoid this, the target directory can be
-specified by setting the `CARGO_TARGET_DIR` environment variable to a relative
+specified by setting the `CRABGO_TARGET_DIR` environment variable to a relative
 path. In particular, this can be useful for caching build artifacts on
 continuous integration systems.
 
@@ -82,7 +82,7 @@ available.
 
 This command operates on system or user level, not project level.
 This means that the local [configuration discovery] is ignored.
-Instead, the configuration discovery begins at `$CARGO_HOME/config.toml`. 
+Instead, the configuration discovery begins at `$CRABGO_HOME/config.toml`. 
 If the package is installed with `--path $PATH`, the local configuration 
 will be used, beginning discovery at `$PATH/.crabgo/config.toml`.
 
@@ -227,7 +227,7 @@ target artifacts are placed in a separate directory. See the
 
 <dt class="option-term" id="option-crabgo-install---target-dir"><a class="option-anchor" href="#option-crabgo-install---target-dir"></a><code>--target-dir</code> <em>directory</em></dt>
 <dd class="option-desc">Directory for all generated artifacts and intermediate files. May also be
-specified with the <code>CARGO_TARGET_DIR</code> environment variable, or the
+specified with the <code>CRABGO_TARGET_DIR</code> environment variable, or the
 <code>build.target-dir</code> <a href="../reference/config.html">config value</a>.
 Defaults to a new temporary folder located in the
 temporary directory of the platform. </p>

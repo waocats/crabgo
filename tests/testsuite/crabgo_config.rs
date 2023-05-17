@@ -9,11 +9,11 @@ fn crabgo_process(s: &str) -> crabgo_test_support::Execs {
     let mut p = crabgo_test_support::crabgo_process(s);
     // Clear out some of the environment added by the default crabgo_process so
     // the tests don't need to deal with it.
-    p.env_remove("CARGO_PROFILE_DEV_SPLIT_DEBUGINFO")
-        .env_remove("CARGO_PROFILE_TEST_SPLIT_DEBUGINFO")
-        .env_remove("CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO")
-        .env_remove("CARGO_PROFILE_BENCH_SPLIT_DEBUGINFO")
-        .env_remove("CARGO_INCREMENTAL");
+    p.env_remove("CRABGO_PROFILE_DEV_SPLIT_DEBUGINFO")
+        .env_remove("CRABGO_PROFILE_TEST_SPLIT_DEBUGINFO")
+        .env_remove("CRABGO_PROFILE_RELEASE_SPLIT_DEBUGINFO")
+        .env_remove("CRABGO_PROFILE_BENCH_SPLIT_DEBUGINFO")
+        .env_remove("CRABGO_INCREMENTAL");
     p
 }
 
@@ -74,8 +74,8 @@ fn get_toml() {
     crabgo_process("config get -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_ALIAS_BAR", "cat dog")
-        .env("CARGO_BUILD_JOBS", "100")
+        .env("CRABGO_ALIAS_BAR", "cat dog")
+        .env("CRABGO_BUILD_JOBS", "100")
         // The weird forward slash in the linux line is due to testsuite normalization.
         .with_stdout(
             "\
@@ -88,9 +88,9 @@ profile.dev.opt-level = 3
 profile.dev.package.foo.opt-level = 1
 target.\"cfg(target_os = \\\"linux\\\")\".runner = \"runme\"
 # The following environment variables may affect the loaded values.
-# CARGO_ALIAS_BAR=[..]cat dog[..]
-# CARGO_BUILD_JOBS=100
-# CARGO_HOME=[ROOT]/home/.crabgo
+# CRABGO_ALIAS_BAR=[..]cat dog[..]
+# CRABGO_BUILD_JOBS=100
+# CRABGO_HOME=[ROOT]/home/.crabgo
 ",
         )
         .with_stderr("")
@@ -100,7 +100,7 @@ target.\"cfg(target_os = \\\"linux\\\")\".runner = \"runme\"
     crabgo_process("config get build.jobs -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_JOBS", "100")
+        .env("CRABGO_BUILD_JOBS", "100")
         .with_stdout("build.jobs = 100")
         .with_stderr("")
         .run();
@@ -197,15 +197,15 @@ fn get_json() {
     crabgo_process("config get --format=json -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_ALIAS_BAR", "cat dog")
-        .env("CARGO_BUILD_JOBS", "100")
+        .env("CRABGO_ALIAS_BAR", "cat dog")
+        .env("CRABGO_BUILD_JOBS", "100")
         .with_json(all_json)
         .with_stderr(
             "\
 note: The following environment variables may affect the loaded values.
-CARGO_ALIAS_BAR=[..]cat dog[..]
-CARGO_BUILD_JOBS=100
-CARGO_HOME=[ROOT]/home/.crabgo
+CRABGO_ALIAS_BAR=[..]cat dog[..]
+CRABGO_BUILD_JOBS=100
+CRABGO_HOME=[ROOT]/home/.crabgo
 ",
         )
         .run();
@@ -218,7 +218,7 @@ CARGO_HOME=[ROOT]/home/.crabgo
         .with_stderr(
             "\
 note: The following environment variables may affect the loaded values.
-CARGO_HOME=[ROOT]/home/.crabgo
+CRABGO_HOME=[ROOT]/home/.crabgo
 ",
         )
         .run();
@@ -265,7 +265,7 @@ profile.dev.opt-level = 3 # [ROOT]/home/.crabgo/config.toml
 profile.dev.package.foo.opt-level = 1 # [ROOT]/home/.crabgo/config.toml
 target.\"cfg(target_os = \\\"linux\\\")\".runner = \"runme\" # [ROOT]/home/.crabgo/config.toml
 # The following environment variables may affect the loaded values.
-# CARGO_HOME=[ROOT]/home/.crabgo
+# CRABGO_HOME=[ROOT]/home/.crabgo
 ",
         )
         .with_stderr("")
@@ -274,14 +274,14 @@ target.\"cfg(target_os = \\\"linux\\\")\".runner = \"runme\" # [ROOT]/home/.crab
     crabgo_process("config get --show-origin build.rustflags -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_RUSTFLAGS", "env1 env2")
+        .env("CRABGO_BUILD_RUSTFLAGS", "env1 env2")
         .with_stdout(
             "\
 build.rustflags = [
     \"--flag-directory\", # [ROOT]/foo/.crabgo/config.toml
     \"--flag-global\", # [ROOT]/home/.crabgo/config.toml
-    \"env1\", # environment variable `CARGO_BUILD_RUSTFLAGS`
-    \"env2\", # environment variable `CARGO_BUILD_RUSTFLAGS`
+    \"env1\", # environment variable `CRABGO_BUILD_RUSTFLAGS`
+    \"env2\", # environment variable `CRABGO_BUILD_RUSTFLAGS`
 ]
 ",
         )
@@ -295,7 +295,7 @@ fn show_origin_toml_cli() {
     crabgo_process("config get --show-origin build.jobs -Zunstable-options --config build.jobs=123")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_JOBS", "1")
+        .env("CRABGO_BUILD_JOBS", "1")
         .with_stdout("build.jobs = 123 # --config cli option")
         .with_stderr("")
         .run();
@@ -304,7 +304,7 @@ fn show_origin_toml_cli() {
         .arg("build.rustflags=[\"cli1\",\"cli2\"]")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_RUSTFLAGS", "env1 env2")
+        .env("CRABGO_BUILD_RUSTFLAGS", "env1 env2")
         .with_stdout(
             "\
 build.rustflags = [
@@ -312,8 +312,8 @@ build.rustflags = [
     \"--flag-global\", # [ROOT]/home/.crabgo/config.toml
     \"cli1\", # --config cli option
     \"cli2\", # --config cli option
-    \"env1\", # environment variable `CARGO_BUILD_RUSTFLAGS`
-    \"env2\", # environment variable `CARGO_BUILD_RUSTFLAGS`
+    \"env1\", # environment variable `CRABGO_BUILD_RUSTFLAGS`
+    \"env2\", # environment variable `CRABGO_BUILD_RUSTFLAGS`
 ]
 ",
         )
@@ -338,15 +338,15 @@ fn unmerged_toml() {
     crabgo_process("config get --merged=no -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_ALIAS_BAR", "cat dog")
-        .env("CARGO_BUILD_JOBS", "100")
+        .env("CRABGO_ALIAS_BAR", "cat dog")
+        .env("CRABGO_BUILD_JOBS", "100")
         .with_stdout(
             "\
 # Environment variables
-# CARGO=[..]
-# CARGO_ALIAS_BAR=[..]cat dog[..]
-# CARGO_BUILD_JOBS=100
-# CARGO_HOME=[ROOT]/home/.crabgo
+# CRABGO=[..]
+# CRABGO_ALIAS_BAR=[..]cat dog[..]
+# CRABGO_BUILD_JOBS=100
+# CRABGO_HOME=[ROOT]/home/.crabgo
 
 # [ROOT]/foo/.crabgo/config.toml
 alias.sub-example = [\"sub\", \"example\"]
@@ -369,11 +369,11 @@ target.\"cfg(target_os = \\\"linux\\\")\".runner = \"runme\"
     crabgo_process("config get --merged=no build.rustflags -Zunstable-options")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_RUSTFLAGS", "env1 env2")
+        .env("CRABGO_BUILD_RUSTFLAGS", "env1 env2")
         .with_stdout(
             "\
 # Environment variables
-# CARGO_BUILD_RUSTFLAGS=[..]env1 env2[..]
+# CRABGO_BUILD_RUSTFLAGS=[..]env1 env2[..]
 
 # [ROOT]/foo/.crabgo/config.toml
 build.rustflags = [\"--flag-directory\"]
@@ -411,14 +411,14 @@ fn unmerged_toml_cli() {
         .arg("build.rustflags=[\"cli1\",\"cli2\"]")
         .cwd(&sub_folder.parent().unwrap())
         .masquerade_as_nightly_crabgo(&["crabgo-config"])
-        .env("CARGO_BUILD_RUSTFLAGS", "env1 env2")
+        .env("CRABGO_BUILD_RUSTFLAGS", "env1 env2")
         .with_stdout(
             "\
 # --config cli option
 build.rustflags = [\"cli1\", \"cli2\"]
 
 # Environment variables
-# CARGO_BUILD_RUSTFLAGS=[..]env1 env2[..]
+# CRABGO_BUILD_RUSTFLAGS=[..]env1 env2[..]
 
 # [ROOT]/foo/.crabgo/config.toml
 build.rustflags = [\"--flag-directory\"]
@@ -494,8 +494,8 @@ build.rustflags = [
         .with_stdout(
             "\
 # Environment variables
-# CARGO=[..]
-# CARGO_HOME=[ROOT]/home/.crabgo
+# CRABGO=[..]
+# CRABGO_HOME=[ROOT]/home/.crabgo
 
 # [ROOT]/foo/.crabgo/other.toml
 build.rustflags = [\"--flag-other\"]

@@ -5,7 +5,7 @@
 //! with the running container.
 //!
 //! Tests using containers must use `#[crabgo_test(container_test)]` to disable
-//! them unless the CARGO_CONTAINER_TESTS environment variable is set.
+//! them unless the CRABGO_CONTAINER_TESTS environment variable is set.
 
 use crabgo_util::ProcessBuilder;
 use std::collections::HashMap;
@@ -42,8 +42,8 @@ pub struct ContainerHandle {
 
 impl Container {
     pub fn new(context_dir: &str) -> Container {
-        assert!(std::env::var_os("CARGO_CONTAINER_TESTS").is_some());
-        let mut build_context = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        assert!(std::env::var_os("CRABGO_CONTAINER_TESTS").is_some());
+        let mut build_context = PathBuf::from(env!("CRABGO_MANIFEST_DIR"));
         build_context.push("containers");
         build_context.push(context_dir);
         Container {
@@ -225,7 +225,7 @@ impl ContainerHandle {
 impl Drop for ContainerHandle {
     fn drop(&mut self) {
         // To help with debugging, this will keep the container alive.
-        if std::env::var_os("CARGO_CONTAINER_TEST_KEEP").is_some() {
+        if std::env::var_os("CRABGO_CONTAINER_TEST_KEEP").is_some() {
             return;
         }
         remove_if_exists(&self.name);

@@ -16,9 +16,9 @@ pub(super) struct Deserializer<'config> {
     pub(super) key: ConfigKey,
     /// Whether or not this key part is allowed to be an inner table. For
     /// example, `profile.dev.build-override` needs to check if
-    /// CARGO_PROFILE_DEV_BUILD_OVERRIDE_ prefixes exist. But
-    /// CARGO_BUILD_TARGET should not check for prefixes because it would
-    /// collide with CARGO_BUILD_TARGET_DIR. See `ConfigMapAccess` for
+    /// CRABGO_PROFILE_DEV_BUILD_OVERRIDE_ prefixes exist. But
+    /// CRABGO_BUILD_TARGET should not check for prefixes because it would
+    /// collide with CRABGO_BUILD_TARGET_DIR. See `ConfigMapAccess` for
     /// details.
     pub(super) env_prefix_ok: bool,
 }
@@ -213,11 +213,11 @@ impl<'config> ConfigMapAccess<'config> {
             }
         }
         if de.config.cli_unstable().advanced_env {
-            // `CARGO_PROFILE_DEV_PACKAGE_`
+            // `CRABGO_PROFILE_DEV_PACKAGE_`
             let env_prefix = format!("{}_", de.key.as_env_key());
             for env_key in de.config.env_keys() {
                 if env_key.starts_with(&env_prefix) {
-                    // `CARGO_PROFILE_DEV_PACKAGE_bar_OPT_LEVEL = 3`
+                    // `CRABGO_PROFILE_DEV_PACKAGE_bar_OPT_LEVEL = 3`
                     let rest = &env_key[env_prefix.len()..];
                     // `rest = bar_OPT_LEVEL`
                     let part = rest.splitn(2, '_').next().unwrap();
@@ -324,19 +324,19 @@ impl<'de, 'config> de::MapAccess<'de> for ConfigMapAccess<'config> {
         // Env vars that are a prefix of another with a dash/underscore cannot
         // be supported by our serde implementation, so check for them here.
         // Example:
-        //     CARGO_BUILD_TARGET
-        //     CARGO_BUILD_TARGET_DIR
+        //     CRABGO_BUILD_TARGET
+        //     CRABGO_BUILD_TARGET_DIR
         // or
-        //     CARGO_PROFILE_DEV_DEBUG
-        //     CARGO_PROFILE_DEV_DEBUG_ASSERTIONS
+        //     CRABGO_PROFILE_DEV_DEBUG
+        //     CRABGO_PROFILE_DEV_DEBUG_ASSERTIONS
         // The `deserialize_option` method does not know the type of the field.
         // If the type is an Option<struct> (like
         // `profile.dev.build-override`), then it needs to check for env vars
-        // starting with CARGO_FOO_BAR_. This is a problem for keys like
-        // CARGO_BUILD_TARGET because checking for a prefix would incorrectly
-        // match CARGO_BUILD_TARGET_DIR. `deserialize_option` would have no
+        // starting with CRABGO_FOO_BAR_. This is a problem for keys like
+        // CRABGO_BUILD_TARGET because checking for a prefix would incorrectly
+        // match CRABGO_BUILD_TARGET_DIR. `deserialize_option` would have no
         // choice but to call `visit_some()` which would then fail if
-        // CARGO_BUILD_TARGET isn't set. So we check for these prefixes and
+        // CRABGO_BUILD_TARGET isn't set. So we check for these prefixes and
         // disallow them here.
         let env_prefix = format!("{}_", field).replace('-', "_");
         let env_prefix_ok = !self.fields.iter().any(|field| {
@@ -436,7 +436,7 @@ impl<'config> ValueDeserializer<'config> {
                 (false, Some(cv)) => cv.definition().clone(),
                 // Assume it is an environment, even if the key is not set.
                 // This can happen for intermediate tables, like
-                // CARGO_FOO_BAR_* where `CARGO_FOO_BAR` is not set.
+                // CRABGO_FOO_BAR_* where `CRABGO_FOO_BAR` is not set.
                 (_, None) => env_def,
             }
         };

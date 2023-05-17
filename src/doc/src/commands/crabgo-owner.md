@@ -51,9 +51,9 @@ information about owners and publishing.
 the credentials file (which is created by <a href="crabgo-login.html">crabgo-login(1)</a>).</p>
 <p><a href="../reference/config.html">Crabgo config</a> environment variables can be
 used to override the tokens stored in the credentials file. The token for
-crates.io may be specified with the <code>CARGO_REGISTRY_TOKEN</code> environment
+crates.io may be specified with the <code>CRABGO_REGISTRY_TOKEN</code> environment
 variable. Tokens for other registries may be specified with environment
-variables of the form <code>CARGO_REGISTRIES_NAME_TOKEN</code> where <code>NAME</code> is the name
+variables of the form <code>CRABGO_REGISTRIES_NAME_TOKEN</code> where <code>NAME</code> is the name
 of the registry in all capital letters.</dd>
 
 

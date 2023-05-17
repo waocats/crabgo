@@ -1,4 +1,4 @@
-CARGO-METADATA(1)
+CRABGO-METADATA(1)
 
 NAME
        crabgo-metadata — Machine-readable metadata about the current package

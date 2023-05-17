@@ -1,4 +1,4 @@
-CARGO-YANK(1)
+CRABGO-YANK(1)
 
 NAME
        crabgo-yank — Remove a pushed crate from the index
@@ -94,9 +94,9 @@ OPTIONS
            Crabgo config <https://doc.rust-lang.org/crabgo/reference/config.html>
            environment variables can be used to override the tokens stored in
            the credentials file. The token for crates.io may be specified with
-           the CARGO_REGISTRY_TOKEN environment variable. Tokens for other
+           the CRABGO_REGISTRY_TOKEN environment variable. Tokens for other
            registries may be specified with environment variables of the form
-           CARGO_REGISTRIES_NAME_TOKEN where NAME is the name of the registry
+           CRABGO_REGISTRIES_NAME_TOKEN where NAME is the name of the registry
            in all capital letters.
 
        --index index

@@ -24,7 +24,7 @@ pub struct Profiler {
 fn enabled_level() -> Option<usize> {
     // ALLOWED: for profiling Crabgo itself, not intended to be used beyond Crabgo contributors.
     #[allow(clippy::disallowed_methods)]
-    env::var("CARGO_PROFILE").ok().and_then(|s| s.parse().ok())
+    env::var("CRABGO_PROFILE").ok().and_then(|s| s.parse().ok())
 }
 
 pub fn start<T: fmt::Display>(desc: T) -> Profiler {

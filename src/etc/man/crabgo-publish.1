@@ -1,5 +1,5 @@
 '\" t
-.TH "CARGO\-PUBLISH" "1"
+.TH "CRABGO\-PUBLISH" "1"
 .nh
 .ad l
 .ss \n[.ss] 0
@@ -51,9 +51,9 @@ the credentials file (which is created by \fBcrabgo\-login\fR(1)).
 .sp
 \fICrabgo config\fR <https://doc.rust\-lang.org/crabgo/reference/config.html> environment variables can be
 used to override the tokens stored in the credentials file. The token for
-crates.io may be specified with the \fBCARGO_REGISTRY_TOKEN\fR environment
+crates.io may be specified with the \fBCRABGO_REGISTRY_TOKEN\fR environment
 variable. Tokens for other registries may be specified with environment
-variables of the form \fBCARGO_REGISTRIES_NAME_TOKEN\fR where \fBNAME\fR is the name
+variables of the form \fBCRABGO_REGISTRIES_NAME_TOKEN\fR where \fBNAME\fR is the name
 of the registry in all capital letters.
 .RE
 .sp
@@ -111,7 +111,7 @@ target artifacts are placed in a separate directory. See the
 \fB\-\-target\-dir\fR \fIdirectory\fR
 .RS 4
 Directory for all generated artifacts and intermediate files. May also be
-specified with the \fBCARGO_TARGET_DIR\fR environment variable, or the
+specified with the \fBCRABGO_TARGET_DIR\fR environment variable, or the
 \fBbuild.target\-dir\fR \fIconfig value\fR <https://doc.rust\-lang.org/crabgo/reference/config.html>\&.
 Defaults to \fBtarget\fR in the root of the workspace.
 .RE

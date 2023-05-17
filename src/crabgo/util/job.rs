@@ -35,7 +35,7 @@ mod imp {
         //
         // ALLOWED: For testing crabgo itself only.
         #[allow(clippy::disallowed_methods)]
-        if env::var("__CARGO_TEST_SETSID_PLEASE_DONT_USE_ELSEWHERE").is_ok() {
+        if env::var("__CRABGO_TEST_SETSID_PLEASE_DONT_USE_ELSEWHERE").is_ok() {
             libc::setsid();
         }
         Some(())

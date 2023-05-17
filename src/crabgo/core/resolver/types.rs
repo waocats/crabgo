@@ -35,9 +35,9 @@ impl ResolverProgress {
             // In the test code we have `slow_cpu_multiplier`, but that is not accessible here.
             #[cfg(debug_assertions)]
             // ALLOWED: For testing crabgo itself only. However, it was communicated as an public
-            // interface to other developers, so keep it as-is, shouldn't add `__CARGO` prefix.
+            // interface to other developers, so keep it as-is, shouldn't add `__CRABGO` prefix.
             #[allow(clippy::disallowed_methods)]
-            slow_cpu_multiplier: std::env::var("CARGO_TEST_SLOW_CPU_MULTIPLIER")
+            slow_cpu_multiplier: std::env::var("CRABGO_TEST_SLOW_CPU_MULTIPLIER")
                 .ok()
                 .and_then(|m| m.parse().ok())
                 .unwrap_or(1),

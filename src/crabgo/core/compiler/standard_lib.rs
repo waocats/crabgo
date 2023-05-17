@@ -221,7 +221,7 @@ pub fn generate_std_roots(
 }
 
 fn detect_sysroot_src_path(target_data: &RustcTargetData<'_>) -> CrabgoResult<PathBuf> {
-    if let Some(s) = target_data.config.get_env_os("__CARGO_TESTS_ONLY_SRC_ROOT") {
+    if let Some(s) = target_data.config.get_env_os("__CRABGO_TESTS_ONLY_SRC_ROOT") {
         return Ok(s.into());
     }
 

@@ -45,9 +45,9 @@ packaging and publishing.
 the credentials file (which is created by <a href="crabgo-login.html">crabgo-login(1)</a>).</p>
 <p><a href="../reference/config.html">Crabgo config</a> environment variables can be
 used to override the tokens stored in the credentials file. The token for
-crates.io may be specified with the <code>CARGO_REGISTRY_TOKEN</code> environment
+crates.io may be specified with the <code>CRABGO_REGISTRY_TOKEN</code> environment
 variable. Tokens for other registries may be specified with environment
-variables of the form <code>CARGO_REGISTRIES_NAME_TOKEN</code> where <code>NAME</code> is the name
+variables of the form <code>CRABGO_REGISTRIES_NAME_TOKEN</code> where <code>NAME</code> is the name
 of the registry in all capital letters.</dd>
 
 
@@ -111,7 +111,7 @@ target artifacts are placed in a separate directory. See the
 
 <dt class="option-term" id="option-crabgo-publish---target-dir"><a class="option-anchor" href="#option-crabgo-publish---target-dir"></a><code>--target-dir</code> <em>directory</em></dt>
 <dd class="option-desc">Directory for all generated artifacts and intermediate files. May also be
-specified with the <code>CARGO_TARGET_DIR</code> environment variable, or the
+specified with the <code>CRABGO_TARGET_DIR</code> environment variable, or the
 <code>build.target-dir</code> <a href="../reference/config.html">config value</a>.
 Defaults to <code>target</code> in the root of the workspace.</dd>
 

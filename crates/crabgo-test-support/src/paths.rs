@@ -10,7 +10,7 @@ use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
-static CARGO_INTEGRATION_TEST_DIR: &str = "cit";
+static CRABGO_INTEGRATION_TEST_DIR: &str = "cit";
 
 lazy_static! {
     // TODO: Use `SyncOnceCell` when stable
@@ -19,8 +19,8 @@ lazy_static! {
     static ref TEST_ROOTS: Mutex<HashMap<String, PathBuf>> = Default::default();
 }
 
-/// This is used when running crabgo is pre-CARGO_TARGET_TMPDIR
-/// TODO: Remove when CARGO_TARGET_TMPDIR grows old enough.
+/// This is used when running crabgo is pre-CRABGO_TARGET_TMPDIR
+/// TODO: Remove when CRABGO_TARGET_TMPDIR grows old enough.
 fn global_root_legacy() -> PathBuf {
     let mut path = t!(env::current_exe());
     path.pop(); // chop off exe name
@@ -38,7 +38,7 @@ fn set_global_root(tmp_dir: Option<&'static str>) {
             None => global_root_legacy(),
         };
 
-        root.push(CARGO_INTEGRATION_TEST_DIR);
+        root.push(CRABGO_INTEGRATION_TEST_DIR);
         *lock = Some(root);
     }
 }

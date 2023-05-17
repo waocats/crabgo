@@ -64,7 +64,7 @@
 //! Enabled Features                           | ✓           | ✓
 //! Immediate dependency’s hashes              | ✓[^1]       | ✓
 //! [`CompileKind`] (host/target)              | ✓           | ✓
-//! __CARGO_DEFAULT_LIB_METADATA[^4]           |             | ✓
+//! __CRABGO_DEFAULT_LIB_METADATA[^4]           |             | ✓
 //! package_id                                 |             | ✓
 //! authors, description, homepage, repo       | ✓           |
 //! Target src path relative to ws             | ✓           |
@@ -80,7 +80,7 @@
 //!
 //! [^3]: See below for details on mtime tracking.
 //!
-//! [^4]: `__CARGO_DEFAULT_LIB_METADATA` is set by rustbuild to embed the
+//! [^4]: `__CRABGO_DEFAULT_LIB_METADATA` is set by rustbuild to embed the
 //!        release channel (bootstrap/stable/beta/nightly) in libstd.
 //!
 //! [^5]: Config settings that are not otherwise captured anywhere else.
@@ -104,7 +104,7 @@
 //!   quick loading and comparison.
 //! - A `.json` file that contains details about the Fingerprint. This is only
 //!   used to log details about *why* a fingerprint is considered dirty.
-//!   `CARGO_LOG=crabgo::core::compiler::fingerprint=trace crabgo build` can be
+//!   `CRABGO_LOG=crabgo::core::compiler::fingerprint=trace crabgo build` can be
 //!   used to display this log information.
 //! - A "dep-info" file which is a translation of rustc's `*.d` dep-info files
 //!   to a Crabgo-specific format that tweaks file names and is optimized for
@@ -371,7 +371,7 @@ use crate::util::errors::CrabgoResult;
 use crate::util::interning::InternedString;
 use crate::util::{self, try_canonicalize};
 use crate::util::{internal, path_args, profile, StableHasher};
-use crate::{Config, CARGO_ENV};
+use crate::{Config, CRABGO_ENV};
 
 use super::custom_build::BuildDeps;
 use super::{BuildContext, Context, FileFlavor, Job, Unit, Work};
@@ -810,7 +810,7 @@ impl LocalFingerprint {
                     None => return Ok(Some(StaleItem::MissingFile(dep_info))),
                 };
                 for (key, previous) in info.env.iter() {
-                    let current = if key == CARGO_ENV {
+                    let current = if key == CRABGO_ENV {
                         Some(
                             crabgo_exe
                                 .to_str()
@@ -1277,7 +1277,7 @@ impl DepFingerprint {
 impl StaleItem {
     /// Use the `log` crate to log a hopefully helpful message in diagnosing
     /// what file is considered stale and why. This is intended to be used in
-    /// conjunction with `CARGO_LOG` to determine why Crabgo is recompiling
+    /// conjunction with `CRABGO_LOG` to determine why Crabgo is recompiling
     /// something. Currently there's no user-facing usage of this other than
     /// that.
     fn log(&self) {
@@ -1854,8 +1854,8 @@ where
         let path = path.as_ref();
 
         // Assuming anything in crabgo_home is immutable (see also #9455 about marking it readonly)
-        // which avoids rebuilds when CI caches $CARGO_HOME/registry/{index, cache} and
-        // $CARGO_HOME/git/db across runs, keeping the content the same but changing the mtime.
+        // which avoids rebuilds when CI caches $CRABGO_HOME/registry/{index, cache} and
+        // $CRABGO_HOME/git/db across runs, keeping the content the same but changing the mtime.
         if let Ok(true) = home::cargo_home().map(|home| path.starts_with(home)) {
             continue;
         }
@@ -1981,12 +1981,12 @@ pub fn translate_dep_info(
     // recompile that if you move the target directory. Hopefully that's not too
     // bad of an issue for now...
     //
-    // This also includes `CARGO` since if the code is explicitly wanting to
-    // know that path, it should be rebuilt if it changes. The CARGO path is
+    // This also includes `CRABGO` since if the code is explicitly wanting to
+    // know that path, it should be rebuilt if it changes. The CRABGO path is
     // not tracked elsewhere in the fingerprint.
     on_disk_info
         .env
-        .retain(|(key, _)| !rustc_cmd.get_envs().contains_key(key) || key == CARGO_ENV);
+        .retain(|(key, _)| !rustc_cmd.get_envs().contains_key(key) || key == CRABGO_ENV);
 
     for file in depinfo.files {
         // The path may be absolute or relative, canonical or not. Make sure

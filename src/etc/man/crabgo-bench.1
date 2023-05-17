@@ -1,5 +1,5 @@
 '\" t
-.TH "CARGO\-BENCH" "1"
+.TH "CRABGO\-BENCH" "1"
 .nh
 .ad l
 .ss \n[.ss] 0
@@ -159,7 +159,7 @@ for more information on per\-target settings.
 Binary targets are automatically built if there is an integration test or
 benchmark being selected to benchmark. This allows an integration
 test to execute the binary to exercise and test its behavior. 
-The \fBCARGO_BIN_EXE_<name>\fR
+The \fBCRABGO_BIN_EXE_<name>\fR
 \fIenvironment variable\fR <https://doc.rust\-lang.org/crabgo/reference/environment\-variables.html#environment\-variables\-crabgo\-sets\-for\-crates>
 is set when the integration test is built so that it can use the
 \fI\f(BIenv\fI macro\fR <https://doc.rust\-lang.org/std/macro.env.html> to locate the
@@ -317,7 +317,7 @@ information about timing information.
 \fB\-\-target\-dir\fR \fIdirectory\fR
 .RS 4
 Directory for all generated artifacts and intermediate files. May also be
-specified with the \fBCARGO_TARGET_DIR\fR environment variable, or the
+specified with the \fBCRABGO_TARGET_DIR\fR environment variable, or the
 \fBbuild.target\-dir\fR \fIconfig value\fR <https://doc.rust\-lang.org/crabgo/reference/config.html>\&.
 Defaults to \fBtarget\fR in the root of the workspace.
 .RE

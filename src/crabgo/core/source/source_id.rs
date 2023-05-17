@@ -887,5 +887,5 @@ mod tests {
 // ALLOWED: For testing Crabgo itself only.
 #[allow(clippy::disallowed_methods)]
 fn is_overridden_crates_io_url(url: &str) -> bool {
-    std::env::var("__CARGO_TEST_CRATES_IO_URL_DO_NOT_USE_THIS").map_or(false, |v| v == url)
+    std::env::var("__CRABGO_TEST_CRATES_IO_URL_DO_NOT_USE_THIS").map_or(false, |v| v == url)
 }

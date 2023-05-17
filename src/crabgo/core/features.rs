@@ -838,7 +838,7 @@ pub struct GitoxideFeatures {
     /// like linefeed conversions are unsupported).
     pub checkout: bool,
     /// A feature flag which doesn't have any meaning except for preventing
-    /// `__CARGO_USE_GITOXIDE_INSTEAD_OF_GIT2=1` builds to enable all safe `gitoxide` features.
+    /// `__CRABGO_USE_GITOXIDE_INSTEAD_OF_GIT2=1` builds to enable all safe `gitoxide` features.
     /// That way, `gitoxide` isn't actually used even though it's enabled.
     pub internal_use_git2: bool,
 }
@@ -1172,7 +1172,7 @@ impl CliUnstable {
 pub fn channel() -> String {
     // ALLOWED: For testing crabgo itself only.
     #[allow(clippy::disallowed_methods)]
-    if let Ok(override_channel) = env::var("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS") {
+    if let Ok(override_channel) = env::var("__CRABGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS") {
         return override_channel;
     }
     // ALLOWED: the process of rustc boostrapping reads this through
@@ -1195,5 +1195,5 @@ pub fn channel() -> String {
 // ALLOWED: For testing crabgo itself only.
 #[allow(clippy::disallowed_methods)]
 fn crabgo_use_gitoxide_instead_of_git2() -> bool {
-    std::env::var_os("__CARGO_USE_GITOXIDE_INSTEAD_OF_GIT2").map_or(false, |value| value == "1")
+    std::env::var_os("__CRABGO_USE_GITOXIDE_INSTEAD_OF_GIT2").map_or(false, |value| value == "1")
 }

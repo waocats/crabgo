@@ -11,7 +11,7 @@ crabgo-logout --- Remove an API token from the registry locally
 ## DESCRIPTION
 
 This command will remove the API token from the local credential storage.
-Credentials are stored in `$CARGO_HOME/credentials.toml` where `$CARGO_HOME`
+Credentials are stored in `$CRABGO_HOME/credentials.toml` where `$CRABGO_HOME`
 defaults to `.crabgo` in your home directory.
 
 If `--registry` is not specified, then the credentials for the default

@@ -186,7 +186,7 @@ pub fn registry_credential_config(
             .env()
             .filter_map(|(k, v)| {
                 Some((
-                    k.strip_prefix("CARGO_REGISTRIES_")?
+                    k.strip_prefix("CRABGO_REGISTRIES_")?
                         .strip_suffix("_INDEX")?,
                     v,
                 ))
@@ -365,7 +365,7 @@ impl fmt::Display for AuthorizationError {
             };
             write!(
                 f,
-                "{}, please run `crabgo login{args}`\nor use environment variable CARGO_REGISTRY_TOKEN",
+                "{}, please run `crabgo login{args}`\nor use environment variable CRABGO_REGISTRY_TOKEN",
                 self.reason
             )
         } else if let Some(name) = self.sid.alt_registry_key() {
@@ -721,12 +721,12 @@ fn run_command(
 
     let mut cmd = Command::new(&exe);
     cmd.args(args)
-        .env(crate::CARGO_ENV, config.crabgo_exe()?)
-        .env("CARGO_REGISTRY_INDEX_URL", index_url);
+        .env(crate::CRABGO_ENV, config.crabgo_exe()?)
+        .env("CRABGO_REGISTRY_INDEX_URL", index_url);
     if sid.is_crates_io() {
-        cmd.env("CARGO_REGISTRY_NAME_OPT", "crates-io");
+        cmd.env("CRABGO_REGISTRY_NAME_OPT", "crates-io");
     } else if let Some(name) = sid.alt_registry_key() {
-        cmd.env("CARGO_REGISTRY_NAME_OPT", name);
+        cmd.env("CRABGO_REGISTRY_NAME_OPT", name);
     }
     match action {
         Action::Get => {

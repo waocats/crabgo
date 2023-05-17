@@ -2,7 +2,7 @@
 
 The "Crabgo home" functions as a download and source cache.
 When building a [crate][def-crate], Crabgo stores downloaded build dependencies in the Crabgo home.
-You can alter the location of the Crabgo home by setting the `CARGO_HOME` [environmental variable][env].
+You can alter the location of the Crabgo home by setting the `CRABGO_HOME` [environmental variable][env].
 The [home](https://crates.io/crates/home) crate provides an API for getting this location if you need this information inside your Rust crate.
 By default, the Crabgo home is located in `$HOME/.crabgo/`.
 
@@ -53,9 +53,9 @@ To be able to make these binaries accessible, add the path of the directory to y
 
 ## Caching the Crabgo home in CI
 
-To avoid redownloading all crate dependencies during continuous integration, you can cache the `$CARGO_HOME` directory.
+To avoid redownloading all crate dependencies during continuous integration, you can cache the `$CRABGO_HOME` directory.
 However, caching the entire directory is often inefficient as it will contain downloaded sources twice.
-If we depend on a crate such as `serde 1.0.92` and cache the entire `$CARGO_HOME` we would actually cache the sources twice, the `serde-1.0.92.crate` inside `registry/cache` and the extracted `.rs` files of serde inside `registry/src`.
+If we depend on a crate such as `serde 1.0.92` and cache the entire `$CRABGO_HOME` we would actually cache the sources twice, the `serde-1.0.92.crate` inside `registry/cache` and the extracted `.rs` files of serde inside `registry/src`.
 That can unnecessarily slow down the build as downloading, extracting, recompressing and reuploading the cache to the CI servers can take some time.
 
 If you wish to cache binaries installed with [`crabgo install`], you need to cache the `bin/` folder and the `.crates.toml` and `.crates2.json` files.

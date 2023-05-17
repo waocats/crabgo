@@ -11,7 +11,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct ConfigKey {
     // The current environment variable this configuration key maps to. This is
-    // updated with `push` methods and looks like `CARGO_FOO_BAR` for pushing
+    // updated with `push` methods and looks like `CRABGO_FOO_BAR` for pushing
     // `foo` and then `bar`.
     env: String,
     // This is used to keep track of how many sub-keys have been pushed on
@@ -28,7 +28,7 @@ impl ConfigKey {
     /// using `push` and `push_sensitive`.
     pub fn new() -> ConfigKey {
         ConfigKey {
-            env: "CARGO".to_string(),
+            env: "CRABGO".to_string(),
             parts: Vec::new(),
         }
     }

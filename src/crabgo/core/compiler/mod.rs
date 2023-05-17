@@ -720,12 +720,12 @@ fn prepare_rustc(
         .rustc_process(unit, is_primary, is_workspace)?;
 
     if is_primary {
-        base.env("CARGO_PRIMARY_PACKAGE", "1");
+        base.env("CRABGO_PRIMARY_PACKAGE", "1");
     }
 
     if unit.target.is_test() || unit.target.is_bench() {
         let tmp = cx.files().layout(unit.kind).prepare_tmp()?;
-        base.env("CARGO_TARGET_TMPDIR", tmp.display().to_string());
+        base.env("CRABGO_TARGET_TMPDIR", tmp.display().to_string());
     }
 
     base.inherit_jobserver(&cx.jobserver);
@@ -1173,7 +1173,7 @@ fn build_base_args(
             .env("RUSTC_BOOTSTRAP", "1");
     }
 
-    // Add `CARGO_BIN_EXE_` environment variables for building tests.
+    // Add `CRABGO_BIN_EXE_` environment variables for building tests.
     if unit.target.is_test() || unit.target.is_bench() {
         for bin_target in unit
             .pkg
@@ -1188,7 +1188,7 @@ fn build_base_args(
             let name = bin_target
                 .binary_filename()
                 .unwrap_or(bin_target.name().to_string());
-            let key = format!("CARGO_BIN_EXE_{}", name);
+            let key = format!("CRABGO_BIN_EXE_{}", name);
             cmd.env(&key, exe_path);
         }
     }

@@ -1,4 +1,4 @@
-CARGO-GENERATE-LOCKFILE(1)
+CRABGO-GENERATE-LOCKFILE(1)
 
 NAME
        crabgo-generate-lockfile — Generate the lockfile for a package

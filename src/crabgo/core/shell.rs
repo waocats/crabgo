@@ -19,7 +19,7 @@ impl TtyWidth {
     pub fn diagnostic_terminal_width(&self) -> Option<usize> {
         // ALLOWED: For testing crabgo itself only.
         #[allow(clippy::disallowed_methods)]
-        if let Ok(width) = std::env::var("__CARGO_TEST_TTY_WIDTH_DO_NOT_USE_THIS") {
+        if let Ok(width) = std::env::var("__CRABGO_TEST_TTY_WIDTH_DO_NOT_USE_THIS") {
             return Some(width.parse().unwrap());
         }
         match *self {

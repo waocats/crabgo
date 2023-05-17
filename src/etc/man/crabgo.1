@@ -1,5 +1,5 @@
 '\" t
-.TH "CARGO" "1"
+.TH "CRABGO" "1"
 .nh
 .ad l
 .ss \n[.ss] 0
@@ -294,15 +294,15 @@ details on environment variables that Crabgo reads.
 \fB~/.crabgo/\fR
 .br
 \ \ \ \ Default location for Crabgo\[cq]s \[lq]home\[rq] directory where it
-stores various files. The location can be changed with the \fBCARGO_HOME\fR
+stores various files. The location can be changed with the \fBCRABGO_HOME\fR
 environment variable.
 .sp
-\fB$CARGO_HOME/bin/\fR
+\fB$CRABGO_HOME/bin/\fR
 .br
 \ \ \ \ Binaries installed by \fBcrabgo\-install\fR(1) will be located here. If using
 \fIrustup\fR <https://rust\-lang.github.io/rustup/>, executables distributed with Rust are also located here.
 .sp
-\fB$CARGO_HOME/config.toml\fR
+\fB$CRABGO_HOME/config.toml\fR
 .br
 \ \ \ \ The global configuration file. See \fIthe reference\fR <https://doc.rust\-lang.org/crabgo/reference/config.html>
 for more information about configuration files.
@@ -313,20 +313,20 @@ for more information about configuration files.
 current directory, and all parent directories. These configuration files
 will be merged with the global configuration file.
 .sp
-\fB$CARGO_HOME/credentials.toml\fR
+\fB$CRABGO_HOME/credentials.toml\fR
 .br
 \ \ \ \ Private authentication information for logging in to a registry.
 .sp
-\fB$CARGO_HOME/registry/\fR
+\fB$CRABGO_HOME/registry/\fR
 .br
 \ \ \ \ This directory contains cached downloads of the registry index and any
 downloaded dependencies.
 .sp
-\fB$CARGO_HOME/git/\fR
+\fB$CRABGO_HOME/git/\fR
 .br
 \ \ \ \ This directory contains cached downloads of git dependencies.
 .sp
-Please note that the internal structure of the \fB$CARGO_HOME\fR directory is not
+Please note that the internal structure of the \fB$CRABGO_HOME\fR directory is not
 stable yet and may be subject to change.
 .SH "EXAMPLES"
 .sp

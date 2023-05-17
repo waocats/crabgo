@@ -18,7 +18,7 @@ use crate::core::Edition;
 use crate::util::errors::CrabgoResult;
 use crate::util::Config;
 
-const DIAGNOSTICS_SERVER_VAR: &str = "__CARGO_FIX_DIAGNOSTICS_SERVER";
+const DIAGNOSTICS_SERVER_VAR: &str = "__CRABGO_FIX_DIAGNOSTICS_SERVER";
 
 #[derive(Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
 pub enum Message {

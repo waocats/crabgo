@@ -306,46 +306,46 @@ impl<'cfg> Compilation<'cfg> {
         let metadata = pkg.manifest().metadata();
 
         let crabgo_exe = self.config.crabgo_exe()?;
-        cmd.env(crate::CARGO_ENV, crabgo_exe);
+        cmd.env(crate::CRABGO_ENV, crabgo_exe);
 
         // When adding new environment variables depending on
         // crate properties which might require rebuild upon change
         // consider adding the corresponding properties to the hash
         // in BuildContext::target_metadata()
-        cmd.env("CARGO_MANIFEST_DIR", pkg.root())
-            .env("CARGO_PKG_VERSION_MAJOR", &pkg.version().major.to_string())
-            .env("CARGO_PKG_VERSION_MINOR", &pkg.version().minor.to_string())
-            .env("CARGO_PKG_VERSION_PATCH", &pkg.version().patch.to_string())
-            .env("CARGO_PKG_VERSION_PRE", pkg.version().pre.as_str())
-            .env("CARGO_PKG_VERSION", &pkg.version().to_string())
-            .env("CARGO_PKG_NAME", &*pkg.name())
+        cmd.env("CRABGO_MANIFEST_DIR", pkg.root())
+            .env("CRABGO_PKG_VERSION_MAJOR", &pkg.version().major.to_string())
+            .env("CRABGO_PKG_VERSION_MINOR", &pkg.version().minor.to_string())
+            .env("CRABGO_PKG_VERSION_PATCH", &pkg.version().patch.to_string())
+            .env("CRABGO_PKG_VERSION_PRE", pkg.version().pre.as_str())
+            .env("CRABGO_PKG_VERSION", &pkg.version().to_string())
+            .env("CRABGO_PKG_NAME", &*pkg.name())
             .env(
-                "CARGO_PKG_DESCRIPTION",
+                "CRABGO_PKG_DESCRIPTION",
                 metadata.description.as_ref().unwrap_or(&String::new()),
             )
             .env(
-                "CARGO_PKG_HOMEPAGE",
+                "CRABGO_PKG_HOMEPAGE",
                 metadata.homepage.as_ref().unwrap_or(&String::new()),
             )
             .env(
-                "CARGO_PKG_REPOSITORY",
+                "CRABGO_PKG_REPOSITORY",
                 metadata.repository.as_ref().unwrap_or(&String::new()),
             )
             .env(
-                "CARGO_PKG_LICENSE",
+                "CRABGO_PKG_LICENSE",
                 metadata.license.as_ref().unwrap_or(&String::new()),
             )
             .env(
-                "CARGO_PKG_LICENSE_FILE",
+                "CRABGO_PKG_LICENSE_FILE",
                 metadata.license_file.as_ref().unwrap_or(&String::new()),
             )
-            .env("CARGO_PKG_AUTHORS", &pkg.authors().join(":"))
+            .env("CRABGO_PKG_AUTHORS", &pkg.authors().join(":"))
             .env(
-                "CARGO_PKG_RUST_VERSION",
+                "CRABGO_PKG_RUST_VERSION",
                 &pkg.rust_version().unwrap_or(&String::new()),
             )
             .env(
-                "CARGO_PKG_README",
+                "CRABGO_PKG_README",
                 metadata.readme.as_ref().unwrap_or(&String::new()),
             )
             .cwd(pkg.root());
@@ -365,9 +365,9 @@ fn fill_rustc_tool_env(mut cmd: ProcessBuilder, unit: &Unit) -> ProcessBuilder {
             .binary_filename()
             .unwrap_or(unit.target.name().to_string());
 
-        cmd.env("CARGO_BIN_NAME", name);
+        cmd.env("CRABGO_BIN_NAME", name);
     }
-    cmd.env("CARGO_CRATE_NAME", unit.target.crate_name());
+    cmd.env("CRABGO_CRATE_NAME", unit.target.crate_name());
     cmd
 }
 

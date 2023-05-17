@@ -1,4 +1,4 @@
-CARGO-SEARCH(1)
+CRABGO-SEARCH(1)
 
 NAME
        crabgo-search — Search packages in crates.io

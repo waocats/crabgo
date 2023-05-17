@@ -252,5 +252,5 @@ pub fn tag(repo: &git2::Repository, name: &str) {
 ///
 /// That way, tests that normally use `git2` can transparently use `gitoxide`.
 pub fn crabgo_uses_gitoxide() -> bool {
-    std::env::var_os("__CARGO_USE_GITOXIDE_INSTEAD_OF_GIT2").map_or(false, |value| value == "1")
+    std::env::var_os("__CRABGO_USE_GITOXIDE_INSTEAD_OF_GIT2").map_or(false, |value| value == "1")
 }

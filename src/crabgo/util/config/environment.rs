@@ -37,7 +37,7 @@ fn make_case_insensitive_and_normalized_env(
 ///   and [`Config::get_env_os`](super::Config::get_env_os)
 ///   for process environment variables (similar to [`std::env::var`] and [`std::env::var_os`]),
 /// - Typed Config Value API via [`Config::get`](super::Config::get).
-///   This is only available for `CARGO_` prefixed environment keys.
+///   This is only available for `CRABGO_` prefixed environment keys.
 ///
 /// This type contains the env var snapshot and helper methods for both APIs.
 #[derive(Debug)]
@@ -157,7 +157,7 @@ impl Env {
     ///
     /// This is case-sensitive on Windows (even though environment keys on Windows are usually
     /// case-insensitive) due to an unintended regression in 1.28 (via #5552).
-    /// This should only affect keys used for crabgo's config-system env variables (`CARGO_`
+    /// This should only affect keys used for crabgo's config-system env variables (`CRABGO_`
     /// prefixed ones), which are currently all uppercase.
     /// We may want to consider rectifying it if users report issues.
     /// One thing that adds a wrinkle here is the unstable advanced-env option that *requires*

@@ -1,4 +1,4 @@
-CARGO-NEW(1)
+CRABGO-NEW(1)
 
 NAME
        crabgo-new — Create a new Crabgo package

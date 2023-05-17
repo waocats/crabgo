@@ -41,8 +41,8 @@ pub fn crabgo_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // the environment since it downloads dependencies).
                 set_ignore!(is_not_nightly, "requires nightly");
                 set_ignore!(
-                    option_env!("CARGO_RUN_BUILD_STD_TESTS").is_none(),
-                    "CARGO_RUN_BUILD_STD_TESTS must be set"
+                    option_env!("CRABGO_RUN_BUILD_STD_TESTS").is_none(),
+                    "CRABGO_RUN_BUILD_STD_TESTS must be set"
                 );
             }
             "build_std_mock" => {
@@ -58,8 +58,8 @@ pub fn crabgo_test(attr: TokenStream, item: TokenStream) -> TokenStream {
             "container_test" => {
                 // These tests must be opt-in because they require docker.
                 set_ignore!(
-                    option_env!("CARGO_CONTAINER_TESTS").is_none(),
-                    "CARGO_CONTAINER_TESTS must be set"
+                    option_env!("CRABGO_CONTAINER_TESTS").is_none(),
+                    "CRABGO_CONTAINER_TESTS must be set"
                 );
             }
             "public_network_test" => {
@@ -68,8 +68,8 @@ pub fn crabgo_test(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // should only touch things which would nearly certainly work
                 // in CI (like github.com).
                 set_ignore!(
-                    option_env!("CARGO_PUBLIC_NETWORK_TESTS").is_none(),
-                    "CARGO_PUBLIC_NETWORK_TESTS must be set"
+                    option_env!("CRABGO_PUBLIC_NETWORK_TESTS").is_none(),
+                    "CRABGO_PUBLIC_NETWORK_TESTS must be set"
                 );
             }
             "nightly" => {
@@ -152,7 +152,7 @@ pub fn crabgo_test(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         let mut new_body = to_token_stream(
             r#"let _test_guard = {
-                let tmp_dir = option_env!("CARGO_TARGET_TMPDIR");
+                let tmp_dir = option_env!("CRABGO_TARGET_TMPDIR");
                 crabgo_test_support::paths::init_root(tmp_dir)
             };"#,
         );
@@ -198,7 +198,7 @@ fn version() -> &'static (u32, bool) {
             .expect("rustc should run");
         let stdout = std::str::from_utf8(&output.stdout).expect("utf8");
         let vers = stdout.split_whitespace().skip(1).next().unwrap();
-        let is_nightly = option_env!("CARGO_TEST_DISABLE_NIGHTLY").is_none()
+        let is_nightly = option_env!("CRABGO_TEST_DISABLE_NIGHTLY").is_none()
             && (vers.contains("-nightly") || vers.contains("-dev"));
         let minor = vers.split('.').skip(1).next().unwrap().parse().unwrap();
         unsafe { VERSION = (minor, is_nightly) }

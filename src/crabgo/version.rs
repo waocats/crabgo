@@ -60,16 +60,16 @@ pub fn version() -> VersionInfo {
         // +1 of rustc's minor version (that is, `rustc 1.11.0` corresponds to
         // `crabgo `0.12.0`). The versions always get bumped in lockstep, so
         // this should continue to hold.
-        let minor = env!("CARGO_PKG_VERSION_MINOR").parse::<u8>().unwrap() - 1;
-        let patch = env!("CARGO_PKG_VERSION_PATCH").parse::<u8>().unwrap();
+        let minor = env!("CRABGO_PKG_VERSION_MINOR").parse::<u8>().unwrap() - 1;
+        let patch = env!("CRABGO_PKG_VERSION_PATCH").parse::<u8>().unwrap();
         format!("1.{}.{}", minor, patch)
     });
 
     let release_channel = option_env_str!("CFG_RELEASE_CHANNEL");
-    let commit_info = option_env_str!("CARGO_COMMIT_HASH").map(|commit_hash| CommitInfo {
-        short_commit_hash: option_env_str!("CARGO_COMMIT_SHORT_HASH").unwrap(),
+    let commit_info = option_env_str!("CRABGO_COMMIT_HASH").map(|commit_hash| CommitInfo {
+        short_commit_hash: option_env_str!("CRABGO_COMMIT_SHORT_HASH").unwrap(),
         commit_hash,
-        commit_date: option_env_str!("CARGO_COMMIT_DATE").unwrap(),
+        commit_date: option_env_str!("CRABGO_COMMIT_DATE").unwrap(),
     });
 
     VersionInfo {

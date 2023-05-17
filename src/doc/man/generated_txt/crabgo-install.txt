@@ -1,4 +1,4 @@
-CARGO-INSTALL(1)
+CRABGO-INSTALL(1)
 
 NAME
        crabgo-install — Build and install a Rust binary
@@ -19,12 +19,12 @@ DESCRIPTION
 
        o  --root option
 
-       o  CARGO_INSTALL_ROOT environment variable
+       o  CRABGO_INSTALL_ROOT environment variable
 
        o  install.root Crabgo config value
           <https://doc.rust-lang.org/crabgo/reference/config.html>
 
-       o  CARGO_HOME environment variable
+       o  CRABGO_HOME environment variable
 
        o  $HOME/.crabgo
 
@@ -61,7 +61,7 @@ DESCRIPTION
 
        If the source is crates.io or --git then by default the crate will be
        built in a temporary target directory. To avoid this, the target
-       directory can be specified by setting the CARGO_TARGET_DIR environment
+       directory can be specified by setting the CRABGO_TARGET_DIR environment
        variable to a relative path. In particular, this can be useful for
        caching build artifacts on continuous integration systems.
 
@@ -85,7 +85,7 @@ DESCRIPTION
        means that the local configuration discovery
        <https://doc.rust-lang.org/crabgo/reference/config.html#hierarchical-structure>
        is ignored. Instead, the configuration discovery begins at
-       $CARGO_HOME/config.toml. If the package is installed with --path $PATH,
+       $CRABGO_HOME/config.toml. If the package is installed with --path $PATH,
        the local configuration will be used, beginning discovery at
        $PATH/.crabgo/config.toml.
 
@@ -197,7 +197,7 @@ OPTIONS
 
        --target-dir directory
            Directory for all generated artifacts and intermediate files. May
-           also be specified with the CARGO_TARGET_DIR environment variable, or
+           also be specified with the CRABGO_TARGET_DIR environment variable, or
            the build.target-dir config value
            <https://doc.rust-lang.org/crabgo/reference/config.html>. Defaults to
            a new temporary folder located in the temporary directory of the

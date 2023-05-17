@@ -113,7 +113,7 @@
 //!     - See [`core::resolver::encode`] for versioning of `Crabgo.lock`
 //!   - `target/`: Used for build artifacts and abstracted with [`core::compiler::layout`]. `Layout` handles locking the target directory and providing paths to parts inside. There is a separate `Layout` for each build `target`.
 //!     - `target/debug/.fingerprint`: Tracker whether nor not a crate needs to be rebuilt.  See [`core::compiler::fingerprint`]
-//! - `$CARGO_HOME/`:
+//! - `$CRABGO_HOME/`:
 //!   - `registry/`: Package registry cache which is managed in [`sources::registry`].  Be careful
 //!     as the lock [`util::Config::acquire_package_cache_lock`] must be manually acquired.
 //!     - `index`/: Fast-to-access crate metadata (no need to download / extract `*.crate` files)
@@ -150,7 +150,7 @@ pub use crate::util::errors::{AlreadyPrintedError, InternalError, VerboseError};
 pub use crate::util::{indented_lines, CrabgoResult, CliError, CliResult, Config};
 pub use crate::version::version;
 
-pub const CARGO_ENV: &str = "CARGO";
+pub const CRABGO_ENV: &str = "CRABGO";
 
 #[macro_use]
 mod macros;

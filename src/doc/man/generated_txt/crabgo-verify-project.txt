@@ -1,4 +1,4 @@
-CARGO-VERIFY-PROJECT(1)
+CRABGO-VERIFY-PROJECT(1)
 
 NAME
        crabgo-verify-project — Check correctness of crate manifest

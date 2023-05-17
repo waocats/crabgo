@@ -1739,9 +1739,9 @@ fn find_root_iter<'a>(
 ) -> impl Iterator<Item = PathBuf> + 'a {
     LookBehind::new(paths::ancestors(manifest_path, None).skip(2))
         .take_while(|path| !path.curr.ends_with("target/package"))
-        // Don't walk across `CARGO_HOME` when we're looking for the
+        // Don't walk across `CRABGO_HOME` when we're looking for the
         // workspace root. Sometimes a package will be organized with
-        // `CARGO_HOME` pointing inside of the workspace root or in the
+        // `CRABGO_HOME` pointing inside of the workspace root or in the
         // current package, but we don't want to mistakenly try to put
         // crates.io crates into the workspace by accident.
         .take_while(|path| {

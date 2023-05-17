@@ -257,7 +257,7 @@ fn find_closest_alias() {
     .unwrap();
 
     crabgo_process("myalais")
-        .env("CARGO_HOME", &my_home)
+        .env("CRABGO_HOME", &my_home)
         .with_status(101)
         .with_stderr_contains(
             "\
@@ -326,7 +326,7 @@ fn override_crabgo_home() {
     )
     .unwrap();
 
-    crabgo_process("new foo").env("CARGO_HOME", &my_home).run();
+    crabgo_process("new foo").env("CRABGO_HOME", &my_home).run();
 
     assert!(!paths::root().join("foo/.git").is_dir());
 
@@ -345,7 +345,7 @@ fn crabgo_subcommand_env() {
             println!("{{}}", env::var("{}").unwrap());
         }}
         "#,
-        crabgo::CARGO_ENV
+        crabgo::CRABGO_ENV
     );
 
     let p = project()
@@ -369,7 +369,7 @@ fn crabgo_subcommand_env() {
         .with_stdout(crabgo.to_str().unwrap())
         .run();
 
-    // Check that subcommands inherit an overridden $CARGO
+    // Check that subcommands inherit an overridden $CRABGO
     let envtest_bin = target_dir
         .join("crabgo-envtest")
         .with_extension(std::env::consts::EXE_EXTENSION)
@@ -378,7 +378,7 @@ fn crabgo_subcommand_env() {
     let envtest_bin = envtest_bin.to_str().unwrap();
     crabgo_process("envtest")
         .env("PATH", &path)
-        .env(crabgo::CARGO_ENV, &envtest_bin)
+        .env(crabgo::CRABGO_ENV, &envtest_bin)
         .with_stdout(envtest_bin)
         .run();
 }
@@ -415,12 +415,12 @@ fn crabgo_cmd_bins_vs_explicit_path() {
 
     let (outside_dir, inside_dir) = set_up_crabgo_foo();
 
-    // If `$CARGO_HOME/bin` is not in a path, prefer it over anything in `$PATH`.
+    // If `$CRABGO_HOME/bin` is not in a path, prefer it over anything in `$PATH`.
     //
     // This is the historical behavior we don't want to break.
     crabgo_process("foo").with_stdout_contains("INSIDE").run();
 
-    // When `$CARGO_HOME/bin` is in the `$PATH`
+    // When `$CRABGO_HOME/bin` is in the `$PATH`
     // use only `$PATH` so the user-defined ordering is respected.
     {
         crabgo_process("foo")

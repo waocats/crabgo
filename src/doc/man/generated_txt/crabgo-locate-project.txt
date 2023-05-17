@@ -1,4 +1,4 @@
-CARGO-LOCATE-PROJECT(1)
+CRABGO-LOCATE-PROJECT(1)
 
 NAME
        crabgo-locate-project — Print a JSON representation of a Crabgo.toml

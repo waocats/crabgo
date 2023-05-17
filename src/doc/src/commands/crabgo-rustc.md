@@ -57,7 +57,7 @@ binary and library targets of the selected package.
 Binary targets are automatically built if there is an integration test or
 benchmark being selected to build. This allows an integration
 test to execute the binary to exercise and test its behavior. 
-The `CARGO_BIN_EXE_<name>`
+The `CRABGO_BIN_EXE_<name>`
 [environment variable](../reference/environment-variables.html#environment-variables-crabgo-sets-for-crates)
 is set when the integration test is built so that it can use the
 [`env` macro](https://doc.rust-lang.org/std/macro.env.html) to locate the
@@ -245,7 +245,7 @@ the command-line argument value will override what is in the manifest.</p>
 <dl>
 <dt class="option-term" id="option-crabgo-rustc---target-dir"><a class="option-anchor" href="#option-crabgo-rustc---target-dir"></a><code>--target-dir</code> <em>directory</em></dt>
 <dd class="option-desc">Directory for all generated artifacts and intermediate files. May also be
-specified with the <code>CARGO_TARGET_DIR</code> environment variable, or the
+specified with the <code>CRABGO_TARGET_DIR</code> environment variable, or the
 <code>build.target-dir</code> <a href="../reference/config.html">config value</a>.
 Defaults to <code>target</code> in the root of the workspace.</dd>
 

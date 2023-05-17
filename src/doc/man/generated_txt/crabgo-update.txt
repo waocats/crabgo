@@ -1,4 +1,4 @@
-CARGO-UPDATE(1)
+CRABGO-UPDATE(1)
 
 NAME
        crabgo-update — Update dependencies as recorded in the local lock file

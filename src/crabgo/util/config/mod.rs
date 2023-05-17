@@ -30,7 +30,7 @@
 //!
 //! A good example is the `[target]` table. The code will request
 //! `target.$TRIPLE` and the config system can then appropriately fetch
-//! environment variables like `CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER`.
+//! environment variables like `CRABGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER`.
 //! Conversely, it is not possible do the same thing for the `cfg()` target
 //! tables (because Crabgo must fetch all of them), so those do not support
 //! environment variables.
@@ -263,7 +263,7 @@ impl Config {
 
         let env = Env::new();
 
-        let cache_key = "CARGO_CACHE_RUSTC_INFO";
+        let cache_key = "CRABGO_CACHE_RUSTC_INFO";
         let cache_rustc_info = match env.get_env_os(cache_key) {
             Some(cache) => cache != "0",
             _ => true,
@@ -431,12 +431,12 @@ impl Config {
                 let from_env = || -> CrabgoResult<PathBuf> {
                     // Try re-using the `crabgo` set in the environment already. This allows
                     // commands that use Crabgo as a library to inherit (via `crabgo <subcommand>`)
-                    // or set (by setting `$CARGO`) a correct path to `crabgo` when the current exe
+                    // or set (by setting `$CRABGO`) a correct path to `crabgo` when the current exe
                     // is not actually crabgo (e.g., `crabgo-*` binaries, Valgrind, `ld.so`, etc.).
                     let exe = try_canonicalize(
-                        self.get_env_os(crate::CARGO_ENV)
+                        self.get_env_os(crate::CRABGO_ENV)
                             .map(PathBuf::from)
-                            .ok_or_else(|| anyhow!("$CARGO not set"))?,
+                            .ok_or_else(|| anyhow!("$CRABGO not set"))?,
                     )?;
                     Ok(exe)
                 };
@@ -554,12 +554,12 @@ impl Config {
     pub fn target_dir(&self) -> CrabgoResult<Option<Filesystem>> {
         if let Some(dir) = &self.target_dir {
             Ok(Some(dir.clone()))
-        } else if let Some(dir) = self.get_env_os("CARGO_TARGET_DIR") {
-            // Check if the CARGO_TARGET_DIR environment variable is set to an empty string.
+        } else if let Some(dir) = self.get_env_os("CRABGO_TARGET_DIR") {
+            // Check if the CRABGO_TARGET_DIR environment variable is set to an empty string.
             if dir.is_empty() {
                 bail!(
                     "the target directory is set to an empty string in the \
-                     `CARGO_TARGET_DIR` environment variable"
+                     `CRABGO_TARGET_DIR` environment variable"
                 )
             }
 
@@ -1693,8 +1693,8 @@ impl Config {
             .env_config
             .try_borrow_with(|| self.get::<EnvConfig>("env"))?;
 
-        if env_config.get("CARGO_HOME").is_some() {
-            bail!("setting the `CARGO_HOME` environment variable is not supported in the `[env]` configuration table")
+        if env_config.get("CRABGO_HOME").is_some() {
+            bail!("setting the `CRABGO_HOME` environment variable is not supported in the `[env]` configuration table")
         }
 
         Ok(env_config)

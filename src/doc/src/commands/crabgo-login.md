@@ -12,7 +12,7 @@ crabgo-login --- Save an API token from the registry locally
 
 This command will save the API token to disk so that commands that require
 authentication, such as [crabgo-publish(1)](crabgo-publish.html), will be automatically
-authenticated. The token is saved in `$CARGO_HOME/credentials.toml`. `CARGO_HOME`
+authenticated. The token is saved in `$CRABGO_HOME/credentials.toml`. `CRABGO_HOME`
 defaults to `.crabgo` in your home directory.
 
 If the _token_ argument is not specified, it will be read from stdin.

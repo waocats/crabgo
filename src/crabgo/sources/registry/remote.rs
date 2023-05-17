@@ -23,7 +23,7 @@ use std::task::{ready, Poll};
 /// downloaded as needed and cached locally.
 pub struct RemoteRegistry<'cfg> {
     index_path: Filesystem,
-    /// Path to the cache of `.crate` files (`$CARGO_HOME/registry/path/$REG-HASH`).
+    /// Path to the cache of `.crate` files (`$CRABGO_HOME/registry/path/$REG-HASH`).
     cache_path: Filesystem,
     source_id: SourceId,
     index_git_ref: GitReference,
@@ -74,7 +74,7 @@ impl<'cfg> RemoteRegistry<'cfg> {
 
                     // Note that we'd actually prefer to use a bare repository
                     // here as we're not actually going to check anything out.
-                    // All versions of Crabgo, though, share the same CARGO_HOME,
+                    // All versions of Crabgo, though, share the same CRABGO_HOME,
                     // so for compatibility with older Crabgo which *does* do
                     // checkouts we make sure to initialize a new full
                     // repository (not a bare one).

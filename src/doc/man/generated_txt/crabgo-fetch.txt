@@ -1,4 +1,4 @@
-CARGO-FETCH(1)
+CRABGO-FETCH(1)
 
 NAME
        crabgo-fetch — Fetch dependencies of a package from the network

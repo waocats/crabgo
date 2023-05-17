@@ -19,9 +19,9 @@ use crate::command_prelude::*;
 
 fn main() {
     #[cfg(feature = "pretty-env-logger")]
-    pretty_env_logger::init_custom_env("CARGO_LOG");
+    pretty_env_logger::init_custom_env("CRABGO_LOG");
     #[cfg(not(feature = "pretty-env-logger"))]
-    env_logger::init_from_env("CARGO_LOG");
+    env_logger::init_from_env("CRABGO_LOG");
 
     let mut config = cli::LazyConfig::new();
 
@@ -206,7 +206,7 @@ fn execute_subcommand(config: &Config, cmd_path: Option<&PathBuf>, args: &[&OsSt
         Some(cmd_path) => ProcessBuilder::new(cmd_path),
         None => ProcessBuilder::new(&crabgo_exe),
     };
-    cmd.env(crabgo::CARGO_ENV, crabgo_exe).args(args);
+    cmd.env(crabgo::CRABGO_ENV, crabgo_exe).args(args);
     if let Some(client) = config.jobserver_from_env() {
         cmd.inherit_jobserver(client);
     }
@@ -265,7 +265,7 @@ fn init_git(config: &Config) {
     // Disabling the owner validation in git can, in theory, lead to code execution
     // vulnerabilities. However, libgit2 does not launch executables, which is the foundation of
     // the original security issue. Meanwhile, issues with refusing to load git repos in
-    // `CARGO_HOME` for example will likely be very frustrating for users. So, we disable the
+    // `CRABGO_HOME` for example will likely be very frustrating for users. So, we disable the
     // validation.
     //
     // For further discussion of Crabgo's current interactions with git, see

@@ -752,18 +752,18 @@ fn dep_build_script(
             //
             // If `is_for_host_features` here is `false`, that means we are a
             // build.rs script for a normal dependency and we want to set the
-            // CARGO_FEATURE_* environment variables to the features as a
+            // CRABGO_FEATURE_* environment variables to the features as a
             // normal dep.
             //
             // If `is_for_host_features` here is `true`, that means that this
             // package is being used as a build dependency or proc-macro, and
-            // so we only want to set CARGO_FEATURE_* variables for the host
+            // so we only want to set CRABGO_FEATURE_* variables for the host
             // side of the graph.
             //
             // Keep in mind that the RunCustomBuild unit and the Compile
             // build.rs unit use the same features. This is because some
             // people use `cfg!` and `#[cfg]` expressions to check for enabled
-            // features instead of just checking `CARGO_FEATURE_*` at runtime.
+            // features instead of just checking `CRABGO_FEATURE_*` at runtime.
             // In the case with the new feature resolver (decoupled host
             // deps), and a shared dependency has different features enabled
             // for normal vs. build, then the build.rs script will get

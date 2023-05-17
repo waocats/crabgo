@@ -1,4 +1,4 @@
-CARGO-UNINSTALL(1)
+CRABGO-UNINSTALL(1)
 
 NAME
        crabgo-uninstall — Remove a Rust binary
@@ -18,12 +18,12 @@ DESCRIPTION
 
        o  --root option
 
-       o  CARGO_INSTALL_ROOT environment variable
+       o  CRABGO_INSTALL_ROOT environment variable
 
        o  install.root Crabgo config value
           <https://doc.rust-lang.org/crabgo/reference/config.html>
 
-       o  CARGO_HOME environment variable
+       o  CRABGO_HOME environment variable
 
        o  $HOME/.crabgo
 

@@ -1,4 +1,4 @@
-CARGO-REMOVE(1)
+CRABGO-REMOVE(1)
 
 NAME
        crabgo-remove — Remove dependencies from a Crabgo.toml manifest file

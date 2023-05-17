@@ -52,7 +52,7 @@ fn collect_all_toolchains() -> Vec<(Version, String)> {
     };
 
     // Provide a way to override the list.
-    if let Ok(tcs) = std::env::var("OLD_CARGO") {
+    if let Ok(tcs) = std::env::var("OLD_CRABGO") {
         return tcs
             .split(',')
             .map(|tc| (rustc_version(tc), tc.to_string()))
@@ -645,7 +645,7 @@ fn avoids_split_debuginfo_collision() {
     execs()
         .with_process_builder(tc_process("crabgo", "stable"))
         .arg("build")
-        .env("CARGO_INCREMENTAL", "1")
+        .env("CRABGO_INCREMENTAL", "1")
         .cwd(p.root())
         .with_stderr(
             "\
@@ -656,7 +656,7 @@ fn avoids_split_debuginfo_collision() {
         .run();
 
     p.crabgo("build")
-        .env("CARGO_INCREMENTAL", "1")
+        .env("CRABGO_INCREMENTAL", "1")
         .with_stderr(
             "\
 [COMPILING] foo v0.1.0 [..]
@@ -668,7 +668,7 @@ fn avoids_split_debuginfo_collision() {
     execs()
         .with_process_builder(tc_process("crabgo", "stable"))
         .arg("build")
-        .env("CARGO_INCREMENTAL", "1")
+        .env("CRABGO_INCREMENTAL", "1")
         .cwd(p.root())
         .with_stderr(
             "\

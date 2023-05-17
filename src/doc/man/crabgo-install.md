@@ -51,7 +51,7 @@ force Crabgo to always reinstall the package.
 
 If the source is crates.io or `--git` then by default the crate will be built
 in a temporary target directory. To avoid this, the target directory can be
-specified by setting the `CARGO_TARGET_DIR` environment variable to a relative
+specified by setting the `CRABGO_TARGET_DIR` environment variable to a relative
 path. In particular, this can be useful for caching build artifacts on
 continuous integration systems.
 
@@ -75,7 +75,7 @@ available.
 
 This command operates on system or user level, not project level.
 This means that the local [configuration discovery] is ignored.
-Instead, the configuration discovery begins at `$CARGO_HOME/config.toml`. 
+Instead, the configuration discovery begins at `$CRABGO_HOME/config.toml`. 
 If the package is installed with `--path $PATH`, the local configuration 
 will be used, beginning discovery at `$PATH/.crabgo/config.toml`.
 

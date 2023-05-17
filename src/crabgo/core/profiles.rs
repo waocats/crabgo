@@ -43,7 +43,7 @@ use std::{cmp, fmt, hash};
 #[derive(Clone, Debug)]
 pub struct Profiles {
     /// Incremental compilation can be overridden globally via:
-    /// - `CARGO_INCREMENTAL` environment variable.
+    /// - `CRABGO_INCREMENTAL` environment variable.
     /// - `build.incremental` config value.
     incremental: Option<bool>,
     /// Map of profile name to directory name for that profile.
@@ -64,7 +64,7 @@ pub struct Profiles {
 impl Profiles {
     pub fn new(ws: &Workspace<'_>, requested_profile: InternedString) -> CrabgoResult<Profiles> {
         let config = ws.config();
-        let incremental = match config.get_env_os("CARGO_INCREMENTAL") {
+        let incremental = match config.get_env_os("CRABGO_INCREMENTAL") {
             Some(v) => Some(v == "1"),
             None => config.build_config()?.incremental,
         };

@@ -681,7 +681,7 @@ impl Flags {
 ///
 /// The locations are:
 ///
-///  - the `CARGO_ENCODED_RUSTFLAGS` environment variable
+///  - the `CRABGO_ENCODED_RUSTFLAGS` environment variable
 ///  - the `RUSTFLAGS` environment variable
 ///
 /// then if none of those were found
@@ -748,9 +748,9 @@ fn extra_args(
 /// Gets compiler flags from environment variables.
 /// See [`extra_args`] for more.
 fn rustflags_from_env(config: &Config, flags: Flags) -> Option<Vec<String>> {
-    // First try CARGO_ENCODED_RUSTFLAGS from the environment.
+    // First try CRABGO_ENCODED_RUSTFLAGS from the environment.
     // Prefer this over RUSTFLAGS since it's less prone to encoding errors.
-    if let Ok(a) = config.get_env(format!("CARGO_ENCODED_{}", flags.as_env())) {
+    if let Ok(a) = config.get_env(format!("CRABGO_ENCODED_{}", flags.as_env())) {
         if a.is_empty() {
             return Some(Vec::new());
         }

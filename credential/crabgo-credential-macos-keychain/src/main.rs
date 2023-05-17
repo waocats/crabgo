@@ -16,7 +16,7 @@ mod macos {
 
     impl Credential for MacKeychain {
         fn name(&self) -> &'static str {
-            env!("CARGO_PKG_NAME")
+            env!("CRABGO_PKG_NAME")
         }
 
         fn get(&self, index_url: &str) -> Result<String, Error> {

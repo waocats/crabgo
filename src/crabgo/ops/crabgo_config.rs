@@ -270,15 +270,15 @@ fn print_toml_unmerged(config: &Config, opts: &GetOptions<'_>, key: &ConfigKey) 
     // "config" (or are special-cased). I'm personally fine with just keeping
     // them here, though it might be confusing. The vars I'm aware of:
     //
-    // * CARGO
-    // * CARGO_HOME
-    // * CARGO_NAME
-    // * CARGO_EMAIL
-    // * CARGO_INCREMENTAL
-    // * CARGO_TARGET_DIR
-    // * CARGO_CACHE_RUSTC_INFO
+    // * CRABGO
+    // * CRABGO_HOME
+    // * CRABGO_NAME
+    // * CRABGO_EMAIL
+    // * CRABGO_INCREMENTAL
+    // * CRABGO_TARGET_DIR
+    // * CRABGO_CACHE_RUSTC_INFO
     //
-    // All of these except CARGO, CARGO_HOME, and CARGO_CACHE_RUSTC_INFO are
+    // All of these except CRABGO, CRABGO_HOME, and CRABGO_CACHE_RUSTC_INFO are
     // actually part of the config, but they are special-cased in the code.
     //
     // TODO: It might be a good idea to teach the Config loader to support

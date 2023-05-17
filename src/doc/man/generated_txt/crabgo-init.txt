@@ -1,4 +1,4 @@
-CARGO-INIT(1)
+CRABGO-INIT(1)
 
 NAME
        crabgo-init — Create a new Crabgo package in an existing directory

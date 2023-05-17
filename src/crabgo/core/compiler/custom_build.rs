@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use std::str;
 use std::sync::{Arc, Mutex};
 
-const CARGO_WARNING: &str = "crabgo:warning=";
+const CRABGO_WARNING: &str = "crabgo:warning=";
 
 /// Contains the parsed output of a custom build script.
 #[derive(Clone, Debug, Hash, Default)]
@@ -188,7 +188,7 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
     let mut cmd = cx.compilation.host_process(to_exec, &unit.pkg)?;
     let debug = unit.profile.debuginfo.is_turned_on();
     cmd.env("OUT_DIR", &script_out_dir)
-        .env("CARGO_MANIFEST_DIR", unit.pkg.root())
+        .env("CRABGO_MANIFEST_DIR", unit.pkg.root())
         .env("NUM_JOBS", &bcx.jobs().to_string())
         .env("TARGET", bcx.target_data.short_name(&unit.kind))
         .env("DEBUG", debug.to_string())
@@ -218,13 +218,13 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
     }
 
     if let Some(links) = unit.pkg.manifest().links() {
-        cmd.env("CARGO_MANIFEST_LINKS", links);
+        cmd.env("CRABGO_MANIFEST_LINKS", links);
     }
 
     // Be sure to pass along all enabled features for this package, this is the
     // last piece of statically known information that we have.
     for feat in &unit.features {
-        cmd.env(&format!("CARGO_FEATURE_{}", super::envify(feat)), "1");
+        cmd.env(&format!("CRABGO_FEATURE_{}", super::envify(feat)), "1");
     }
 
     let mut cfg_map = HashMap::new();
@@ -245,7 +245,7 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
             // That is because Crabgo queries rustc without any profile settings.
             continue;
         }
-        let k = format!("CARGO_CFG_{}", super::envify(&k));
+        let k = format!("CRABGO_CFG_{}", super::envify(&k));
         cmd.env(&k, v.join(","));
     }
 
@@ -262,7 +262,7 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
         }
     }
     cmd.env(
-        "CARGO_ENCODED_RUSTFLAGS",
+        "CRABGO_ENCODED_RUSTFLAGS",
         bcx.rustflags_args(unit).join("\x1f"),
     );
     cmd.env_remove("RUSTFLAGS");
@@ -387,7 +387,7 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
         let output = cmd
             .exec_with_streaming(
                 &mut |stdout| {
-                    if let Some(warning) = stdout.strip_prefix(CARGO_WARNING) {
+                    if let Some(warning) = stdout.strip_prefix(CRABGO_WARNING) {
                         warnings_in_case_of_panic.push(warning.to_owned());
                     }
                     if extra_verbose {
@@ -419,7 +419,7 @@ fn build_work(cx: &mut Context<'_, '_>, unit: &Unit) -> CrabgoResult<Job> {
                         build_error_context.push_str(&format!(
                             "\n\
                             note: To improve backtraces for build dependencies, set the \
-                            CARGO_PROFILE_{env_profile_name}_BUILD_OVERRIDE_DEBUG=true environment \
+                            CRABGO_PROFILE_{env_profile_name}_BUILD_OVERRIDE_DEBUG=true environment \
                             variable to enable debug information generation.",
                         ));
                     }

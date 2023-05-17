@@ -133,7 +133,7 @@ annotated functions and run them in parallel. You can pass module names to
 
 Binary targets are automatically built if there is an integration test. This
 allows an integration test to execute the binary to exercise and test its
-behavior. The `CARGO_BIN_EXE_<name>` [environment variable] is set when the
+behavior. The `CRABGO_BIN_EXE_<name>` [environment variable] is set when the
 integration test is built so that it can use the [`env` macro] to locate the
 executable.
 

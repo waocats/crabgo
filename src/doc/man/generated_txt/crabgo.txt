@@ -1,4 +1,4 @@
-CARGO(1)
+CRABGO(1)
 
 NAME
        crabgo — The Rust package manager
@@ -233,15 +233,15 @@ EXIT STATUS
 FILES
        ~/.crabgo/
            Default location for Crabgo’s “home” directory where it
-       stores various files. The location can be changed with the CARGO_HOME
+       stores various files. The location can be changed with the CRABGO_HOME
        environment variable.
 
-       $CARGO_HOME/bin/
+       $CRABGO_HOME/bin/
            Binaries installed by crabgo-install(1) will be located here. If
        using rustup <https://rust-lang.github.io/rustup/>, executables
        distributed with Rust are also located here.
 
-       $CARGO_HOME/config.toml
+       $CRABGO_HOME/config.toml
            The global configuration file. See the reference
        <https://doc.rust-lang.org/crabgo/reference/config.html> for more
        information about configuration files.
@@ -251,17 +251,17 @@ FILES
        in the current directory, and all parent directories. These
        configuration files will be merged with the global configuration file.
 
-       $CARGO_HOME/credentials.toml
+       $CRABGO_HOME/credentials.toml
            Private authentication information for logging in to a registry.
 
-       $CARGO_HOME/registry/
+       $CRABGO_HOME/registry/
            This directory contains cached downloads of the registry index
        and any downloaded dependencies.
 
-       $CARGO_HOME/git/
+       $CRABGO_HOME/git/
            This directory contains cached downloads of git dependencies.
 
-       Please note that the internal structure of the $CARGO_HOME directory is
+       Please note that the internal structure of the $CRABGO_HOME directory is
        not stable yet and may be subject to change.
 
 EXAMPLES

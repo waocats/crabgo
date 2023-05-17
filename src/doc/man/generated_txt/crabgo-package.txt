@@ -1,4 +1,4 @@
-CARGO-PACKAGE(1)
+CRABGO-PACKAGE(1)
 
 NAME
        crabgo-package — Assemble the local package into a distributable
@@ -127,7 +127,7 @@ OPTIONS
 
        --target-dir directory
            Directory for all generated artifacts and intermediate files. May
-           also be specified with the CARGO_TARGET_DIR environment variable, or
+           also be specified with the CRABGO_TARGET_DIR environment variable, or
            the build.target-dir config value
            <https://doc.rust-lang.org/crabgo/reference/config.html>. Defaults to
            target in the root of the workspace.

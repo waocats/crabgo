@@ -1,4 +1,4 @@
-CARGO-VENDOR(1)
+CRABGO-VENDOR(1)
 
 NAME
        crabgo-vendor — Vendor all dependencies locally

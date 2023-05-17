@@ -413,7 +413,7 @@ impl Project {
         let crabgo = crabgo_exe();
         let mut execs = self.process(&crabgo);
         if let Some(ref mut p) = execs.process_builder {
-            p.env("CARGO", crabgo);
+            p.env("CRABGO", crabgo);
             p.arg_line(cmd);
         }
         execs
@@ -849,16 +849,16 @@ impl Execs {
     /// cannot be used.
     pub fn replace_crates_io(&mut self, url: &Url) -> &mut Self {
         if let Some(ref mut p) = self.process_builder {
-            p.env("__CARGO_TEST_CRATES_IO_URL_DO_NOT_USE_THIS", url.as_str());
+            p.env("__CRABGO_TEST_CRATES_IO_URL_DO_NOT_USE_THIS", url.as_str());
         }
         self
     }
 
     pub fn enable_split_debuginfo_packed(&mut self) -> &mut Self {
-        self.env("CARGO_PROFILE_DEV_SPLIT_DEBUGINFO", "packed")
-            .env("CARGO_PROFILE_TEST_SPLIT_DEBUGINFO", "packed")
-            .env("CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO", "packed")
-            .env("CARGO_PROFILE_BENCH_SPLIT_DEBUGINFO", "packed");
+        self.env("CRABGO_PROFILE_DEV_SPLIT_DEBUGINFO", "packed")
+            .env("CRABGO_PROFILE_TEST_SPLIT_DEBUGINFO", "packed")
+            .env("CRABGO_PROFILE_RELEASE_SPLIT_DEBUGINFO", "packed")
+            .env("CRABGO_PROFILE_BENCH_SPLIT_DEBUGINFO", "packed");
         self
     }
 
@@ -1169,11 +1169,11 @@ pub fn rustc_host_env() -> String {
 
 pub fn is_nightly() -> bool {
     let vv = &RUSTC_INFO.verbose_version;
-    // CARGO_TEST_DISABLE_NIGHTLY is set in rust-lang/rust's CI so that all
+    // CRABGO_TEST_DISABLE_NIGHTLY is set in rust-lang/rust's CI so that all
     // nightly-only tests are disabled there. Otherwise, it could make it
     // difficult to land changes which would need to be made simultaneously in
     // rust-lang/crabgo and rust-lan/rust, which isn't possible.
-    env::var("CARGO_TEST_DISABLE_NIGHTLY").is_err()
+    env::var("CRABGO_TEST_DISABLE_NIGHTLY").is_err()
         && (vv.contains("-nightly") || vv.contains("-dev"))
 }
 
@@ -1197,13 +1197,13 @@ pub trait ChannelChanger {
 
 impl ChannelChanger for &mut ProcessBuilder {
     fn masquerade_as_nightly_crabgo(self, _reasons: &[&str]) -> Self {
-        self.env("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "nightly")
+        self.env("__CRABGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "nightly")
     }
 }
 
 impl ChannelChanger for snapbox::cmd::Command {
     fn masquerade_as_nightly_crabgo(self, _reasons: &[&str]) -> Self {
-        self.env("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "nightly")
+        self.env("__CRABGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "nightly")
     }
 }
 
@@ -1214,7 +1214,7 @@ pub trait TestEnv: Sized {
         // environment. Our tests all assume a "default configuration" unless
         // specified otherwise.
         for (k, _v) in env::vars() {
-            if k.starts_with("CARGO_") {
+            if k.starts_with("CRABGO_") {
                 self = self.env_remove(&k);
             }
         }
@@ -1249,21 +1249,21 @@ pub trait TestEnv: Sized {
         self = self
             .current_dir(&paths::root())
             .env("HOME", paths::home())
-            .env("CARGO_HOME", paths::home().join(".crabgo"))
-            .env("__CARGO_TEST_ROOT", paths::global_root())
+            .env("CRABGO_HOME", paths::home().join(".crabgo"))
+            .env("__CRABGO_TEST_ROOT", paths::global_root())
             // Force Crabgo to think it's on the stable channel for all tests, this
             // should hopefully not surprise us as we add crabgo features over time and
             // crabgo rides the trains.
-            .env("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "stable")
+            .env("__CRABGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "stable")
             // Keeps crabgo within its sandbox.
-            .env("__CARGO_TEST_DISABLE_GLOBAL_KNOWN_HOST", "1")
+            .env("__CRABGO_TEST_DISABLE_GLOBAL_KNOWN_HOST", "1")
             // Incremental generates a huge amount of data per test, which we
             // don't particularly need. Tests that specifically need to check
             // the incremental behavior should turn this back on.
-            .env("CARGO_INCREMENTAL", "0")
+            .env("CRABGO_INCREMENTAL", "0")
             // Don't read the system git config which is out of our control.
             .env("GIT_CONFIG_NOSYSTEM", "1")
-            .env_remove("__CARGO_DEFAULT_LIB_METADATA")
+            .env_remove("__CRABGO_DEFAULT_LIB_METADATA")
             .env_remove("ALL_PROXY")
             .env_remove("EMAIL")
             .env_remove("GIT_AUTHOR_EMAIL")
@@ -1287,7 +1287,7 @@ pub trait TestEnv: Sized {
             .env_remove("XDG_CONFIG_HOME"); // see #2345
         if cfg!(target_os = "macos") {
             // Work-around a bug in macOS 10.15, see `link_or_copy` for details.
-            self = self.env("__CARGO_COPY_DONT_LINK_DO_NOT_USE_THIS", "1");
+            self = self.env("__CRABGO_COPY_DONT_LINK_DO_NOT_USE_THIS", "1");
         }
         if cfg!(windows) {
             self = self.env("USERPROFILE", paths::home());
@@ -1372,7 +1372,7 @@ impl ArgLine for snapbox::cmd::Command {
 pub fn crabgo_process(s: &str) -> Execs {
     let crabgo = crabgo_exe();
     let mut p = process(&crabgo);
-    p.env("CARGO", crabgo);
+    p.env("CRABGO", crabgo);
     p.arg_line(s);
     execs().with_process_builder(p)
 }
@@ -1392,7 +1392,7 @@ pub fn is_coarse_mtime() -> bool {
     // If the filetime crate is being used to emulate HFS then
     // return `true`, without looking at the actual hardware.
     cfg!(emulate_second_only_system) ||
-    // This should actually be a test that `$CARGO_TARGET_DIR` is on an HFS
+    // This should actually be a test that `$CRABGO_TARGET_DIR` is on an HFS
     // filesystem, (or any filesystem with low-resolution mtimes). However,
     // that's tricky to detect, so for now just deal with CI.
     cfg!(target_os = "macos") && is_ci()
@@ -1404,7 +1404,7 @@ pub fn is_coarse_mtime() -> bool {
 pub fn slow_cpu_multiplier(main: u64) -> Duration {
     lazy_static::lazy_static! {
         static ref SLOW_CPU_MULTIPLIER: u64 =
-            env::var("CARGO_TEST_SLOW_CPU_MULTIPLIER").ok().and_then(|m| m.parse().ok()).unwrap_or(1);
+            env::var("CRABGO_TEST_SLOW_CPU_MULTIPLIER").ok().and_then(|m| m.parse().ok()).unwrap_or(1);
     }
     Duration::from_secs(*SLOW_CPU_MULTIPLIER * main)
 }

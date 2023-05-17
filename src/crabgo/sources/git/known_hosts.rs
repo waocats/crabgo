@@ -500,7 +500,7 @@ fn check_ssh_known_hosts_loaded(
 fn known_host_files(config: &Config) -> Vec<PathBuf> {
     let mut result = Vec::new();
     if config
-        .get_env_os("__CARGO_TEST_DISABLE_GLOBAL_KNOWN_HOST")
+        .get_env_os("__CRABGO_TEST_DISABLE_GLOBAL_KNOWN_HOST")
         .is_some()
     {
     } else if cfg!(unix) {

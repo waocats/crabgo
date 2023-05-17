@@ -1,4 +1,4 @@
-CARGO-ADD(1)
+CRABGO-ADD(1)
 
 NAME
        crabgo-add — Add dependencies to a Crabgo.toml manifest file

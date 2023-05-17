@@ -74,8 +74,8 @@ fn doit(credential: impl Credential) -> Result<(), Error> {
         .skip_while(|arg| arg.starts_with('-'))
         .next()
         .ok_or_else(|| "first argument must be the {action}")?;
-    let index_url = env("CARGO_REGISTRY_INDEX_URL")?;
-    let name = std::env::var("CARGO_REGISTRY_NAME_OPT").ok();
+    let index_url = env("CRABGO_REGISTRY_INDEX_URL")?;
+    let name = std::env::var("CRABGO_REGISTRY_NAME_OPT").ok();
     let result = match which.as_ref() {
         "get" => credential.get(&index_url).and_then(|token| {
             println!("{}", token);

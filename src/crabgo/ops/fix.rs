@@ -67,16 +67,16 @@ use crate::{drop_eprint, drop_eprintln};
 /// Indicates Crabgo is in fix-proxy-mode if presents.
 /// The value of it is the socket address of the [`LockServer`] being used.
 /// See the [module-level documentation](mod@super::fix) for more.
-const FIX_ENV_INTERNAL: &str = "__CARGO_FIX_PLZ";
+const FIX_ENV_INTERNAL: &str = "__CRABGO_FIX_PLZ";
 /// **Internal only.**
 /// For passing [`FixOptions::broken_code`] through to crabgo running in proxy mode.
-const BROKEN_CODE_ENV_INTERNAL: &str = "__CARGO_FIX_BROKEN_CODE";
+const BROKEN_CODE_ENV_INTERNAL: &str = "__CRABGO_FIX_BROKEN_CODE";
 /// **Internal only.**
 /// For passing [`FixOptions::edition`] through to crabgo running in proxy mode.
-const EDITION_ENV_INTERNAL: &str = "__CARGO_FIX_EDITION";
+const EDITION_ENV_INTERNAL: &str = "__CRABGO_FIX_EDITION";
 /// **Internal only.**
 /// For passing [`FixOptions::idioms`] through to crabgo running in proxy mode.
-const IDIOMS_ENV_INTERNAL: &str = "__CARGO_FIX_IDIOMS";
+const IDIOMS_ENV_INTERNAL: &str = "__CRABGO_FIX_IDIOMS";
 
 pub struct FixOptions {
     pub edition: bool,
@@ -525,7 +525,7 @@ fn rustfix_crate(
     let mut fixes = FixedCrate::default();
     let mut last_fix_counts = HashMap::new();
     let iterations = config
-        .get_env("CARGO_FIX_MAX_RETRIES")
+        .get_env("CRABGO_FIX_MAX_RETRIES")
         .ok()
         .and_then(|n| n.parse().ok())
         .unwrap_or(4);
@@ -601,7 +601,7 @@ fn rustfix_and_fix(
     }
 
     let fix_mode = config
-        .get_env_os("__CARGO_FIX_YOLO")
+        .get_env_os("__CRABGO_FIX_YOLO")
         .map(|_| rustfix::Filter::Everything)
         .unwrap_or(rustfix::Filter::MachineApplicableOnly);
 

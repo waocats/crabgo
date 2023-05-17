@@ -1,4 +1,4 @@
-CARGO-RUSTDOC(1)
+CRABGO-RUSTDOC(1)
 
 NAME
        crabgo-rustdoc — Build a package’s documentation, using specified
@@ -179,7 +179,7 @@ OPTIONS
    Output Options
        --target-dir directory
            Directory for all generated artifacts and intermediate files. May
-           also be specified with the CARGO_TARGET_DIR environment variable, or
+           also be specified with the CRABGO_TARGET_DIR environment variable, or
            the build.target-dir config value
            <https://doc.rust-lang.org/crabgo/reference/config.html>. Defaults to
            target in the root of the workspace.

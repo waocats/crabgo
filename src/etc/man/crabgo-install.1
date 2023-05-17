@@ -1,5 +1,5 @@
 '\" t
-.TH "CARGO\-INSTALL" "1"
+.TH "CRABGO\-INSTALL" "1"
 .nh
 .ad l
 .ss \n[.ss] 0
@@ -26,7 +26,7 @@ The installation root is determined, in order of precedence:
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+02'\fBCARGO_INSTALL_ROOT\fR environment variable
+\h'-04'\(bu\h'+02'\fBCRABGO_INSTALL_ROOT\fR environment variable
 .RE
 .sp
 .RS 4
@@ -34,7 +34,7 @@ The installation root is determined, in order of precedence:
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+02'\fBCARGO_HOME\fR environment variable
+\h'-04'\(bu\h'+02'\fBCRABGO_HOME\fR environment variable
 .RE
 .sp
 .RS 4
@@ -84,7 +84,7 @@ force Crabgo to always reinstall the package.
 .sp
 If the source is crates.io or \fB\-\-git\fR then by default the crate will be built
 in a temporary target directory. To avoid this, the target directory can be
-specified by setting the \fBCARGO_TARGET_DIR\fR environment variable to a relative
+specified by setting the \fBCRABGO_TARGET_DIR\fR environment variable to a relative
 path. In particular, this can be useful for caching build artifacts on
 continuous integration systems.
 .SS "Dealing with the Lockfile"
@@ -104,7 +104,7 @@ available.
 .SS "Configuration Discovery"
 This command operates on system or user level, not project level.
 This means that the local \fIconfiguration discovery\fR <https://doc.rust\-lang.org/crabgo/reference/config.html#hierarchical\-structure> is ignored.
-Instead, the configuration discovery begins at \fB$CARGO_HOME/config.toml\fR\&. 
+Instead, the configuration discovery begins at \fB$CRABGO_HOME/config.toml\fR\&. 
 If the package is installed with \fB\-\-path $PATH\fR, the local configuration 
 will be used, beginning discovery at \fB$PATH/.crabgo/config.toml\fR\&.
 .SH "OPTIONS"
@@ -251,7 +251,7 @@ target artifacts are placed in a separate directory. See the
 \fB\-\-target\-dir\fR \fIdirectory\fR
 .RS 4
 Directory for all generated artifacts and intermediate files. May also be
-specified with the \fBCARGO_TARGET_DIR\fR environment variable, or the
+specified with the \fBCRABGO_TARGET_DIR\fR environment variable, or the
 \fBbuild.target\-dir\fR \fIconfig value\fR <https://doc.rust\-lang.org/crabgo/reference/config.html>\&.
 Defaults to a new temporary folder located in the
 temporary directory of the platform. 

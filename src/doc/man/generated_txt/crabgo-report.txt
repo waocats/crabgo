@@ -1,4 +1,4 @@
-CARGO-REPORT(1)
+CRABGO-REPORT(1)
 
 NAME
        crabgo-report — Generate and display various kinds of reports

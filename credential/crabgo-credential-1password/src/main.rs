@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::io::Read;
 use std::process::{Command, Stdio};
 
-const CARGO_TAG: &str = "crabgo-registry";
+const CRABGO_TAG: &str = "crabgo-registry";
 
 /// Implementation of 1password keychain access for Crabgo registries.
 struct OnePasswordKeychain {
@@ -164,7 +164,7 @@ impl OnePasswordKeychain {
                 "--categories",
                 "Login",
                 "--tags",
-                CARGO_TAG,
+                CRABGO_TAG,
                 "--format",
                 "json",
             ],
@@ -230,7 +230,7 @@ impl OnePasswordKeychain {
                 "--title",
                 &title,
                 "--tags",
-                CARGO_TAG,
+                CRABGO_TAG,
             ],
         );
         // For unknown reasons, `op item create` seems to not be happy if
@@ -264,7 +264,7 @@ impl OnePasswordKeychain {
 
 impl Credential for OnePasswordKeychain {
     fn name(&self) -> &'static str {
-        env!("CARGO_PKG_NAME")
+        env!("CRABGO_PKG_NAME")
     }
 
     fn get(&self, index_url: &str) -> Result<String, Error> {

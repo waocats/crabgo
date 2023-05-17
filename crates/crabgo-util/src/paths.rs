@@ -368,7 +368,7 @@ pub struct PathAncestors<'a> {
 
 impl<'a> PathAncestors<'a> {
     fn new(path: &'a Path, stop_root_at: Option<&Path>) -> PathAncestors<'a> {
-        let stop_at = env::var("__CARGO_TEST_ROOT")
+        let stop_at = env::var("__CRABGO_TEST_ROOT")
             .ok()
             .map(PathBuf::from)
             .or_else(|| stop_root_at.map(|p| p.to_path_buf()));
@@ -527,7 +527,7 @@ fn _link_or_copy(src: &Path, dst: &Path) -> Result<()> {
             src
         };
         symlink(src, dst)
-    } else if env::var_os("__CARGO_COPY_DONT_LINK_DO_NOT_USE_THIS").is_some() {
+    } else if env::var_os("__CRABGO_COPY_DONT_LINK_DO_NOT_USE_THIS").is_some() {
         // This is a work-around for a bug in macOS 10.15. When running on
         // APFS, there seems to be a strange race condition with
         // Gatekeeper where it will forcefully kill a process launched via

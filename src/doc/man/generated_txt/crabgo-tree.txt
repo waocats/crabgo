@@ -1,4 +1,4 @@
-CARGO-TREE(1)
+CRABGO-TREE(1)
 
 NAME
        crabgo-tree — Display a tree visualization of a dependency graph

@@ -25,12 +25,12 @@ pub fn get_env(
             let dep_name = unit_dep.dep_name.unwrap_or(unit_dep.unit.pkg.name());
             let dep_name_upper = dep_name.to_uppercase().replace("-", "_");
 
-            let var = format!("CARGO_{}_DIR_{}", artifact_type_upper, dep_name_upper);
+            let var = format!("CRABGO_{}_DIR_{}", artifact_type_upper, dep_name_upper);
             let path = artifact_path.parent().expect("parent dir for artifacts");
             env.insert(var, path.to_owned().into());
 
             let var = format!(
-                "CARGO_{}_FILE_{}_{}",
+                "CRABGO_{}_FILE_{}_{}",
                 artifact_type_upper,
                 dep_name_upper,
                 unit_dep.unit.target.name()
@@ -38,7 +38,7 @@ pub fn get_env(
             env.insert(var, artifact_path.to_owned().into());
 
             if unit_dep.unit.target.name() == dep_name.as_str() {
-                let var = format!("CARGO_{}_FILE_{}", artifact_type_upper, dep_name_upper,);
+                let var = format!("CRABGO_{}_FILE_{}", artifact_type_upper, dep_name_upper,);
                 env.insert(var, artifact_path.to_owned().into());
             }
         }
